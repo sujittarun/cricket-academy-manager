@@ -9,75 +9,58 @@
   <body>
     <main class="app-shell">
       <section class="masthead panel">
-        <div class="masthead-grid">
-          <div class="masthead-copy">
-            <div class="brand-lockup">
-              <img
-                src="./assets/gen-alpha-badge-upscaled.png"
-                alt="Gen Alpha Cricket Academy badge"
-                class="brand-badge"
-              />
-              <div>
-                <p class="eyebrow">Gen Alpha Cricket Academy</p>
-                <p class="topbar-title">Academy Manager</p>
-              </div>
-            </div>
-
-            <h1>Track join fees, renewal dues, and student status in one place.</h1>
-            <p class="hero-copy">
-              A cleaner academy dashboard for managing enrollments, confirming
-              payments, and spotting overdue renewals after every 30-day cycle.
-            </p>
-
-            <div class="hero-meta">
-              <p class="location-chip">Manikonda</p>
-              <p class="hero-badge">Live academy register</p>
-              <p class="hero-badge">30-day renewal logic</p>
-            </div>
-
-            <div class="masthead-note">
-              Public users can view records. Manager login unlocks add, edit,
-              renewal, and fee updates.
+        <div class="masthead-top">
+          <div class="brand-lockup">
+            <img
+              src="./assets/gen-alpha-badge-upscaled.png"
+              alt="Gen Alpha Cricket Academy badge"
+              class="brand-badge"
+            />
+            <div class="brand-copy">
+              <p class="eyebrow">Gen Alpha Cricket Academy</p>
+              <h1>Academy Register</h1>
+              <p class="hero-copy">
+                Track join fees, renewal dues, and student status from one clean
+                dashboard.
+              </p>
             </div>
           </div>
 
-          <aside class="masthead-side">
-            <div class="manager-bar">
-              <div class="manager-meta">
-                <p id="accessMode" class="access-mode">View-only mode</p>
-                <p id="managerIdentity" class="manager-identity" hidden></p>
-              </div>
-              <div class="manager-actions">
-                <button id="authToggleButton" type="button" class="top-link-button">
-                  Manager Login
-                </button>
-                <button
-                  id="quickLogoutButton"
-                  type="button"
-                  class="secondary-btn top-logout-button"
-                  hidden
-                >
-                  Logout
-                </button>
-              </div>
+          <div class="manager-bar">
+            <div class="manager-meta">
+              <p id="accessMode" class="access-mode">View-only mode</p>
+              <p id="managerIdentity" class="manager-identity" hidden></p>
             </div>
+            <div class="manager-actions">
+              <button id="authToggleButton" type="button" class="top-link-button">
+                Manager Login
+              </button>
+              <button
+                id="quickLogoutButton"
+                type="button"
+                class="secondary-btn top-logout-button"
+                hidden
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
 
-            <div class="hero-card">
-              <p class="hero-label">30-Day Alerts</p>
-              <strong id="alertCount">0 kids need attention</strong>
-              <p id="alertSummary" class="hero-subtext">
-                Add Gen Alpha academy records to start tracking.
-              </p>
-            </div>
+        <div class="masthead-bottom">
+          <div class="hero-meta">
+            <p class="hero-badge">Join fees</p>
+            <p class="hero-badge">30-day renewals</p>
+            <p class="hero-badge">Public view, manager edit</p>
+          </div>
 
-            <div class="masthead-badge-panel">
-              <img
-                src="./assets/gen-alpha-badge-upscaled.png"
-                alt="Gen Alpha Cricket Academy badge"
-                class="hero-badge-logo"
-              />
-            </div>
-          </aside>
+          <div class="hero-card">
+            <p class="hero-label">30-Day Alerts</p>
+            <strong id="alertCount">0 kids need attention</strong>
+            <p id="alertSummary" class="hero-subtext">
+              Add Gen Alpha academy records to start tracking.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -238,7 +221,7 @@
                   <th>Amount paid</th>
                   <th>Renewal status</th>
                   <th>Updated</th>
-                  <th>Action</th>
+                  <th id="actionHeader">Action</th>
                 </tr>
               </thead>
               <tbody id="kidsTableBody"></tbody>
