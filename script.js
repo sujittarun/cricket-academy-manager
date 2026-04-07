@@ -285,7 +285,6 @@ const renderKids = () => {
         </span>
         <p class="sub-copy">${kid.renewals.length} renewal${kid.renewals.length === 1 ? "" : "s"}</p>
       </td>
-      <td>${kid.updatedBy}</td>
       <td>${formatDate(kid.joinDate)}</td>
       <td>${formatDate(latestRenewal)}</td>
       <td>
@@ -299,6 +298,9 @@ const renderKids = () => {
           ${renewalStatus}
         </span>
         <p class="sub-copy">Tracking from ${formatDate(referenceDate)}</p>
+      </td>
+      <td>
+        <span class="meta-text">${kid.updatedBy}</span>
       </td>
       <td>
         ${
