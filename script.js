@@ -139,7 +139,7 @@ const updateStats = () => {
   joinedCount.textContent = String(kids.length);
   activeCount.textContent = String(activeKids.length);
   paidCount.textContent = String(activeKids.filter((kid) => kid.feesPaid === "yes").length);
-  returningCount.textContent = String(kids.filter((kid) => kid.renewals.length > 0).length);
+  returningCount.textContent = String(activeKids.filter((kid) => kid.renewals.length > 0).length);
 };
 
 const renderSlotFilters = () => {
