@@ -52,7 +52,7 @@ let editingKidId = null;
 let isAuthPanelOpen = false;
 let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
-let activeSlotFilter = "all";
+let activeSlotFilter = "";
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -126,9 +126,11 @@ const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
 const isRenewalPending = (kid) =>
   isActiveKid(kid) && getDaysSinceDate(getReferenceDate(kid)) >= 30;
 const getFilteredKids = () =>
-  activeSlotFilter === "all"
+  !activeSlotFilter
     ? kids
-    : kids.filter((kid) => isActiveKid(kid) && kid.timeSlot === activeSlotFilter);
+    : activeSlotFilter === "not-set"
+      ? kids.filter((kid) => isActiveKid(kid) && !kid.timeSlot)
+      : kids.filter((kid) => isActiveKid(kid) && kid.timeSlot === activeSlotFilter);
 
 const updateStats = () => {
   const activeKids = kids.filter(isActiveKid);
@@ -140,14 +142,24 @@ const updateStats = () => {
 
 const renderSlotFilters = () => {
   const activeKids = kids.filter(isActiveKid);
+  const notSetCount = activeKids.filter((kid) => !kid.timeSlot).length;
   const filters = [
-    { value: "all", label: "All", count: activeKids.length },
     ...TIME_SLOTS.map((slot) => ({
       value: slot,
       label: slot,
       count: activeKids.filter((kid) => kid.timeSlot === slot).length,
     })),
   ];
+
+  if (notSetCount > 0) {
+    filters.push({
+      value: "not-set",
+      label: "Not set",
+      count: notSetCount,
+    });
+  } else if (activeSlotFilter === "not-set") {
+    activeSlotFilter = "";
+  }
 
   slotFilters.innerHTML = filters
     .map(
@@ -305,8 +317,10 @@ const renderKids = () => {
     kidsTable.hidden = true;
     emptyState.textContent =
       activeSlotFilter === "all"
-        ? "No registered players match the current view."
-        : `No active kids are currently assigned to the ${activeSlotFilter} slot.`;
+      ? "No registered players match the current view."
+        : activeSlotFilter === "not-set"
+          ? "No active kids are currently missing a time slot."
+          : `No active kids are currently assigned to the ${activeSlotFilter} slot.`;
     renderSummary(kids.filter((kid) => isFeesPending(kid) || isRenewalPending(kid)));
     return;
   }
@@ -743,7 +757,7 @@ slotFilters.addEventListener("click", (event) => {
     return;
   }
 
-  activeSlotFilter = target.dataset.slotFilter || "all";
+  activeSlotFilter = target.dataset.slotFilter || "";
   renderKids();
 });
 
