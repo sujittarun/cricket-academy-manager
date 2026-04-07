@@ -22,6 +22,9 @@ const editorLock = document.getElementById("editorLock");
 const authPanel = document.getElementById("authPanel");
 const authToggleButton = document.getElementById("authToggleButton");
 const authCloseButton = document.getElementById("authCloseButton");
+const formPanel = document.getElementById("formPanel");
+const recordsHelper = document.getElementById("recordsHelper");
+const contentGrid = document.querySelector(".content-grid");
 const joinedCount = document.getElementById("joinedCount");
 const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
@@ -168,6 +171,12 @@ const updateAccessUI = () => {
   formControls.forEach((control) => {
     control.disabled = !canEdit;
   });
+
+  formPanel.hidden = !canEdit;
+  contentGrid.classList.toggle("form-hidden", !canEdit);
+  recordsHelper.textContent = canEdit
+    ? "Manager editing is enabled. Add, update, renew, or remove players from here."
+    : "View academy records here. Login as manager to add or edit players.";
 
   formMessage.textContent = !hasSupabaseConfig
     ? "Supabase connection is required before edits can be made."
