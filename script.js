@@ -34,6 +34,7 @@ const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
 const actionHeader = document.getElementById("actionHeader");
 const slotFilters = document.getElementById("slotFilters");
+const globalToast = document.getElementById("globalToast");
 
 const TIME_SLOTS = ["6AM", "7:30AM", "4PM", "5:30PM", "7PM"];
 
@@ -53,6 +54,7 @@ let isAuthPanelOpen = false;
 let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
+let toastTimeoutId = null;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -144,6 +146,7 @@ const renderSlotFilters = () => {
   const activeKids = kids.filter(isActiveKid);
   const notSetCount = activeKids.filter((kid) => !kid.timeSlot).length;
   const filters = [
+    { value: "all", label: "All", count: activeKids.length },
     ...TIME_SLOTS.map((slot) => ({
       value: slot,
       label: slot,
@@ -166,7 +169,11 @@ const renderSlotFilters = () => {
       (filter) => `
         <button
           type="button"
-          class="slot-chip ${filter.value === activeSlotFilter ? "active" : ""}"
+          class="slot-chip ${
+            (filter.value === "all" && !activeSlotFilter) || filter.value === activeSlotFilter
+              ? "active"
+              : ""
+          }"
           data-slot-filter="${filter.value}"
         >
           <span>${filter.label}</span>
@@ -175,6 +182,23 @@ const renderSlotFilters = () => {
       `
     )
     .join("");
+};
+
+const showToast = (message) => {
+  if (!globalToast) {
+    return;
+  }
+
+  if (toastTimeoutId) {
+    window.clearTimeout(toastTimeoutId);
+  }
+
+  globalToast.textContent = message;
+  globalToast.hidden = false;
+
+  toastTimeoutId = window.setTimeout(() => {
+    globalToast.hidden = true;
+  }, 2800);
 };
 
 const syncAmountState = () => {
@@ -656,6 +680,7 @@ kidsTableBody.addEventListener("click", async (event) => {
   }
 
   if (action === "delete") {
+    const kidToDelete = kids.find((kid) => kid.id === id);
     const { error } = await supabaseClient.from("students").delete().eq("id", id);
 
     if (error) {
@@ -669,6 +694,9 @@ kidsTableBody.addEventListener("click", async (event) => {
     }
 
     await loadKids();
+    if (kidToDelete) {
+      showToast(`Player ${kidToDelete.name} deleted`);
+    }
     return;
   }
 
@@ -757,7 +785,9 @@ slotFilters.addEventListener("click", (event) => {
     return;
   }
 
-  activeSlotFilter = target.dataset.slotFilter || "";
+  const nextFilter = target.dataset.slotFilter || "";
+  activeSlotFilter =
+    nextFilter === "all" || nextFilter === activeSlotFilter ? "" : nextFilter;
   renderKids();
 });
 
