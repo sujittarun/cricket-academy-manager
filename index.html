@@ -21,10 +21,13 @@
             <p class="eyebrow">Gen Alpha Cricket Academy</p>
             <h1>Gen Alpha Kids Manager</h1>
             <p class="hero-copy">
-              Manage player enrollments, fees, and 30-day follow-up alerts in a
-              branded dashboard for your academy team.
+              Public dashboard for parents and staff, with manager-only controls
+              for enrollments, renewals, and fee tracking.
             </p>
-            <p class="location-chip">Manikonda</p>
+            <div class="hero-meta">
+              <p class="location-chip">Manikonda</p>
+              <p id="accessMode" class="access-mode">View-only mode</p>
+            </div>
           </div>
         </div>
         <div class="hero-card">
@@ -36,12 +39,90 @@
         </div>
       </section>
 
+      <section class="stats-grid">
+        <article class="panel stat-card">
+          <p class="section-kicker">Players Joined</p>
+          <strong id="joinedCount" class="stat-value">0</strong>
+          <p class="stat-copy">Total academy kids in the register.</p>
+        </article>
+        <article class="panel stat-card">
+          <p class="section-kicker">Fees Paid</p>
+          <strong id="paidCount" class="stat-value">0</strong>
+          <p class="stat-copy">Kids whose current record is marked paid.</p>
+        </article>
+        <article class="panel stat-card">
+          <p class="section-kicker">Returning Students</p>
+          <strong id="returningCount" class="stat-value">0</strong>
+          <p class="stat-copy">Kids who renewed after their initial join.</p>
+        </article>
+      </section>
+
+      <section class="panel access-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Manager Access</p>
+            <h2>Login to edit academy data</h2>
+          </div>
+        </div>
+
+        <div class="access-layout">
+          <div class="access-copy-block">
+            <p class="access-copy">
+              Everyone can view student data and stats. Only signed-in managers
+              can add records, mark renewals, or delete entries.
+            </p>
+            <p id="loginHint" class="access-hint">
+              Connect Supabase and use a manager email login to unlock editing
+              tools.
+            </p>
+          </div>
+
+          <form id="loginForm" class="login-form">
+            <label>
+              Manager email
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="manager@genalpha.com"
+                required
+              />
+            </label>
+            <label>
+              Password
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter password"
+                required
+              />
+            </label>
+            <p id="loginMessage" class="form-message" aria-live="polite"></p>
+            <button type="submit" class="primary-btn">Login</button>
+          </form>
+
+          <div id="managerTools" class="manager-tools" hidden>
+            <p class="manager-badge">Manager logged in</p>
+            <p class="access-copy">
+              Editing is unlocked on this device. You can add players, renew
+              courses, and update the register.
+            </p>
+            <button id="logoutButton" type="button" class="secondary-btn">Logout</button>
+          </div>
+        </div>
+      </section>
+
       <section class="panel form-panel">
         <div class="panel-heading">
           <div>
             <p class="section-kicker">New Gen Alpha Entry</p>
             <h2>Add an academy kid</h2>
           </div>
+        </div>
+
+        <div id="editorLock" class="editor-lock">
+          Login as manager to add or edit academy records.
         </div>
 
         <form id="kidForm" class="kid-form">
@@ -83,7 +164,10 @@
 
           <p id="formMessage" class="form-message" aria-live="polite"></p>
 
-          <button type="submit" class="primary-btn">Save kid details</button>
+          <button id="saveButton" type="submit" class="primary-btn">Save kid details</button>
+          <button id="cancelEditButton" type="button" class="secondary-btn" hidden>
+            Cancel edit
+          </button>
         </form>
       </section>
 
@@ -106,10 +190,12 @@
               <tr>
                 <th>Name</th>
                 <th>Age</th>
+                <th>Student type</th>
                 <th>Join date</th>
+                <th>Latest renewal</th>
                 <th>Fees paid</th>
                 <th>Amount paid</th>
-                <th>Alert</th>
+                <th>Cycle status</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -119,6 +205,8 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
     <script src="./script.js"></script>
   </body>
 </html>
