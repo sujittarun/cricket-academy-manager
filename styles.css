@@ -64,6 +64,7 @@ body {
 }
 
 .masthead-bottom {
+  justify-content: flex-start;
   gap: 18px;
 }
 
@@ -132,8 +133,7 @@ h1 {
 }
 
 .access-mode,
-.manager-badge,
-.hero-badge {
+.manager-badge {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
@@ -147,11 +147,6 @@ h1 {
 .manager-badge {
   background: rgba(26, 79, 157, 0.1);
   color: var(--accent-dark);
-}
-
-.hero-badge {
-  background: rgba(244, 191, 42, 0.18);
-  color: #8d6400;
 }
 
 .manager-bar {
@@ -210,7 +205,7 @@ h1 {
 }
 
 .hero-card {
-  min-width: 320px;
+  width: min(360px, 100%);
   padding: 16px 18px;
   background: linear-gradient(180deg, rgba(26, 79, 157, 0.98) 0%, rgba(11, 52, 112, 0.98) 100%);
   color: white;
@@ -562,10 +557,6 @@ h1 {
   .brand-copy {
     justify-content: center;
     text-align: center;
-  }
-
-  .hero-meta {
-    justify-content: center;
   }
 
   .form-message {

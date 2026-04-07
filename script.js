@@ -148,12 +148,10 @@ const updateAuthPanel = () => {
   authPanel.hidden = !isAuthPanelOpen;
   authToggleButton.textContent = isManagerLoggedIn ? "Manager Access" : "Manager Login";
   quickLogoutButton.hidden = !isManagerLoggedIn;
-  managerIdentity.hidden = !lastManagerEmail;
-  managerIdentity.textContent = isManagerLoggedIn
-    ? `Logged in: ${lastManagerEmail}`
-    : `Last login: ${lastManagerEmail}`;
-  lastLoginHint.hidden = !lastManagerEmail;
-  lastLoginHint.textContent = lastManagerEmail
+  managerIdentity.hidden = !isManagerLoggedIn || !lastManagerEmail;
+  managerIdentity.textContent = isManagerLoggedIn ? `Logged in: ${lastManagerEmail}` : "";
+  lastLoginHint.hidden = !isManagerLoggedIn || !lastManagerEmail;
+  lastLoginHint.textContent = isManagerLoggedIn
     ? `Last used manager email: ${lastManagerEmail}`
     : "";
 };
