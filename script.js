@@ -22,6 +22,9 @@ const editorLock = document.getElementById("editorLock");
 const authPanel = document.getElementById("authPanel");
 const authToggleButton = document.getElementById("authToggleButton");
 const authCloseButton = document.getElementById("authCloseButton");
+const quickLogoutButton = document.getElementById("quickLogoutButton");
+const managerIdentity = document.getElementById("managerIdentity");
+const lastLoginHint = document.getElementById("lastLoginHint");
 const formPanel = document.getElementById("formPanel");
 const recordsHelper = document.getElementById("recordsHelper");
 const contentGrid = document.querySelector(".content-grid");
@@ -35,11 +38,13 @@ const supabaseClient =
     ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
     : null;
 const isBackendReady = Boolean(supabaseClient);
+const LAST_EMAIL_STORAGE_KEY = "gen-alpha-last-manager-email";
 
 let kids = [];
 let isManagerLoggedIn = false;
 let editingKidId = null;
 let isAuthPanelOpen = false;
+let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 
 const normalizeKid = (kid) => {
   const renewals = Array.isArray(kid.renewals) ? kid.renewals.filter(Boolean) : [];
@@ -114,6 +119,15 @@ const resetFormState = () => {
 const updateAuthPanel = () => {
   authPanel.hidden = !isAuthPanelOpen;
   authToggleButton.textContent = isManagerLoggedIn ? "Manager Access" : "Manager Login";
+  quickLogoutButton.hidden = !isManagerLoggedIn;
+  managerIdentity.hidden = !lastManagerEmail;
+  managerIdentity.textContent = isManagerLoggedIn
+    ? `Logged in: ${lastManagerEmail}`
+    : `Last login: ${lastManagerEmail}`;
+  lastLoginHint.hidden = !lastManagerEmail;
+  lastLoginHint.textContent = lastManagerEmail
+    ? `Last used manager email: ${lastManagerEmail}`
+    : "";
 };
 
 const renderSummary = (alertKids) => {
@@ -171,6 +185,10 @@ const updateAccessUI = () => {
   formControls.forEach((control) => {
     control.disabled = !canEdit;
   });
+
+  if (lastManagerEmail) {
+    document.getElementById("email").value = lastManagerEmail;
+  }
 
   formPanel.hidden = !canEdit;
   contentGrid.classList.toggle("form-hidden", !canEdit);
@@ -302,6 +320,11 @@ const refreshSession = async () => {
     loginMessage.textContent = error.message;
   }
 
+  if (session?.user?.email) {
+    lastManagerEmail = session.user.email;
+    localStorage.setItem(LAST_EMAIL_STORAGE_KEY, lastManagerEmail);
+  }
+
   isManagerLoggedIn = Boolean(session);
   updateAccessUI();
 };
@@ -339,6 +362,11 @@ const initializeAuthListener = () => {
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     setTimeout(() => {
+      if (session?.user?.email) {
+        lastManagerEmail = session.user.email;
+        localStorage.setItem(LAST_EMAIL_STORAGE_KEY, lastManagerEmail);
+      }
+
       isManagerLoggedIn = Boolean(session);
       updateAccessUI();
       renderKids();
@@ -368,6 +396,8 @@ loginForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  lastManagerEmail = email;
+  localStorage.setItem(LAST_EMAIL_STORAGE_KEY, lastManagerEmail);
   loginForm.reset();
   loginMessage.textContent = "";
   isAuthPanelOpen = false;
@@ -375,7 +405,7 @@ loginForm.addEventListener("submit", async (event) => {
   await loadKids();
 });
 
-logoutButton.addEventListener("click", async () => {
+const handleLogout = async () => {
   if (!isBackendReady) {
     return;
   }
@@ -391,7 +421,10 @@ logoutButton.addEventListener("click", async () => {
   isAuthPanelOpen = false;
   await refreshSession();
   renderKids();
-});
+};
+
+logoutButton.addEventListener("click", handleLogout);
+quickLogoutButton.addEventListener("click", handleLogout);
 
 kidForm.addEventListener("submit", async (event) => {
   event.preventDefault();

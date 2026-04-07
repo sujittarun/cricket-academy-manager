@@ -23,8 +23,12 @@
 
         <div class="topbar-actions">
           <p id="accessMode" class="access-mode">View-only mode</p>
+          <p id="managerIdentity" class="manager-identity" hidden></p>
           <button id="authToggleButton" type="button" class="top-link-button">
             Manager Login
+          </button>
+          <button id="quickLogoutButton" type="button" class="secondary-btn top-logout-button" hidden>
+            Logout
           </button>
         </div>
       </header>
@@ -43,6 +47,7 @@
         <p id="loginHint" class="access-hint">
           Connect Supabase and use a manager email login to unlock editing tools.
         </p>
+        <p id="lastLoginHint" class="last-login-hint" hidden></p>
 
         <form id="loginForm" class="login-form">
           <label>
