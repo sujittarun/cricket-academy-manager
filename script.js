@@ -33,6 +33,9 @@ const activeCount = document.getElementById("activeCount");
 const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
 const actionHeader = document.getElementById("actionHeader");
+const slotFilters = document.getElementById("slotFilters");
+
+const TIME_SLOTS = ["6AM", "7:30AM", "4PM", "5:30PM", "7PM"];
 
 const hasSupabaseConfig = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 const supabaseClient =
@@ -49,6 +52,7 @@ let editingKidId = null;
 let isAuthPanelOpen = false;
 let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
+let activeSlotFilter = "all";
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -59,6 +63,7 @@ const normalizeKid = (kid) => {
     id: kid.id,
     name: kid.name || "",
     age: Number(kid.age) || 0,
+    timeSlot: kid.time_slot || "",
     joinDate: kid.join_date || "",
     feesPaid: kid.fees_paid ? "yes" : "no",
     amountPaid: Number(kid.amount_paid) || 0,
@@ -72,6 +77,7 @@ const normalizeKid = (kid) => {
 const toDatabasePayload = ({
   name,
   age,
+  timeSlot,
   joinDate,
   feesPaid,
   amountPaid,
@@ -82,6 +88,7 @@ const toDatabasePayload = ({
 }) => ({
   name,
   age,
+  time_slot: timeSlot,
   join_date: joinDate,
   fees_paid: feesPaid === "yes",
   amount_paid: Number(amountPaid),
@@ -118,6 +125,10 @@ const isActiveKid = (kid) => !kid.discontinued;
 const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
 const isRenewalPending = (kid) =>
   isActiveKid(kid) && getDaysSinceDate(getReferenceDate(kid)) >= 30;
+const getFilteredKids = () =>
+  activeSlotFilter === "all"
+    ? kids
+    : kids.filter((kid) => isActiveKid(kid) && kid.timeSlot === activeSlotFilter);
 
 const updateStats = () => {
   const activeKids = kids.filter(isActiveKid);
@@ -125,6 +136,33 @@ const updateStats = () => {
   activeCount.textContent = String(activeKids.length);
   paidCount.textContent = String(activeKids.filter((kid) => kid.feesPaid === "yes").length);
   returningCount.textContent = String(kids.filter((kid) => kid.renewals.length > 0).length);
+};
+
+const renderSlotFilters = () => {
+  const activeKids = kids.filter(isActiveKid);
+  const filters = [
+    { value: "all", label: "All", count: activeKids.length },
+    ...TIME_SLOTS.map((slot) => ({
+      value: slot,
+      label: slot,
+      count: activeKids.filter((kid) => kid.timeSlot === slot).length,
+    })),
+  ];
+
+  slotFilters.innerHTML = filters
+    .map(
+      (filter) => `
+        <button
+          type="button"
+          class="slot-chip ${filter.value === activeSlotFilter ? "active" : ""}"
+          data-slot-filter="${filter.value}"
+        >
+          <span>${filter.label}</span>
+          <strong>${filter.count}</strong>
+        </button>
+      `
+    )
+    .join("");
 };
 
 const syncAmountState = () => {
@@ -246,6 +284,9 @@ const updateAccessUI = () => {
 const renderKids = () => {
   kidsTableBody.innerHTML = "";
   updateStats();
+  renderSlotFilters();
+
+  const visibleKids = getFilteredKids();
 
   if (kids.length === 0) {
     emptyState.hidden = false;
@@ -259,12 +300,29 @@ const renderKids = () => {
     return;
   }
 
+  if (visibleKids.length === 0) {
+    emptyState.hidden = false;
+    kidsTable.hidden = true;
+    emptyState.textContent =
+      activeSlotFilter === "all"
+        ? "No registered players match the current view."
+        : `No active kids are currently assigned to the ${activeSlotFilter} slot.`;
+    renderSummary(kids.filter((kid) => isFeesPending(kid) || isRenewalPending(kid)));
+    return;
+  }
+
   emptyState.hidden = true;
   kidsTable.hidden = false;
 
   const alertKids = [];
 
   kids.forEach((kid) => {
+    if (isFeesPending(kid) || isRenewalPending(kid)) {
+      alertKids.push(kid);
+    }
+  });
+
+  visibleKids.forEach((kid) => {
     const referenceDate = getReferenceDate(kid);
     const daysSinceCycle = getDaysSinceDate(referenceDate);
     const renewalPending = isRenewalPending(kid);
@@ -281,16 +339,15 @@ const renderKids = () => {
           ? `Renewed, next due in ${30 - daysSinceCycle} days`
           : `Not due yet, ${30 - daysSinceCycle} days left`;
 
-    if (needsAttention) {
-      alertKids.push(kid);
-    }
-
     const row = document.createElement("tr");
     row.className = needsAttention ? "alert-row" : "";
 
     row.innerHTML = `
       <td>${kid.name}</td>
       <td>${kid.age}</td>
+      <td>
+        <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
+      </td>
       <td>
         <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
           ${kid.discontinued ? "Discontinued" : "Active"}
@@ -499,6 +556,7 @@ kidForm.addEventListener("submit", async (event) => {
   const payload = {
     name: formData.get("name").toString().trim(),
     age: Number(formData.get("age")),
+    timeSlot: formData.get("timeSlot").toString(),
     joinDate: formData.get("joinDate").toString(),
     feesPaid: formData.get("feesPaid").toString(),
     amountPaid: Number(formData.get("amountPaid")),
@@ -508,7 +566,7 @@ kidForm.addEventListener("submit", async (event) => {
     discontinued: false,
   };
 
-  if (!payload.name || !payload.joinDate) {
+  if (!payload.name || !payload.joinDate || !payload.timeSlot) {
     formMessage.textContent = "Please complete all required fields.";
     return;
   }
@@ -571,6 +629,7 @@ kidsTableBody.addEventListener("click", async (event) => {
     editingKidId = kidToEdit.id;
     document.getElementById("name").value = kidToEdit.name;
     document.getElementById("age").value = String(kidToEdit.age);
+    document.getElementById("timeSlot").value = kidToEdit.timeSlot;
     joinDateInput.value = kidToEdit.joinDate;
     feesPaidSelect.value = kidToEdit.feesPaid;
     amountPaidInput.value = String(kidToEdit.amountPaid);
@@ -673,6 +732,20 @@ authCloseButton.addEventListener("click", () => {
 });
 
 feesPaidSelect.addEventListener("change", syncAmountState);
+slotFilters.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+
+  const target = event.target.closest("[data-slot-filter]");
+
+  if (!(target instanceof HTMLButtonElement)) {
+    return;
+  }
+
+  activeSlotFilter = target.dataset.slotFilter || "all";
+  renderKids();
+});
 
 const initializeApp = async () => {
   setJoinDateLimit();

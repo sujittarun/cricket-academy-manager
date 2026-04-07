@@ -205,8 +205,8 @@ h1 {
 }
 
 .hero-card {
-  width: min(360px, 100%);
-  padding: 16px 18px;
+  width: min(520px, 100%);
+  padding: 18px 22px;
   background: linear-gradient(180deg, rgba(26, 79, 157, 0.98) 0%, rgba(11, 52, 112, 0.98) 100%);
   color: white;
   border-color: rgba(255, 255, 255, 0.18);
@@ -242,6 +242,62 @@ h1 {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.slot-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 18px;
+  background: rgba(26, 79, 157, 0.03);
+}
+
+.slot-toolbar-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.slot-helper {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.slot-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.slot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 34, 64, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--accent-dark);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.slot-chip strong {
+  font-size: 0.88rem;
+}
+
+.slot-chip.active {
+  background: linear-gradient(135deg, rgba(26, 79, 157, 0.98) 0%, rgba(11, 52, 112, 0.98) 100%);
+  color: white;
+  border-color: transparent;
 }
 
 .stats-grid {
@@ -420,7 +476,8 @@ h1 {
 .status-pill,
 .alert-pill,
 .type-pill,
-.state-pill {
+.state-pill,
+.slot-pill {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
@@ -467,6 +524,11 @@ h1 {
 .state-pill.discontinued {
   background: rgba(69, 97, 141, 0.12);
   color: var(--muted);
+}
+
+.slot-pill {
+  background: rgba(26, 79, 157, 0.09);
+  color: var(--accent-dark);
 }
 
 .action-group {
@@ -523,6 +585,15 @@ h1 {
 
   .kid-form {
     grid-template-columns: 1fr;
+  }
+
+  .slot-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .slot-filters {
+    justify-content: flex-start;
   }
 
   .masthead-top,

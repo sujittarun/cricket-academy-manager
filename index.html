@@ -157,6 +157,18 @@
             </label>
 
             <label>
+              Time slot
+              <select id="timeSlot" name="timeSlot" required>
+                <option value="">Select slot</option>
+                <option value="6AM">6AM</option>
+                <option value="7:30AM">7:30AM</option>
+                <option value="4PM">4PM</option>
+                <option value="5:30PM">5:30PM</option>
+                <option value="7PM">7PM</option>
+              </select>
+            </label>
+
+            <label>
               Join date
               <input id="joinDate" name="joinDate" type="date" required />
             </label>
@@ -202,6 +214,14 @@
             </p>
           </div>
 
+          <div class="slot-toolbar">
+            <div class="slot-toolbar-copy">
+              <p class="section-kicker">Time Slots</p>
+              <p class="slot-helper">Tap a slot to see the current active batch size.</p>
+            </div>
+            <div id="slotFilters" class="slot-filters" aria-label="Time slot filters"></div>
+          </div>
+
           <div id="emptyState" class="empty-state">
             No Gen Alpha players added yet. Use the form above to create the first
             record.
@@ -213,6 +233,7 @@
                 <tr>
                   <th>Name</th>
                   <th>Age</th>
+                  <th>Time slot</th>
                   <th>Status</th>
                   <th>Student type</th>
                   <th>Join date</th>
