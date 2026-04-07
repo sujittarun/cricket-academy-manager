@@ -1,4 +1,4 @@
-const STORAGE_KEY = "cricket-academy-kids";
+const STORAGE_KEY = "gen-alpha-cricket-academy-kids";
 
 const kidForm = document.getElementById("kidForm");
 const kidsTable = document.getElementById("kidsTable");
@@ -158,7 +158,7 @@ kidForm.addEventListener("submit", (event) => {
   saveKids();
   kidForm.reset();
   syncAmountState();
-  formMessage.textContent = "Kid record saved successfully.";
+  formMessage.textContent = "Gen Alpha player record saved successfully.";
   renderKids();
 });
 
