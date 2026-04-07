@@ -107,6 +107,8 @@ const getDaysSinceDate = (dateValue) => {
 };
 
 const getStudentType = (kid) => (kid.renewals.length > 0 ? "Returning" : "New");
+const isFeesPending = (kid) => kid.feesPaid !== "yes";
+const isRenewalPending = (kid) => getDaysSinceDate(getReferenceDate(kid)) >= 30;
 
 const updateStats = () => {
   joinedCount.textContent = String(kids.length);
@@ -157,11 +159,11 @@ const renderSummary = (alertKids) => {
   }
 
   if (totalAlerts === 0) {
-    alertSummary.textContent = "No active course cycles have crossed the 30-day mark.";
+    alertSummary.textContent = "All current join fees and renewals are up to date.";
     return;
   }
 
-  alertSummary.textContent = `Renewal follow-up needed for: ${alertKids
+  alertSummary.textContent = `Need fees or renewal action for: ${alertKids
     .map((kid) => kid.name)
     .join(", ")}`;
 };
@@ -249,17 +251,24 @@ const renderKids = () => {
   kids.forEach((kid) => {
     const referenceDate = getReferenceDate(kid);
     const daysSinceCycle = getDaysSinceDate(referenceDate);
-    const isAlert = daysSinceCycle > 30;
-    const canRenew = daysSinceCycle >= 30;
+    const renewalPending = isRenewalPending(kid);
+    const feesPending = isFeesPending(kid);
+    const needsAttention = feesPending || renewalPending;
+    const canRenew = renewalPending;
     const studentType = getStudentType(kid);
     const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
+    const renewalStatus = renewalPending
+      ? `${daysSinceCycle} days passed, renewal pending`
+      : kid.renewals.length > 0
+        ? `Renewed, next due in ${30 - daysSinceCycle} days`
+        : `Not due yet, ${30 - daysSinceCycle} days left`;
 
-    if (isAlert) {
+    if (needsAttention) {
       alertKids.push(kid);
     }
 
     const row = document.createElement("tr");
-    row.className = isAlert ? "alert-row" : "";
+    row.className = needsAttention ? "alert-row" : "";
 
     row.innerHTML = `
       <td>${kid.name}</td>
@@ -270,19 +279,18 @@ const renderKids = () => {
         </span>
         <p class="sub-copy">${kid.renewals.length} renewal${kid.renewals.length === 1 ? "" : "s"}</p>
       </td>
-      <td>${kid.addedBy}</td>
       <td>${kid.updatedBy}</td>
       <td>${formatDate(kid.joinDate)}</td>
       <td>${formatDate(latestRenewal)}</td>
       <td>
-        <span class="status-pill ${kid.feesPaid === "yes" ? "status-paid" : "status-unpaid"}">
-          ${kid.feesPaid === "yes" ? "Paid" : "Not paid"}
+        <span class="status-pill ${feesPending ? "status-unpaid" : "status-paid"}">
+          ${feesPending ? "Not paid" : "Paid"}
         </span>
       </td>
       <td>Rs ${Number(kid.amountPaid).toFixed(2)}</td>
       <td>
-        <span class="alert-pill ${isAlert ? "" : "safe"}">
-          ${isAlert ? `${daysSinceCycle} days since last active date` : "Current cycle active"}
+        <span class="alert-pill ${renewalPending ? "" : "safe"}">
+          ${renewalStatus}
         </span>
         <p class="sub-copy">Tracking from ${formatDate(referenceDate)}</p>
       </td>
@@ -298,7 +306,7 @@ const renderKids = () => {
               canRenew
                 ? `
               <button class="renew-btn" data-action="renew" data-id="${kid.id}" type="button">
-                Renew 30 days
+                Mark renewal paid
               </button>
             `
                 : `<span class="action-note">Renew in ${30 - daysSinceCycle} day${
@@ -579,7 +587,7 @@ kidsTableBody.addEventListener("click", async (event) => {
       return;
     }
 
-    formMessage.textContent = `${kidToRenew.name} renewed for another 30 days.`;
+    formMessage.textContent = `${kidToRenew.name} marked as renewed for the next 30-day cycle.`;
     await loadKids();
   }
 });
