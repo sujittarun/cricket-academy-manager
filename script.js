@@ -46,6 +46,8 @@ let editingKidId = null;
 let isAuthPanelOpen = false;
 let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 
+const getActiveManagerEmail = () => lastManagerEmail || "manager";
+
 const normalizeKid = (kid) => {
   const renewals = Array.isArray(kid.renewals) ? kid.renewals.filter(Boolean) : [];
 
@@ -57,16 +59,29 @@ const normalizeKid = (kid) => {
     feesPaid: kid.fees_paid ? "yes" : "no",
     amountPaid: Number(kid.amount_paid) || 0,
     renewals,
+    addedBy: kid.added_by || "Unknown",
+    updatedBy: kid.updated_by || kid.added_by || "Unknown",
   };
 };
 
-const toDatabasePayload = ({ name, age, joinDate, feesPaid, amountPaid, renewals }) => ({
+const toDatabasePayload = ({
+  name,
+  age,
+  joinDate,
+  feesPaid,
+  amountPaid,
+  renewals,
+  addedBy,
+  updatedBy,
+}) => ({
   name,
   age,
   join_date: joinDate,
   fees_paid: feesPaid === "yes",
   amount_paid: Number(amountPaid),
   renewals,
+  added_by: addedBy,
+  updated_by: updatedBy,
 });
 
 const setJoinDateLimit = () => {
@@ -255,6 +270,8 @@ const renderKids = () => {
         </span>
         <p class="sub-copy">${kid.renewals.length} renewal${kid.renewals.length === 1 ? "" : "s"}</p>
       </td>
+      <td>${kid.addedBy}</td>
+      <td>${kid.updatedBy}</td>
       <td>${formatDate(kid.joinDate)}</td>
       <td>${formatDate(latestRenewal)}</td>
       <td>
@@ -442,6 +459,8 @@ kidForm.addEventListener("submit", async (event) => {
     feesPaid: formData.get("feesPaid").toString(),
     amountPaid: Number(formData.get("amountPaid")),
     renewals: [],
+    addedBy: getActiveManagerEmail(),
+    updatedBy: getActiveManagerEmail(),
   };
 
   if (!payload.name || !payload.joinDate) {
@@ -466,6 +485,8 @@ kidForm.addEventListener("submit", async (event) => {
         toDatabasePayload({
           ...payload,
           renewals: currentKid ? currentKid.renewals : [],
+          addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
+          updatedBy: getActiveManagerEmail(),
         })
       )
       .eq("id", editingKidId));
@@ -547,7 +568,10 @@ kidsTableBody.addEventListener("click", async (event) => {
     const renewals = [...kidToRenew.renewals, new Date().toISOString().split("T")[0]];
     const { error } = await supabaseClient
       .from("students")
-      .update({ renewals })
+      .update({
+        renewals,
+        updated_by: getActiveManagerEmail(),
+      })
       .eq("id", id);
 
     if (error) {
