@@ -29,8 +29,10 @@ const formPanel = document.getElementById("formPanel");
 const recordsHelper = document.getElementById("recordsHelper");
 const contentGrid = document.querySelector(".content-grid");
 const joinedCount = document.getElementById("joinedCount");
+const activeCount = document.getElementById("activeCount");
 const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
+const actionHeader = document.getElementById("actionHeader");
 
 const hasSupabaseConfig = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 const supabaseClient =
@@ -63,6 +65,7 @@ const normalizeKid = (kid) => {
     renewals,
     addedBy: kid.added_by || "Unknown",
     updatedBy: kid.updated_by || kid.added_by || "Unknown",
+    discontinued: Boolean(kid.discontinued),
   };
 };
 
@@ -75,6 +78,7 @@ const toDatabasePayload = ({
   renewals,
   addedBy,
   updatedBy,
+  discontinued,
 }) => ({
   name,
   age,
@@ -84,6 +88,7 @@ const toDatabasePayload = ({
   renewals,
   added_by: addedBy,
   updated_by: updatedBy,
+  discontinued: Boolean(discontinued),
 });
 
 const setJoinDateLimit = () => {
@@ -109,12 +114,16 @@ const getDaysSinceDate = (dateValue) => {
 };
 
 const getStudentType = (kid) => (kid.renewals.length > 0 ? "Returning" : "New");
-const isFeesPending = (kid) => kid.feesPaid !== "yes";
-const isRenewalPending = (kid) => getDaysSinceDate(getReferenceDate(kid)) >= 30;
+const isActiveKid = (kid) => !kid.discontinued;
+const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
+const isRenewalPending = (kid) =>
+  isActiveKid(kid) && getDaysSinceDate(getReferenceDate(kid)) >= 30;
 
 const updateStats = () => {
+  const activeKids = kids.filter(isActiveKid);
   joinedCount.textContent = String(kids.length);
-  paidCount.textContent = String(kids.filter((kid) => kid.feesPaid === "yes").length);
+  activeCount.textContent = String(activeKids.length);
+  paidCount.textContent = String(activeKids.filter((kid) => kid.feesPaid === "yes").length);
   returningCount.textContent = String(kids.filter((kid) => kid.renewals.length > 0).length);
 };
 
@@ -215,6 +224,7 @@ const updateAccessUI = () => {
 
   formPanel.hidden = !canEdit;
   contentGrid.classList.toggle("form-hidden", !canEdit);
+  actionHeader.hidden = !canEdit;
   recordsHelper.textContent = canEdit
     ? "Manager editing is enabled. Add, update, renew, or remove players from here."
     : "View academy records here. Login as manager to add or edit players.";
@@ -243,7 +253,9 @@ const renderKids = () => {
     emptyState.hidden = false;
     kidsTable.hidden = true;
     emptyState.textContent = isBackendReady
-      ? "No Gen Alpha players added yet. Use the form above to create the first record."
+      ? isManagerLoggedIn
+        ? "No Gen Alpha players added yet. Use the form above to create the first record."
+        : "No Gen Alpha players added yet. Login as manager to create the first record."
       : "No data source is connected yet. Finish the Supabase setup to start storing academy records.";
     renderSummary([]);
     return;
@@ -260,14 +272,16 @@ const renderKids = () => {
     const renewalPending = isRenewalPending(kid);
     const feesPending = isFeesPending(kid);
     const needsAttention = feesPending || renewalPending;
-    const canRenew = renewalPending;
+    const canRenew = renewalPending && isActiveKid(kid);
     const studentType = getStudentType(kid);
     const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
-    const renewalStatus = renewalPending
-      ? `${daysSinceCycle} days passed, renewal pending`
-      : kid.renewals.length > 0
-        ? `Renewed, next due in ${30 - daysSinceCycle} days`
-        : `Not due yet, ${30 - daysSinceCycle} days left`;
+    const renewalStatus = kid.discontinued
+      ? "Tracking paused"
+      : renewalPending
+        ? `${daysSinceCycle} days passed, renewal pending`
+        : kid.renewals.length > 0
+          ? `Renewed, next due in ${30 - daysSinceCycle} days`
+          : `Not due yet, ${30 - daysSinceCycle} days left`;
 
     if (needsAttention) {
       alertKids.push(kid);
@@ -279,6 +293,11 @@ const renderKids = () => {
     row.innerHTML = `
       <td>${kid.name}</td>
       <td>${kid.age}</td>
+      <td>
+        <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
+          ${kid.discontinued ? "Discontinued" : "Active"}
+        </span>
+      </td>
       <td>
         <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
           ${studentType}
@@ -297,18 +316,23 @@ const renderKids = () => {
         <span class="alert-pill ${renewalPending ? "" : "safe"}">
           ${renewalStatus}
         </span>
-        <p class="sub-copy">Tracking from ${formatDate(referenceDate)}</p>
+        <p class="sub-copy">${
+          kid.discontinued ? "Removed from active tracking" : `Tracking from ${formatDate(referenceDate)}`
+        }</p>
       </td>
       <td>
         <span class="meta-text">${kid.updatedBy}</span>
       </td>
+      ${
+        isManagerLoggedIn
+          ? `
       <td>
-        ${
-          isManagerLoggedIn
-            ? `
           <div class="action-group">
             <button class="secondary-btn" data-action="edit" data-id="${kid.id}" type="button">
               Edit
+            </button>
+            <button class="secondary-btn" data-action="toggle-status" data-id="${kid.id}" type="button">
+              ${kid.discontinued ? "Mark active" : "Discontinue"}
             </button>
             ${
               canRenew
@@ -317,18 +341,22 @@ const renderKids = () => {
                 Mark renewal paid
               </button>
             `
-                : `<span class="action-note">Renew in ${30 - daysSinceCycle} day${
-                    30 - daysSinceCycle === 1 ? "" : "s"
+                : `<span class="action-note">${
+                    kid.discontinued
+                      ? "Renewal tracking paused"
+                      : `Renew in ${30 - daysSinceCycle} day${
+                          30 - daysSinceCycle === 1 ? "" : "s"
+                        }`
                   }</span>`
             }
             <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">
               Delete
             </button>
           </div>
-        `
-            : '<span class="action-note">Login to edit</span>'
-        }
       </td>
+        `
+          : ""
+      }
     `;
 
     kidsTableBody.appendChild(row);
@@ -479,6 +507,7 @@ kidForm.addEventListener("submit", async (event) => {
     renewals: [],
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
+    discontinued: false,
   };
 
   if (!payload.name || !payload.joinDate) {
@@ -505,6 +534,7 @@ kidForm.addEventListener("submit", async (event) => {
           renewals: currentKid ? currentKid.renewals : [],
           addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
           updatedBy: getActiveManagerEmail(),
+          discontinued: currentKid ? currentKid.discontinued : false,
         })
       )
       .eq("id", editingKidId));
@@ -598,6 +628,33 @@ kidsTableBody.addEventListener("click", async (event) => {
     }
 
     formMessage.textContent = `${kidToRenew.name} marked as renewed for the next 30-day cycle.`;
+    await loadKids();
+    return;
+  }
+
+  if (action === "toggle-status") {
+    const kidToUpdate = kids.find((kid) => kid.id === id);
+
+    if (!kidToUpdate) {
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from("students")
+      .update({
+        discontinued: !kidToUpdate.discontinued,
+        updated_by: getActiveManagerEmail(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      formMessage.textContent = error.message;
+      return;
+    }
+
+    formMessage.textContent = kidToUpdate.discontinued
+      ? `${kidToUpdate.name} marked as active again.`
+      : `${kidToUpdate.name} marked as discontinued.`;
     await loadKids();
   }
 });
