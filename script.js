@@ -39,12 +39,14 @@ const supabaseClient =
     : null;
 const isBackendReady = Boolean(supabaseClient);
 const LAST_EMAIL_STORAGE_KEY = "gen-alpha-last-manager-email";
+const LAST_PASSWORD_STORAGE_KEY = "gen-alpha-last-manager-password";
 
 let kids = [];
 let isManagerLoggedIn = false;
 let editingKidId = null;
 let isAuthPanelOpen = false;
 let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
+let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -205,6 +207,10 @@ const updateAccessUI = () => {
 
   if (lastManagerEmail) {
     document.getElementById("email").value = lastManagerEmail;
+  }
+
+  if (lastManagerPassword) {
+    document.getElementById("password").value = lastManagerPassword;
   }
 
   formPanel.hidden = !canEdit;
@@ -422,7 +428,9 @@ loginForm.addEventListener("submit", async (event) => {
   }
 
   lastManagerEmail = email;
+  lastManagerPassword = password;
   localStorage.setItem(LAST_EMAIL_STORAGE_KEY, lastManagerEmail);
+  localStorage.setItem(LAST_PASSWORD_STORAGE_KEY, lastManagerPassword);
   loginForm.reset();
   loginMessage.textContent = "";
   isAuthPanelOpen = false;
