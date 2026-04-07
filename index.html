@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cricket Academy Manager</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Cricket Academy</p>
+          <h1>Kids Enrollment Manager</h1>
+          <p class="hero-copy">
+            Track academy kids, fee status, and 30-day follow-up alerts from a
+            single screen.
+          </p>
+        </div>
+        <div class="hero-card">
+          <p class="hero-label">30-Day Alerts</p>
+          <strong id="alertCount">0 kids need attention</strong>
+          <p id="alertSummary" class="hero-subtext">
+            Add academy records to start tracking.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel form-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">New Entry</p>
+            <h2>Add a kid</h2>
+          </div>
+        </div>
+
+        <form id="kidForm" class="kid-form">
+          <label>
+            Kid name
+            <input id="name" name="name" type="text" placeholder="Enter full name" required />
+          </label>
+
+          <label>
+            Age
+            <input id="age" name="age" type="number" min="4" max="18" placeholder="8" required />
+          </label>
+
+          <label>
+            Join date
+            <input id="joinDate" name="joinDate" type="date" required />
+          </label>
+
+          <label>
+            Fees paid?
+            <select id="feesPaid" name="feesPaid" required>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+
+          <label>
+            Amount paid
+            <input
+              id="amountPaid"
+              name="amountPaid"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </label>
+
+          <p id="formMessage" class="form-message" aria-live="polite"></p>
+
+          <button type="submit" class="primary-btn">Save kid details</button>
+        </form>
+      </section>
+
+      <section class="panel records-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Academy Records</p>
+            <h2>Registered kids</h2>
+          </div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+          No kids added yet. Use the form above to create the first record.
+        </div>
+
+        <div class="table-wrap">
+          <table id="kidsTable" class="kids-table" hidden>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Join date</th>
+                <th>Fees paid</th>
+                <th>Amount paid</th>
+                <th>Alert</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="kidsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
