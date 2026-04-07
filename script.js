@@ -19,6 +19,9 @@ const logoutButton = document.getElementById("logoutButton");
 const accessMode = document.getElementById("accessMode");
 const loginHint = document.getElementById("loginHint");
 const editorLock = document.getElementById("editorLock");
+const authPanel = document.getElementById("authPanel");
+const authToggleButton = document.getElementById("authToggleButton");
+const authCloseButton = document.getElementById("authCloseButton");
 const joinedCount = document.getElementById("joinedCount");
 const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
@@ -33,6 +36,7 @@ const isBackendReady = Boolean(supabaseClient);
 let kids = [];
 let isManagerLoggedIn = false;
 let editingKidId = null;
+let isAuthPanelOpen = false;
 
 const normalizeKid = (kid) => {
   const renewals = Array.isArray(kid.renewals) ? kid.renewals.filter(Boolean) : [];
@@ -104,6 +108,11 @@ const resetFormState = () => {
   syncAmountState();
 };
 
+const updateAuthPanel = () => {
+  authPanel.hidden = !isAuthPanelOpen;
+  authToggleButton.textContent = isManagerLoggedIn ? "Manager Access" : "Manager Login";
+};
+
 const renderSummary = (alertKids) => {
   const totalAlerts = alertKids.length;
 
@@ -173,6 +182,7 @@ const updateAccessUI = () => {
   }
 
   syncAmountState();
+  updateAuthPanel();
 };
 
 const renderKids = () => {
@@ -351,6 +361,7 @@ loginForm.addEventListener("submit", async (event) => {
 
   loginForm.reset();
   loginMessage.textContent = "";
+  isAuthPanelOpen = false;
   await refreshSession();
   await loadKids();
 });
@@ -368,6 +379,7 @@ logoutButton.addEventListener("click", async () => {
   }
 
   loginMessage.textContent = "";
+  isAuthPanelOpen = false;
   await refreshSession();
   renderKids();
 });
@@ -509,6 +521,16 @@ kidsTableBody.addEventListener("click", async (event) => {
 cancelEditButton.addEventListener("click", () => {
   resetFormState();
   formMessage.textContent = "Edit cancelled.";
+});
+
+authToggleButton.addEventListener("click", () => {
+  isAuthPanelOpen = !isAuthPanelOpen;
+  updateAuthPanel();
+});
+
+authCloseButton.addEventListener("click", () => {
+  isAuthPanelOpen = false;
+  updateAuthPanel();
 });
 
 feesPaidSelect.addEventListener("change", syncAmountState);
