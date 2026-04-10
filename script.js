@@ -1,7 +1,8 @@
 const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
 
 const kidForm = document.getElementById("kidForm");
-const kidsList = document.getElementById("kidsList");
+const kidsTable = document.getElementById("kidsTable");
+const kidsTableBody = document.getElementById("kidsTableBody");
 const emptyState = document.getElementById("emptyState");
 const alertCount = document.getElementById("alertCount");
 const alertSummary = document.getElementById("alertSummary");
@@ -21,7 +22,6 @@ const editorLock = document.getElementById("editorLock");
 const authPanel = document.getElementById("authPanel");
 const authToggleButton = document.getElementById("authToggleButton");
 const authCloseButton = document.getElementById("authCloseButton");
-const authBackdrop = document.getElementById("authBackdrop");
 const quickLogoutButton = document.getElementById("quickLogoutButton");
 const managerIdentity = document.getElementById("managerIdentity");
 const lastLoginHint = document.getElementById("lastLoginHint");
@@ -33,6 +33,11 @@ const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
 const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
+const rosterView = document.getElementById("rosterView");
+const admissionView = document.getElementById("admissionView");
+const rosterTabButton = document.getElementById("rosterTabButton");
+const admissionTabButton = document.getElementById("admissionTabButton");
+const actionHeader = document.getElementById("actionHeader");
 const admissionForm = document.getElementById("admissionForm");
 const admissionRegNo = document.getElementById("admissionRegNo");
 const admissionMessage = document.getElementById("admissionMessage");
@@ -80,6 +85,7 @@ let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
+let activeView = "roster";
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -339,7 +345,6 @@ const resetAdmissionForm = async () => {
 
 const updateAuthPanel = () => {
   authPanel.hidden = !isAuthPanelOpen;
-  authBackdrop.hidden = !isAuthPanelOpen;
   authToggleButton.textContent = isManagerLoggedIn ? "Manager Access" : "Manager Login";
   quickLogoutButton.hidden = !isManagerLoggedIn;
   managerIdentity.hidden = !isManagerLoggedIn || !lastManagerEmail;
@@ -369,6 +374,16 @@ const renderSummary = (alertKids) => {
   alertSummary.textContent = `Need fees or renewal action for: ${alertKids
     .map((kid) => kid.name)
     .join(", ")}`;
+};
+
+const updateActiveView = () => {
+  const isRoster = activeView === "roster";
+  rosterView.hidden = !isRoster;
+  admissionView.hidden = isRoster;
+  rosterTabButton.classList.toggle("active", isRoster);
+  rosterTabButton.setAttribute("aria-selected", String(isRoster));
+  admissionTabButton.classList.toggle("active", !isRoster);
+  admissionTabButton.setAttribute("aria-selected", String(!isRoster));
 };
 
 const updateAccessUI = () => {
@@ -416,8 +431,9 @@ const updateAccessUI = () => {
 
   formPanel.hidden = !canEdit;
   recordsHelper.textContent = canEdit
-    ? "Manager editing is enabled. Use the cards below to update, renew, or discontinue players."
+    ? "Manager editing is enabled. Use the table below to update, renew, or discontinue players."
     : "Public users can review the register here. Login as manager to edit players.";
+  actionHeader.hidden = !canEdit;
 
   formMessage.textContent = !hasSupabaseConfig
     ? "Supabase connection is required before edits can be made."
@@ -436,7 +452,7 @@ const updateAccessUI = () => {
 };
 
 const renderKids = () => {
-  kidsList.innerHTML = "";
+  kidsTableBody.innerHTML = "";
   updateStats();
   renderSlotFilters();
 
@@ -444,7 +460,7 @@ const renderKids = () => {
 
   if (kids.length === 0) {
     emptyState.hidden = false;
-    kidsList.hidden = true;
+    kidsTable.hidden = true;
     emptyState.textContent = isBackendReady
       ? isManagerLoggedIn
         ? "No Gen Alpha players added yet. Use the form above to create the first record."
@@ -456,7 +472,7 @@ const renderKids = () => {
 
   if (visibleKids.length === 0) {
     emptyState.hidden = false;
-    kidsList.hidden = true;
+    kidsTable.hidden = true;
     emptyState.textContent =
       !activeSlotFilter
         ? "No registered players match the current view."
@@ -468,7 +484,7 @@ const renderKids = () => {
   }
 
   emptyState.hidden = true;
-  kidsList.hidden = false;
+  kidsTable.hidden = false;
 
   const alertKids = [];
 
@@ -492,108 +508,59 @@ const renderKids = () => {
       : renewalPending
         ? `${daysSinceCycle} days passed, renewal pending`
         : kid.renewals.length > 0
-          ? `Renewed, next due in ${30 - daysSinceCycle} days`
-          : `Not due yet, ${30 - daysSinceCycle} days left`;
+          ? `${30 - daysSinceCycle} days left`
+          : `${30 - daysSinceCycle} days left`;
 
-    const card = document.createElement("article");
-    card.className = `kid-card${needsAttention ? " alert" : ""}`;
-
-    card.innerHTML = `
-      <div class="kid-card-top">
-        <div class="kid-card-title">
-          <h3>${kid.name}</h3>
-          <div class="kid-card-meta">
-            <span>Age ${kid.age}</span>
-            <span class="meta-dot" aria-hidden="true"></span>
-            <span>${kid.timeSlot || "Time slot not set"}</span>
-          </div>
-        </div>
-
-        <div class="kid-card-badges">
-          <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
-          <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
-            ${kid.discontinued ? "Discontinued" : "Active"}
-          </span>
-          <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
-            ${studentType}
-          </span>
-        </div>
-      </div>
-
-      <div class="kid-data-grid">
-        <div class="data-tile">
-          <span class="data-label">Join Date</span>
-          <span class="data-value">${formatDate(kid.joinDate)}</span>
-        </div>
-        <div class="data-tile">
-          <span class="data-label">Latest Renewal</span>
-          <span class="data-value">${formatDate(latestRenewal)}</span>
-        </div>
-        <div class="data-tile">
-          <span class="data-label">Fees</span>
-          <span class="data-value">
-            <span class="status-pill ${feesPending ? "status-unpaid" : "status-paid"}">
-              ${feesPending ? "Not paid" : "Paid"}
-            </span>
-          </span>
-        </div>
-        <div class="data-tile">
-          <span class="data-label">Amount Paid</span>
-          <span class="data-value">Rs ${Number(kid.amountPaid).toFixed(2)}</span>
-        </div>
-      </div>
-
-      <div class="kid-renewal">
-        <span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span>
-        <p class="kid-renewal-text">
-          ${
-            kid.discontinued
-              ? "Removed from active renewal tracking."
-              : `Tracking from ${formatDate(referenceDate)}. ${kid.renewals.length} renewal${
-                  kid.renewals.length === 1 ? "" : "s"
-                } recorded.`
-          }
-        </p>
-      </div>
-
-      <div class="kid-card-footer">
-        <span class="meta-text">Last updated by ${kid.updatedBy}</span>
-        ${
-          isManagerLoggedIn
-            ? `
-          <div class="kid-card-actions">
-            <button class="secondary-btn" data-action="edit" data-id="${kid.id}" type="button">
-              Edit
-            </button>
-            <button class="secondary-btn" data-action="toggle-status" data-id="${kid.id}" type="button">
-              ${kid.discontinued ? "Mark active" : "Discontinue"}
-            </button>
-            ${
-              canRenew
-                ? `
-              <button class="renew-btn" data-action="renew" data-id="${kid.id}" type="button">
-                Mark renewal paid
+    const row = document.createElement("tr");
+    row.className = needsAttention ? "alert-row" : "";
+    row.innerHTML = `
+      <td><strong>${kid.name}</strong></td>
+      <td>${kid.age}</td>
+      <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
+      <td>
+        <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
+          ${kid.discontinued ? "Discontinued" : "Active"}
+        </span>
+      </td>
+      <td>
+        <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
+          ${studentType}
+        </span>
+      </td>
+      <td>${formatDate(kid.joinDate)}</td>
+      <td>${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
+      <td>
+        <span class="status-pill ${feesPending ? "status-unpaid" : "status-paid"}">
+          ${feesPending ? "Not paid" : "Paid"}
+        </span>
+      </td>
+      <td>Rs ${Number(kid.amountPaid).toFixed(2)}</td>
+      <td><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
+      <td><span class="meta-text">Last updated by ${kid.updatedBy}</span></td>
+      ${
+        isManagerLoggedIn
+          ? `<td>
+            <div class="action-group">
+              <button class="secondary-btn" data-action="edit" data-id="${kid.id}" type="button">Edit</button>
+              <button class="secondary-btn" data-action="toggle-status" data-id="${kid.id}" type="button">
+                ${kid.discontinued ? "Mark active" : "Discontinue"}
               </button>
-            `
-                : `
-              <span class="action-note">${
-                kid.discontinued
-                  ? "Renewal tracking paused"
-                  : `Renew in ${30 - daysSinceCycle} day${30 - daysSinceCycle === 1 ? "" : "s"}`
-              }</span>
-            `
-            }
-            <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">
-              Delete
-            </button>
-          </div>
-        `
-            : ""
-        }
-      </div>
+              ${
+                canRenew
+                  ? `<button class="renew-btn" data-action="renew" data-id="${kid.id}" type="button">Mark renewal paid</button>`
+                  : `<span class="action-note">${
+                      kid.discontinued
+                        ? "Renewal paused"
+                        : `${30 - daysSinceCycle} day${30 - daysSinceCycle === 1 ? "" : "s"} left`
+                    }</span>`
+              }
+              <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">Delete</button>
+            </div>
+          </td>`
+          : ""
+      }
     `;
-
-    kidsList.appendChild(card);
+    kidsTableBody.appendChild(row);
   });
 
   renderSummary(alertKids);
@@ -639,7 +606,7 @@ const loadKids = async () => {
   if (error) {
     kids = [];
     emptyState.hidden = false;
-    kidsList.hidden = true;
+    kidsTable.hidden = true;
     emptyState.textContent = `Supabase error: ${error.message}`;
     alertCount.textContent = "0 kids need attention";
     alertSummary.textContent = "Fix the Supabase setup to load academy records.";
@@ -789,7 +756,7 @@ kidForm.addEventListener("submit", async (event) => {
   await loadKids();
 });
 
-kidsList.addEventListener("click", async (event) => {
+kidsTableBody.addEventListener("click", async (event) => {
   const target = event.target;
 
   if (!(target instanceof HTMLButtonElement) || !isBackendReady || !isManagerLoggedIn) {
@@ -914,16 +881,19 @@ authCloseButton.addEventListener("click", () => {
   updateAuthPanel();
 });
 
-authBackdrop.addEventListener("click", () => {
-  isAuthPanelOpen = false;
-  updateAuthPanel();
-});
-
 feesPaidSelect.addEventListener("change", syncAmountState);
 admissionFeesPaid.addEventListener("change", syncAdmissionAmountState);
 admissionBirthDay.addEventListener("change", updateAdmissionAge);
 admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
+rosterTabButton.addEventListener("click", () => {
+  activeView = "roster";
+  updateActiveView();
+});
+admissionTabButton.addEventListener("click", () => {
+  activeView = "admission";
+  updateActiveView();
+});
 slotFilters.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) {
     return;
@@ -1007,6 +977,7 @@ const initializeApp = async () => {
   populateAdmissionSelectors();
   setJoinDateLimit();
   admissionJoinDate.value = new Date().toISOString().split("T")[0];
+  updateActiveView();
   updateAccessUI();
   renderKids();
   syncAdmissionAmountState();

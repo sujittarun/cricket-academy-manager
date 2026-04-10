@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1836" />
+    <meta name="theme-color" content="#1a4f9d" />
     <title>Gen Alpha Cricket Academy Manager</title>
     <link rel="icon" type="image/png" href="./assets/gen-alpha-icon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-icon-192.png" />
@@ -12,8 +12,8 @@
   </head>
   <body>
     <main class="app-shell">
-      <header class="app-header">
-        <div class="app-bar">
+      <section class="masthead panel">
+        <div class="masthead-top">
           <div class="brand-lockup">
             <img
               src="./assets/gen-alpha-badge-upscaled.png"
@@ -22,9 +22,9 @@
             />
             <div class="brand-copy">
               <p class="eyebrow">Gen Alpha Cricket Academy</p>
-              <h1>Academy Manager</h1>
+              <h1>Academy Register</h1>
               <p class="hero-copy">
-                Manage registrations, renewals, fee tracking, and slot planning from one academy app.
+                Track join fees, renewal dues, and student status from one clean dashboard.
               </p>
             </div>
           </div>
@@ -34,15 +34,14 @@
               <p id="accessMode" class="access-mode">View-only mode</p>
               <p id="managerIdentity" class="manager-identity" hidden></p>
             </div>
-
             <div class="manager-actions">
-              <button id="authToggleButton" type="button" class="ghost-button">
+              <button id="authToggleButton" type="button" class="top-link-button">
                 Manager Login
               </button>
               <button
                 id="quickLogoutButton"
                 type="button"
-                class="secondary-btn compact-btn"
+                class="secondary-btn top-logout-button"
                 hidden
               >
                 Logout
@@ -51,167 +50,248 @@
           </div>
         </div>
 
-        <div class="hero-grid">
-          <section class="hero-panel hero-main">
-            <p class="section-kicker">Academy Overview</p>
-            <h2>Designed like a proper app, tuned for daily academy work.</h2>
-            <p class="hero-support">
-              Public users can view the register, while managers can sign in to update kids, renew courses,
-              and manage active batches.
-            </p>
-
-            <div class="hero-glance">
-              <span class="glance-pill">Live slot counts</span>
-              <span class="glance-pill">Renewal tracking</span>
-              <span class="glance-pill">Manager-only edits</span>
-            </div>
-          </section>
-
-          <section class="hero-panel hero-alert">
+        <div class="masthead-bottom">
+          <div class="hero-card">
             <p class="hero-label">30-Day Alerts</p>
             <strong id="alertCount">0 kids need attention</strong>
             <p id="alertSummary" class="hero-subtext">
               Add Gen Alpha academy records to start tracking.
             </p>
-          </section>
+          </div>
         </div>
-      </header>
-
-      <section class="stats-grid">
-        <article class="stat-card">
-          <p class="section-kicker">Players Joined</p>
-          <strong id="joinedCount" class="stat-value">0</strong>
-          <p class="stat-copy">All players ever added to the academy register.</p>
-        </article>
-
-        <article class="stat-card">
-          <p class="section-kicker">Active Players</p>
-          <strong id="activeCount" class="stat-value">0</strong>
-          <p class="stat-copy">Kids currently active in coaching batches.</p>
-        </article>
-
-        <article class="stat-card">
-          <p class="section-kicker">Fees Paid</p>
-          <strong id="paidCount" class="stat-value">0</strong>
-          <p class="stat-copy">Active kids whose current join fees are marked paid.</p>
-        </article>
-
-        <article class="stat-card">
-          <p class="section-kicker">Returning Students</p>
-          <strong id="returningCount" class="stat-value">0</strong>
-          <p class="stat-copy">Active kids who already renewed at least once.</p>
-        </article>
       </section>
 
-      <section class="workspace-grid">
-        <section id="formPanel" class="app-panel form-panel" hidden>
-          <div class="panel-heading">
-            <div>
-              <p class="section-kicker">Manager Workspace</p>
-              <h2>Add or update a player</h2>
+      <section class="view-switcher panel">
+        <div class="view-switcher-copy">
+          <p class="section-kicker">Workspace</p>
+          <h2>Choose what you want to work on</h2>
+        </div>
+        <div class="view-switcher-tabs" role="tablist" aria-label="Dashboard views">
+          <button
+            id="rosterTabButton"
+            type="button"
+            class="view-tab active"
+            data-view-target="roster"
+            role="tab"
+            aria-selected="true"
+          >
+            Academy Roster
+          </button>
+          <button
+            id="admissionTabButton"
+            type="button"
+            class="view-tab"
+            data-view-target="admission"
+            role="tab"
+            aria-selected="false"
+          >
+            Admission Form
+          </button>
+        </div>
+      </section>
+
+      <section id="authPanel" class="panel auth-panel" hidden>
+        <div class="auth-panel-header">
+          <div>
+            <p class="section-kicker">Manager Access</p>
+            <h2>Secure editing access</h2>
+          </div>
+          <button id="authCloseButton" type="button" class="icon-button" aria-label="Close login panel">
+            Close
+          </button>
+        </div>
+
+        <p id="loginHint" class="access-hint">
+          Connect Supabase and use a manager email login to unlock editing tools.
+        </p>
+        <p id="lastLoginHint" class="last-login-hint" hidden></p>
+
+        <form id="loginForm" class="login-form">
+          <label>
+            Manager email
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="manager@genalpha.com"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter password"
+              required
+            />
+          </label>
+          <p id="loginMessage" class="form-message" aria-live="polite"></p>
+          <button type="submit" class="primary-btn">Login</button>
+        </form>
+
+        <div id="managerTools" class="manager-tools" hidden>
+          <p class="manager-badge">Manager logged in</p>
+          <p class="access-copy">
+            Editing is unlocked on this device. You can add players, renew courses, and update the register.
+          </p>
+          <button id="logoutButton" type="button" class="secondary-btn">Logout</button>
+        </div>
+      </section>
+
+      <section id="rosterView" class="dashboard-view">
+        <section class="stats-grid">
+          <article class="panel stat-card">
+            <p class="section-kicker">Players Joined</p>
+            <strong id="joinedCount" class="stat-value">0</strong>
+            <p class="stat-copy">Total academy kids in the register.</p>
+          </article>
+          <article class="panel stat-card">
+            <p class="section-kicker">Active Players</p>
+            <strong id="activeCount" class="stat-value">0</strong>
+            <p class="stat-copy">Kids currently active in the academy.</p>
+          </article>
+          <article class="panel stat-card">
+            <p class="section-kicker">Fees Paid</p>
+            <strong id="paidCount" class="stat-value">0</strong>
+            <p class="stat-copy">Active kids whose join fees are marked paid.</p>
+          </article>
+          <article class="panel stat-card">
+            <p class="section-kicker">Returning Students</p>
+            <strong id="returningCount" class="stat-value">0</strong>
+            <p class="stat-copy">Kids who renewed after their initial join.</p>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <section id="formPanel" class="panel form-panel" hidden>
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">New Gen Alpha Entry</p>
+                <h2>Add an academy kid</h2>
+              </div>
             </div>
-          </div>
 
-          <div id="editorLock" class="editor-lock">
-            Login as manager to add or edit academy records.
-          </div>
+            <div id="editorLock" class="editor-lock">
+              Login as manager to add or edit academy records.
+            </div>
 
-          <form id="kidForm" class="kid-form">
-            <label>
-              Kid name
-              <input id="name" name="name" type="text" placeholder="Enter full name" required />
-            </label>
+            <form id="kidForm" class="kid-form">
+              <label>
+                Kid name
+                <input id="name" name="name" type="text" placeholder="Enter full name" required />
+              </label>
 
-            <label>
-              Age
-              <input id="age" name="age" type="number" min="4" max="18" placeholder="8" required />
-            </label>
+              <label>
+                Age
+                <input id="age" name="age" type="number" min="4" max="18" placeholder="8" required />
+              </label>
 
-            <label>
-              Time slot
-              <select id="timeSlot" name="timeSlot" required>
-                <option value="">Select slot</option>
-                <option value="6AM">6AM</option>
-                <option value="7:30AM">7:30AM</option>
-                <option value="4PM">4PM</option>
-                <option value="5:30PM">5:30PM</option>
-                <option value="7PM">7PM</option>
-              </select>
-            </label>
+              <label>
+                Time slot
+                <select id="timeSlot" name="timeSlot" required>
+                  <option value="">Select slot</option>
+                  <option value="6AM">6AM</option>
+                  <option value="7:30AM">7:30AM</option>
+                  <option value="4PM">4PM</option>
+                  <option value="5:30PM">5:30PM</option>
+                  <option value="7PM">7PM</option>
+                </select>
+              </label>
 
-            <label>
-              Join date
-              <input id="joinDate" name="joinDate" type="date" required />
-            </label>
+              <label>
+                Join date
+                <input id="joinDate" name="joinDate" type="date" required />
+              </label>
 
-            <label>
-              Fees paid?
-              <select id="feesPaid" name="feesPaid" required>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </label>
+              <label>
+                Fees paid?
+                <select id="feesPaid" name="feesPaid" required>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
 
-            <label>
-              Amount paid
-              <input
-                id="amountPaid"
-                name="amountPaid"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                required
-              />
-            </label>
+              <label>
+                Amount paid
+                <input
+                  id="amountPaid"
+                  name="amountPaid"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  required
+                />
+              </label>
 
-            <p id="formMessage" class="form-message" aria-live="polite"></p>
+              <p id="formMessage" class="form-message" aria-live="polite"></p>
 
-            <div class="form-actions">
               <button id="saveButton" type="submit" class="primary-btn">Save kid details</button>
               <button id="cancelEditButton" type="button" class="secondary-btn" hidden>
                 Cancel edit
               </button>
+            </form>
+          </section>
+
+          <section class="panel records-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">Gen Alpha Records</p>
+                <h2>Registered players</h2>
+              </div>
+              <p id="recordsHelper" class="records-helper">
+                View academy records here. Login as manager to add or edit players.
+              </p>
             </div>
-          </form>
-        </section>
 
-        <section class="app-panel records-panel">
-          <div class="panel-heading records-heading">
-            <div>
-              <p class="section-kicker">Player Register</p>
-              <h2>Academy roster</h2>
+            <div class="slot-toolbar">
+              <div class="slot-toolbar-copy">
+                <p class="section-kicker">Time Slots</p>
+                <p class="slot-helper">Tap a slot to see the current active batch size.</p>
+              </div>
+              <div id="slotFilters" class="slot-filters" aria-label="Time slot filters"></div>
             </div>
-            <p id="recordsHelper" class="records-helper">
-              View academy records here. Login as manager to add or edit players.
-            </p>
-          </div>
 
-          <div class="slot-toolbar">
-            <div class="slot-toolbar-copy">
-              <p class="section-kicker">Time Slots</p>
-              <p class="slot-helper">Check active batch occupancy or filter the roster instantly.</p>
+            <div id="emptyState" class="empty-state">
+              No Gen Alpha players added yet. Use the form above to create the first record.
             </div>
-            <div id="slotFilters" class="slot-filters" aria-label="Time slot filters"></div>
-          </div>
 
-          <div id="emptyState" class="empty-state">
-            No Gen Alpha players added yet. Login as manager to create the first record.
-          </div>
-
-          <section id="kidsList" class="kids-list" hidden aria-live="polite"></section>
+            <div class="table-wrap">
+              <table id="kidsTable" class="kids-table" hidden>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Time slot</th>
+                    <th>Status</th>
+                    <th>Student type</th>
+                    <th>Join date</th>
+                    <th>Latest renewal</th>
+                    <th>Fees paid</th>
+                    <th>Amount paid</th>
+                    <th>Renewal status</th>
+                    <th>Updated</th>
+                    <th id="actionHeader">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="kidsTableBody"></tbody>
+              </table>
+            </div>
+          </section>
         </section>
       </section>
 
-      <section class="admission-stack">
-        <section class="app-panel admission-panel">
-          <div class="panel-heading records-heading">
+      <section id="admissionView" class="dashboard-view" hidden>
+        <section class="panel admission-panel">
+          <div class="panel-heading admission-heading">
             <div>
-              <p class="section-kicker">Admission Form</p>
-              <h2>Add first-time admissions without changing the roster layout</h2>
+              <p class="section-kicker">First-Time Admission</p>
+              <h2>Parent admission form</h2>
             </div>
             <p class="records-helper">
-              Parents or staff can fill this form directly. Successful submission creates the admission record and adds the kid to the academy register.
+              Fill in a new admission here without opening the manager roster workspace.
             </p>
           </div>
 
@@ -221,208 +301,231 @@
                 <span class="data-label">Registration Number</span>
                 <strong id="admissionRegNo" class="admission-reg-value">Loading...</strong>
               </div>
-              <p class="records-helper">The number is only consumed after a successful submission.</p>
+              <p class="records-helper">This number is only used after the form is submitted successfully.</p>
             </div>
 
-            <div class="admission-grid">
-              <label>
-                Applicant full name
-                <input id="admissionApplicantName" name="applicantName" type="text" required />
-              </label>
-              <label>
-                Nationality
-                <input id="admissionNationality" name="nationality" type="text" value="Indian" required />
-              </label>
-              <label>
-                Day of birth
-                <select id="admissionBirthDay" name="birthDay" required>
-                  <option value="">DD</option>
-                </select>
-              </label>
-              <label>
-                Month of birth
-                <select id="admissionBirthMonth" name="birthMonth" required>
-                  <option value="">Month</option>
-                </select>
-              </label>
-              <label>
-                Year of birth
-                <select id="admissionBirthYear" name="birthYear" required>
-                  <option value="">YYYY</option>
-                </select>
-              </label>
-              <div class="data-tile compact-data-tile">
-                <span class="data-label">Age</span>
-                <span id="admissionAge" class="data-value">Auto</span>
-              </div>
-              <label>
-                Gender
-                <select id="admissionGender" name="gender" required>
-                  <option value="">Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </label>
-              <label>
-                School / College
-                <input id="admissionSchoolCollege" name="schoolCollege" type="text" required />
-              </label>
-              <label>
-                Father's / Guardian's name
-                <input id="admissionGuardianName" name="guardianName" type="text" required />
-              </label>
-              <label>
-                Parent contact number
-                <input id="admissionParentContact" name="parentContact" type="tel" inputmode="numeric" required />
-              </label>
-              <label>
-                Alternate contact number
-                <input id="admissionAlternateContact" name="alternateContact" type="tel" inputmode="numeric" required />
-              </label>
-              <label>
-                City
-                <input id="admissionCity" name="city" type="text" required />
-              </label>
-              <label class="admission-span-two">
-                Address
-                <textarea id="admissionAddress" name="address" rows="3" required></textarea>
-              </label>
-              <label>
-                Parent Aadhaar number
-                <input id="admissionAadhaar" name="aadhaar" type="tel" inputmode="numeric" />
-              </label>
-              <label>
-                Time slot
-                <select id="admissionTimeSlot" name="timeSlot" required>
-                  <option value="">Select slot</option>
-                  <option value="6AM">6AM</option>
-                  <option value="7:30AM">7:30AM</option>
-                  <option value="4PM">4PM</option>
-                  <option value="5:30PM">5:30PM</option>
-                  <option value="7PM">7PM</option>
-                </select>
-              </label>
-              <label>
-                Joining date
-                <input id="admissionJoinDate" name="joinDate" type="date" required />
-              </label>
-              <label>
-                Fees paid?
-                <select id="admissionFeesPaid" name="feesPaid" required>
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </label>
-              <label>
-                Amount paid
-                <input id="admissionAmountPaid" name="amountPaid" type="number" min="0" step="0.01" value="0" required />
-              </label>
-              <label>
-                Batsman style
-                <select id="admissionBatsmanStyle" name="batsmanStyle">
-                  <option value="">Select style</option>
-                  <option value="Right Handed Batsman">Right Handed Batsman</option>
-                  <option value="Left Handed Batsman">Left Handed Batsman</option>
-                </select>
-              </label>
-            </div>
+            <div class="admission-form-grid">
+              <section class="admission-group admission-group-wide">
+                <div class="admission-group-head">
+                  <p class="section-kicker">Applicant Details</p>
+                  <h3>Player information</h3>
+                </div>
+                <div class="admission-grid three-col">
+                  <label>
+                    Applicant full name
+                    <input id="admissionApplicantName" name="applicantName" type="text" required />
+                  </label>
+                  <label>
+                    Nationality
+                    <input id="admissionNationality" name="nationality" type="text" value="Indian" required />
+                  </label>
+                  <label>
+                    Gender
+                    <select id="admissionGender" name="gender" required>
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="admission-grid dob-grid">
+                  <label>
+                    Date
+                    <select id="admissionBirthDay" name="birthDay" required>
+                      <option value="">DD</option>
+                    </select>
+                  </label>
+                  <label>
+                    Month
+                    <select id="admissionBirthMonth" name="birthMonth" required>
+                      <option value="">MON</option>
+                    </select>
+                  </label>
+                  <label>
+                    Year
+                    <select id="admissionBirthYear" name="birthYear" required>
+                      <option value="">YYYY</option>
+                    </select>
+                  </label>
+                  <div class="data-tile compact-data-tile">
+                    <span class="data-label">Age</span>
+                    <span id="admissionAge" class="data-value">Auto</span>
+                  </div>
+                </div>
+              </section>
 
-            <div class="admission-subsection">
-              <label class="inline-check">
-                <input id="admissionReadyToStart" name="readyToStart" type="checkbox" />
-                <span>Kick start the journey now</span>
-              </label>
-            </div>
+              <section class="admission-group">
+                <div class="admission-group-head">
+                  <p class="section-kicker">Parent Details</p>
+                  <h3>Family contacts</h3>
+                </div>
+                <div class="admission-grid two-col">
+                  <label>
+                    Father / guardian name
+                    <input id="admissionGuardianName" name="guardianName" type="text" required />
+                  </label>
+                  <label>
+                    Parent contact number
+                    <input id="admissionParentContact" name="parentContact" type="tel" required />
+                  </label>
+                  <label>
+                    Alternate contact number
+                    <input id="admissionAlternateContact" name="alternateContact" type="tel" required />
+                  </label>
+                  <label>
+                    Parent Aadhaar / NIDA number
+                    <input id="admissionAadhaar" name="aadhaar" type="text" />
+                  </label>
+                </div>
+              </section>
 
-            <div class="admission-subsection">
-              <p class="data-label">Bowling style</p>
-              <div class="check-grid">
-                <label class="inline-check"><input type="checkbox" name="bowlingStyles" value="Right Arm Fast Bowler" /> <span>Right Arm Fast Bowler</span></label>
-                <label class="inline-check"><input type="checkbox" name="bowlingStyles" value="Left Arm Fast Bowler" /> <span>Left Arm Fast Bowler</span></label>
-                <label class="inline-check"><input type="checkbox" name="bowlingStyles" value="Right Arm Off Spinner" /> <span>Right Arm Off Spinner</span></label>
-                <label class="inline-check"><input type="checkbox" name="bowlingStyles" value="Left Arm Leg Spinner" /> <span>Left Arm Leg Spinner</span></label>
-              </div>
-            </div>
+              <section class="admission-group">
+                <div class="admission-group-head">
+                  <p class="section-kicker">Schooling</p>
+                  <h3>Player background</h3>
+                </div>
+                <div class="admission-grid two-col">
+                  <label>
+                    School / college
+                    <input id="admissionSchoolCollege" name="schoolCollege" type="text" />
+                  </label>
+                  <label>
+                    City
+                    <input id="admissionCity" name="city" type="text" required />
+                  </label>
+                </div>
+                <label class="full-span">
+                  Address
+                  <textarea id="admissionAddress" name="address" rows="3" required></textarea>
+                </label>
+              </section>
 
-            <div class="admission-subsection">
-              <p class="records-helper">
-                I, the parent or guardian of the applicant, request admission for my child to Gen Alpha Cricket Academy. I confirm that the information provided is correct. I understand that my child must follow academy rules, discipline, and coaching instructions. I understand that cricket training, fitness drills, matches, and travel may involve the risk of minor or major injuries, and I give consent for my child to participate. I also understand that the academy is not responsible for injuries caused by indiscipline or for the loss of personal items during training or travel.
-              </p>
-              <ul class="terms-list">
-                <li>Attend with discipline and punctuality.</li>
-                <li>Co-operate during training and follow academy instructions.</li>
-                <li>Monthly fees must be cleared within the first 10 days.</li>
-                <li>Fees once paid are non-refundable.</li>
-                <li>Proper cricket kit is required for training.</li>
-                <li>Damage to academy property is the player's responsibility.</li>
-              </ul>
-              <label class="inline-check"><input id="admissionConsentAccepted" name="consentAccepted" type="checkbox" required /> <span>I agree to the parent consent statement.</span></label>
-              <label class="inline-check"><input id="admissionTermsAccepted" name="termsAccepted" type="checkbox" required /> <span>I accept the terms and conditions.</span></label>
+              <section class="admission-group">
+                <div class="admission-group-head">
+                  <p class="section-kicker">Training Details</p>
+                  <h3>Joining and payment</h3>
+                </div>
+                <div class="admission-grid three-col">
+                  <label>
+                    Time slot
+                    <select id="admissionTimeSlot" name="timeSlot" required>
+                      <option value="">Select slot</option>
+                      <option value="6AM">6AM</option>
+                      <option value="7:30AM">7:30AM</option>
+                      <option value="4PM">4PM</option>
+                      <option value="5:30PM">5:30PM</option>
+                      <option value="7PM">7PM</option>
+                    </select>
+                  </label>
+                  <label>
+                    Joining date
+                    <input id="admissionJoinDate" name="joinDate" type="date" required />
+                  </label>
+                  <label>
+                    Fees paid
+                    <select id="admissionFeesPaid" name="feesPaid" required>
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="admission-grid two-col">
+                  <label>
+                    Amount paid
+                    <input id="admissionAmountPaid" name="amountPaid" type="number" min="0" step="0.01" />
+                  </label>
+                </div>
+              </section>
+
+              <section class="admission-group">
+                <div class="admission-group-head">
+                  <p class="section-kicker">Skills and Playing Style</p>
+                  <h3>Playing preferences</h3>
+                </div>
+                <div class="single-check-row">
+                  <label class="checkbox-row">
+                    <input id="admissionReadyToStart" name="readyToStart" type="checkbox" />
+                    <span>Kick start the journey now</span>
+                  </label>
+                </div>
+                <div class="admission-grid two-col">
+                  <fieldset class="option-block">
+                    <legend>Batsman style</legend>
+                    <label class="checkbox-row">
+                      <input type="radio" name="batsmanStyle" value="Right Handed Batsman" />
+                      <span>Right handed batsman</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="radio" name="batsmanStyle" value="Left Handed Batsman" />
+                      <span>Left handed batsman</span>
+                    </label>
+                  </fieldset>
+                  <fieldset class="option-block">
+                    <legend>Bowling style</legend>
+                    <label class="checkbox-row">
+                      <input type="checkbox" name="bowlingStyles" value="Right Arm Fast Bowler" />
+                      <span>Right arm fast bowler</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" name="bowlingStyles" value="Left Arm Fast Bowler" />
+                      <span>Left arm fast bowler</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" name="bowlingStyles" value="Right Arm Off Spinner" />
+                      <span>Right arm off spinner</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" name="bowlingStyles" value="Left Arm Leg Spinner" />
+                      <span>Left arm leg spinner</span>
+                    </label>
+                  </fieldset>
+                </div>
+              </section>
+
+              <section class="admission-group admission-group-wide">
+                <div class="admission-group-head">
+                  <p class="section-kicker">Parent Consent</p>
+                  <h3>Required confirmations</h3>
+                </div>
+                <div class="consent-copy">
+                  <p>
+                    I request that my son / daughter be admitted as a player of Gen Alpha Cricket Academy. I agree
+                    that my child will abide by academy discipline, punctuality, and training rules.
+                  </p>
+                  <p>
+                    I understand that cricket is a physical sport and I accept the possibility of sports-related
+                    injuries during practice, coaching, or matches.
+                  </p>
+                  <p>
+                    I confirm that the academy will not be responsible for loss of personal belongings, and I agree
+                    to clear monthly fees within the first 10 days.
+                  </p>
+                </div>
+                <div class="consent-grid">
+                  <label class="checkbox-row consent-row">
+                    <input id="admissionConsentAccepted" name="consentAccepted" type="checkbox" required />
+                    <span>I accept the academy rules and the injury-related consent above.</span>
+                  </label>
+                  <label class="checkbox-row consent-row">
+                    <input id="admissionTermsAccepted" name="termsAccepted" type="checkbox" required />
+                    <span>I confirm the fee, discipline, and academy property terms.</span>
+                  </label>
+                </div>
+              </section>
             </div>
 
             <p id="admissionMessage" class="form-message" aria-live="polite"></p>
 
-            <div class="form-actions">
-              <button id="submitAdmissionButton" type="submit" class="primary-btn">Submit admission form</button>
-              <button id="resetAdmissionButton" type="button" class="secondary-btn">Clear form</button>
+            <div class="admission-actions">
+              <button id="submitAdmissionButton" type="submit" class="primary-btn">Submit admission</button>
+              <button id="resetAdmissionButton" type="button" class="secondary-btn">Reset form</button>
             </div>
           </form>
         </section>
       </section>
     </main>
 
-    <section id="authPanel" class="auth-sheet" hidden>
-      <div class="auth-sheet-header">
-        <div>
-          <p class="section-kicker">Manager Access</p>
-          <h2>Secure editing access</h2>
-        </div>
-        <button id="authCloseButton" type="button" class="icon-button" aria-label="Close login panel">
-          Close
-        </button>
-      </div>
-
-      <p id="loginHint" class="access-hint">
-        Connect Supabase and use a manager email login to unlock editing tools.
-      </p>
-      <p id="lastLoginHint" class="last-login-hint" hidden></p>
-
-      <form id="loginForm" class="login-form">
-        <label>
-          Manager email
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="manager@genalpha.com"
-            required
-          />
-        </label>
-        <label>
-          Password
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Enter password"
-            required
-          />
-        </label>
-        <p id="loginMessage" class="form-message" aria-live="polite"></p>
-        <button type="submit" class="primary-btn">Login</button>
-      </form>
-
-      <div id="managerTools" class="manager-tools" hidden>
-        <p class="manager-badge">Manager logged in</p>
-        <p class="access-copy">
-          Editing is unlocked on this device. You can add players, renew courses, and update the register.
-        </p>
-        <button id="logoutButton" type="button" class="secondary-btn">Logout</button>
-      </div>
-    </section>
-
-    <button id="authBackdrop" class="auth-backdrop" type="button" hidden aria-label="Close login"></button>
     <div id="globalToast" class="global-toast" hidden aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
