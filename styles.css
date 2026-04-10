@@ -61,38 +61,6 @@ p {
   margin-bottom: 22px;
 }
 
-.view-switcher {
-  display: inline-flex;
-  gap: 10px;
-  padding: 8px;
-  margin-bottom: 18px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 37, 71, 0.08);
-  box-shadow: 0 14px 34px rgba(16, 37, 71, 0.08);
-}
-
-.view-tab {
-  min-height: 46px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 16px;
-  background: transparent;
-  color: var(--blue-deep);
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.view-tab.active {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-deep) 100%);
-  color: white;
-}
-
-.view-stack {
-  display: grid;
-  gap: 22px;
-}
-
 .app-bar,
 .hero-grid,
 .brand-lockup,
@@ -361,22 +329,18 @@ p {
   align-items: start;
 }
 
-.admission-grid {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.44fr) minmax(0, 0.56fr);
-  gap: 20px;
-  align-items: start;
-}
-
 .workspace-grid > * {
   min-width: 0;
 }
 
 .form-panel,
 .records-panel,
-.admission-intro,
 .admission-panel {
   padding: 20px;
+}
+
+.admission-block {
+  margin-top: 22px;
 }
 
 .panel-heading {
@@ -906,10 +870,6 @@ p {
     grid-template-columns: 1fr;
   }
 
-  .admission-grid {
-    grid-template-columns: 1fr;
-  }
-
   .form-panel {
     order: -1;
   }
@@ -965,11 +925,6 @@ p {
 
   .brand-lockup {
     align-items: flex-start;
-  }
-
-  .view-switcher {
-    display: grid;
-    width: 100%;
   }
 
   .brand-badge {

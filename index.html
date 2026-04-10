@@ -56,8 +56,8 @@
             <p class="section-kicker">Academy Overview</p>
             <h2>Built for daily academy work, now with a parent-friendly admission flow.</h2>
             <p class="hero-support">
-              Switch between the live academy register and a clean admission form. Parents can submit first-time
-              admissions without seeing manager-only academy operations.
+              Public users can view the register, while managers can sign in to update kids, renew courses,
+              manage active batches, and review admissions.
             </p>
 
             <div class="hero-glance">
@@ -77,17 +77,7 @@
         </div>
       </header>
 
-      <section class="view-switcher">
-        <button id="dashboardViewButton" type="button" class="view-tab active" data-view="dashboard">
-          Academy Register
-        </button>
-        <button id="admissionViewButton" type="button" class="view-tab" data-view="admission">
-          Admission Form
-        </button>
-      </section>
-
-      <section id="dashboardView" class="view-stack">
-        <section class="stats-grid">
+      <section class="stats-grid">
           <article class="stat-card">
             <p class="section-kicker">Players Joined</p>
             <strong id="joinedCount" class="stat-value">0</strong>
@@ -111,9 +101,9 @@
             <strong id="returningCount" class="stat-value">0</strong>
             <p class="stat-copy">Active kids who already renewed at least once.</p>
           </article>
-        </section>
+      </section>
 
-        <section class="workspace-grid">
+      <section class="workspace-grid">
           <section id="formPanel" class="app-panel form-panel" hidden>
             <div class="panel-heading">
               <div>
@@ -211,31 +201,18 @@
 
             <section id="kidsList" class="kids-list" hidden aria-live="polite"></section>
           </section>
-        </section>
       </section>
 
-      <section id="admissionView" class="view-stack" hidden>
-        <section class="admission-grid">
-          <section class="app-panel admission-intro">
-            <p class="section-kicker">Admission View</p>
-            <h2>First-time admission form for parents</h2>
-            <p class="hero-support">
-              Fill this form for a new student admission. The registration number is assigned automatically on
-              successful submission and the player is added to the academy register.
-            </p>
-            <div class="hero-glance">
-              <span class="glance-pill">Parent-friendly</span>
-              <span class="glance-pill">Auto join date</span>
-              <span class="glance-pill">Direct to academy register</span>
-            </div>
-          </section>
-
+      <section class="admission-block">
           <section class="app-panel admission-panel">
             <div class="panel-heading">
               <div>
                 <p class="section-kicker">New Admission Form</p>
-                <h2>Submit student details</h2>
+                <h2>Add first-time admissions without changing the main dashboard flow</h2>
               </div>
+              <p class="records-helper">
+                Parents can fill this directly. Successful submissions create the admission record and add the kid to the academy register.
+              </p>
             </div>
 
             <form id="admissionForm" class="admission-form">
@@ -428,7 +405,6 @@
               </div>
             </form>
           </section>
-        </section>
       </section>
     </main>
 

@@ -1,10 +1,5 @@
 const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
 
-const dashboardView = document.getElementById("dashboardView");
-const admissionView = document.getElementById("admissionView");
-const dashboardViewButton = document.getElementById("dashboardViewButton");
-const admissionViewButton = document.getElementById("admissionViewButton");
-
 const kidForm = document.getElementById("kidForm");
 const kidsList = document.getElementById("kidsList");
 const emptyState = document.getElementById("emptyState");
@@ -88,7 +83,6 @@ let isAuthPanelOpen = false;
 let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
-let activeView = "dashboard";
 let toastTimeoutId = null;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
@@ -223,14 +217,6 @@ const showToast = (message) => {
   toastTimeoutId = window.setTimeout(() => {
     globalToast.hidden = true;
   }, 2800);
-};
-
-const setActiveView = (view) => {
-  activeView = view;
-  dashboardView.hidden = view !== "dashboard";
-  admissionView.hidden = view !== "admission";
-  dashboardViewButton.classList.toggle("active", view === "dashboard");
-  admissionViewButton.classList.toggle("active", view === "admission");
 };
 
 const updateStats = () => {
@@ -622,9 +608,6 @@ const initializeAuthListener = () => {
   });
 };
 
-dashboardViewButton.addEventListener("click", () => setActiveView("dashboard"));
-admissionViewButton.addEventListener("click", () => setActiveView("admission"));
-
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -923,7 +906,6 @@ const initializeApp = async () => {
   admissionJoinDate.value = todayIso();
   syncAmountState();
   syncAdmissionAmountState();
-  setActiveView("dashboard");
   updateAccessUI();
   renderKids();
 
