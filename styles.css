@@ -329,18 +329,17 @@ p {
   align-items: start;
 }
 
+.admission-stack {
+  margin-top: 22px;
+}
+
 .workspace-grid > * {
   min-width: 0;
 }
 
 .form-panel,
-.records-panel,
-.admission-panel {
+.records-panel {
   padding: 20px;
-}
-
-.admission-block {
-  margin-top: 22px;
 }
 
 .panel-heading {
@@ -469,95 +468,66 @@ p {
 }
 
 .admission-form textarea {
-  min-height: 110px;
+  min-height: 104px;
   padding: 14px;
   resize: vertical;
 }
 
-.admission-reg-banner,
-.admission-section {
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: rgba(16, 37, 71, 0.03);
-}
-
-.admission-reg-banner {
-  display: grid;
-  gap: 8px;
-  padding: 16px;
+.admission-banner,
+.admission-subsection {
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(16, 37, 71, 0.04);
+  border: 1px solid rgba(16, 37, 71, 0.08);
 }
 
 .admission-reg-value {
   display: block;
   margin-top: 4px;
-  font-size: 2rem;
+  font-size: 1.9rem;
   line-height: 1;
   letter-spacing: -0.05em;
   color: var(--blue-deep);
 }
 
-.admission-reg-copy,
-.consent-copy {
-  color: var(--ink-soft);
-  line-height: 1.55;
-}
-
-.admission-section {
-  padding: 16px;
-}
-
-.admission-section h3 {
-  margin-bottom: 12px;
-  font-size: 1.08rem;
-  letter-spacing: -0.02em;
-}
-
-.admission-grid-fields,
-.checkbox-group {
+.admission-grid {
   display: grid;
-  gap: 12px;
-}
-
-.admission-grid-fields.two-up {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.admission-grid-fields.dob-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.admission-span-two {
+  grid-column: 1 / -1;
 }
 
-.compact-tile {
+.compact-data-tile {
   align-self: end;
 }
 
-.inline-check,
-.consent-check {
+.inline-check {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  font-weight: 700;
   color: var(--ink);
+  font-weight: 700;
 }
 
-.inline-check input,
-.consent-check input {
+.inline-check input {
   width: 18px;
   height: 18px;
   margin-top: 2px;
 }
 
-.checkbox-group-title {
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: var(--ink);
+.check-grid,
+.terms-list {
+  display: grid;
+  gap: 10px;
 }
 
 .terms-list {
   margin: 0;
   padding-left: 18px;
   color: var(--ink-soft);
-  display: grid;
-  gap: 6px;
 }
 
 .kid-form input:disabled,
@@ -895,8 +865,7 @@ p {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .admission-grid-fields.two-up,
-  .admission-grid-fields.dob-grid {
+  .admission-grid {
     grid-template-columns: 1fr;
   }
 
