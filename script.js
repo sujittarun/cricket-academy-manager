@@ -88,6 +88,7 @@ let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
 let activeView = "roster";
+let hasTriggeredServiceWorkerRefresh = false;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -1007,7 +1008,47 @@ const initializeApp = async () => {
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      navigator.serviceWorker
+        .register("./sw.js", { updateViaCache: "none" })
+        .then((registration) => {
+          const activateWaitingWorker = (worker) => {
+            if (!worker) {
+              return;
+            }
+
+            worker.postMessage({ type: "SKIP_WAITING" });
+          };
+
+          if (registration.waiting) {
+            activateWaitingWorker(registration.waiting);
+          }
+
+          registration.addEventListener("updatefound", () => {
+            const nextWorker = registration.installing;
+
+            if (!nextWorker) {
+              return;
+            }
+
+            nextWorker.addEventListener("statechange", () => {
+              if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
+                activateWaitingWorker(registration.waiting || nextWorker);
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (hasTriggeredServiceWorkerRefresh) {
+              return;
+            }
+
+            hasTriggeredServiceWorkerRefresh = true;
+            window.location.reload();
+          });
+
+          registration.update().catch(() => {});
+        })
+        .catch(() => {});
     });
   }
 
