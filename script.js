@@ -37,6 +37,8 @@ const rosterView = document.getElementById("rosterView");
 const admissionView = document.getElementById("admissionView");
 const rosterTabButton = document.getElementById("rosterTabButton");
 const admissionTabButton = document.getElementById("admissionTabButton");
+const viewSwitcher = document.getElementById("viewSwitcher");
+const heroLabel = document.getElementById("heroLabel");
 const actionHeader = document.getElementById("actionHeader");
 const admissionForm = document.getElementById("admissionForm");
 const admissionRegNo = document.getElementById("admissionRegNo");
@@ -89,7 +91,7 @@ let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
-let activeView = "roster";
+let activeView = "admission";
 let hasTriggeredServiceWorkerRefresh = false;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
@@ -393,6 +395,15 @@ const updateAuthPanel = () => {
 };
 
 const renderSummary = (alertKids) => {
+  if (!isManagerLoggedIn) {
+    heroLabel.textContent = "Online Admission";
+    alertCount.textContent = "Admission form is open";
+    alertSummary.textContent =
+      "Parents can fill the form below for first-time admission. Manager roster access appears only after login.";
+    return;
+  }
+
+  heroLabel.textContent = "30-Day Alerts";
   const totalAlerts = alertKids.length;
 
   alertCount.textContent =
@@ -426,11 +437,12 @@ const updateActiveView = () => {
 const updateAccessUI = () => {
   const canEdit = isBackendReady && isManagerLoggedIn;
   const formControls = kidForm.querySelectorAll("input, select, button");
+  viewSwitcher.hidden = !canEdit;
 
   if (!hasSupabaseConfig) {
     loginForm.hidden = true;
     managerTools.hidden = true;
-    accessMode.textContent = "Setup required";
+    accessMode.textContent = "Admission mode";
     loginHint.textContent =
       "Add your Supabase URL and anon key in supabase-config.js, then create a manager user in Supabase Auth.";
     editorLock.hidden = false;
@@ -438,7 +450,7 @@ const updateAccessUI = () => {
   } else if (!isBackendReady) {
     loginForm.hidden = true;
     managerTools.hidden = true;
-    accessMode.textContent = "Connection error";
+    accessMode.textContent = "Admission mode";
     loginHint.textContent =
       "Supabase config exists, but the browser client did not load. Check the CDN script and redeploy.";
     editorLock.hidden = false;
@@ -446,7 +458,7 @@ const updateAccessUI = () => {
   } else {
     loginForm.hidden = canEdit;
     managerTools.hidden = !canEdit;
-    accessMode.textContent = canEdit ? "Manager edit mode" : "View-only mode";
+    accessMode.textContent = canEdit ? "Manager edit mode" : "Admission mode";
     loginHint.textContent = canEdit
       ? "Manager editing is active on this device."
       : "Sign in with a manager email created in Supabase Auth.";
@@ -457,6 +469,10 @@ const updateAccessUI = () => {
   formControls.forEach((control) => {
     control.disabled = !canEdit;
   });
+
+  if (!canEdit && activeView !== "admission") {
+    activeView = "admission";
+  }
 
   if (lastManagerEmail) {
     document.getElementById("email").value = lastManagerEmail;
@@ -469,7 +485,7 @@ const updateAccessUI = () => {
   formPanel.hidden = !canEdit;
   recordsHelper.textContent = canEdit
     ? "Manager editing is enabled. Use the table below to update, renew, or discontinue players."
-    : "Public users can review the register here. Login as manager to edit players.";
+    : "Manager roster access is available only after login.";
   actionHeader.hidden = !canEdit;
 
   formMessage.textContent = !hasSupabaseConfig

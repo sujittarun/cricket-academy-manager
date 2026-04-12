@@ -22,9 +22,9 @@
             />
             <div class="brand-copy">
               <p class="eyebrow">Gen Alpha Cricket Academy</p>
-              <h1>Academy Register</h1>
+              <h1>Online Admission Form</h1>
               <p class="hero-copy">
-                Track join fees, renewal dues, and student status from one clean dashboard.
+                Parents can submit first-time admissions here. Manager tools stay locked until staff login.
               </p>
             </div>
           </div>
@@ -52,7 +52,7 @@
 
         <div class="masthead-bottom">
           <div class="hero-card">
-            <p class="hero-label">30-Day Alerts</p>
+            <p id="heroLabel" class="hero-label">Online Admission</p>
             <strong id="alertCount">0 kids need attention</strong>
             <p id="alertSummary" class="hero-subtext">
               Add Gen Alpha academy records to start tracking.
@@ -61,7 +61,7 @@
         </div>
       </section>
 
-      <section class="view-switcher panel">
+      <section id="viewSwitcher" class="view-switcher panel" hidden>
         <div class="view-switcher-copy">
           <p class="section-kicker">Workspace</p>
           <h2>Choose what you want to work on</h2>
@@ -70,20 +70,20 @@
           <button
             id="rosterTabButton"
             type="button"
-            class="view-tab active"
+            class="view-tab"
             data-view-target="roster"
             role="tab"
-            aria-selected="true"
+            aria-selected="false"
           >
             Academy Roster
           </button>
           <button
             id="admissionTabButton"
             type="button"
-            class="view-tab"
+            class="view-tab active"
             data-view-target="admission"
             role="tab"
-            aria-selected="false"
+            aria-selected="true"
           >
             Admission Form
           </button>
@@ -140,7 +140,7 @@
         </div>
       </section>
 
-      <section id="rosterView" class="dashboard-view">
+      <section id="rosterView" class="dashboard-view" hidden>
         <section class="stats-grid">
           <article class="panel stat-card">
             <p class="section-kicker">Players Joined</p>
@@ -284,7 +284,7 @@
         </section>
       </section>
 
-      <section id="admissionView" class="dashboard-view" hidden>
+      <section id="admissionView" class="dashboard-view">
         <section class="panel admission-panel">
           <div class="panel-heading admission-heading">
             <div>
