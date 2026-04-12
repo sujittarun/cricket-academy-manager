@@ -8,6 +8,8 @@ const alertCount = document.getElementById("alertCount");
 const alertSummary = document.getElementById("alertSummary");
 const feesPaidSelect = document.getElementById("feesPaid");
 const amountPaidInput = document.getElementById("amountPaid");
+const jerseySizeSelect = document.getElementById("jerseySize");
+const jerseyPairsInput = document.getElementById("jerseyPairs");
 const joinDateInput = document.getElementById("joinDate");
 const formMessage = document.getElementById("formMessage");
 const saveButton = document.getElementById("saveButton");
@@ -125,6 +127,8 @@ const toDatabasePayload = ({
   joinDate,
   feesPaid,
   amountPaid,
+  jerseySize,
+  jerseyPairs,
   renewals,
   addedBy,
   updatedBy,
@@ -136,6 +140,8 @@ const toDatabasePayload = ({
   join_date: joinDate,
   fees_paid: feesPaid === "yes",
   amount_paid: Number(amountPaid),
+  jersey_size: jerseySize || null,
+  jersey_pairs: Number(jerseyPairs) || 0,
   renewals,
   added_by: addedBy,
   updated_by: updatedBy,
@@ -262,7 +268,7 @@ const syncAdmissionAmountState = () => {
   }
 };
 
-const formatKitDetails = (kid) => {
+const formatJerseyDetails = (kid) => {
   const parts = [];
   if (kid.jerseySize) {
     parts.push(`Size ${kid.jerseySize}`);
@@ -594,7 +600,7 @@ const renderKids = () => {
       <td><strong>${kid.name}</strong></td>
       <td>${kid.age}</td>
       <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
-      <td><span class="meta-text">${formatKitDetails(kid)}</span></td>
+      <td><span class="meta-text">${formatJerseyDetails(kid)}</span></td>
       <td>
         <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
           ${kid.discontinued ? "Discontinued" : "Active"}
@@ -796,6 +802,8 @@ kidForm.addEventListener("submit", async (event) => {
     joinDate: formData.get("joinDate").toString(),
     feesPaid: formData.get("feesPaid").toString(),
     amountPaid: Number(formData.get("amountPaid")),
+    jerseySize: formData.get("jerseySize").toString(),
+    jerseyPairs: Number(formData.get("jerseyPairs") || 0),
     renewals: [],
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
@@ -869,6 +877,8 @@ kidsTableBody.addEventListener("click", async (event) => {
     joinDateInput.value = kidToEdit.joinDate;
     feesPaidSelect.value = kidToEdit.feesPaid;
     amountPaidInput.value = String(kidToEdit.amountPaid);
+    jerseySizeSelect.value = kidToEdit.jerseySize || "";
+    jerseyPairsInput.value = String(kidToEdit.jerseyPairs || 0);
     saveButton.textContent = "Save changes";
     cancelEditButton.hidden = false;
     syncAmountState();

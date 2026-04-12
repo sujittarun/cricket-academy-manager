@@ -244,6 +244,33 @@
                 />
               </label>
 
+              <label>
+                Jersey size
+                <select id="jerseySize" name="jerseySize">
+                  <option value="">Not set</option>
+                  <option value="22">22</option>
+                  <option value="24">24</option>
+                  <option value="26">26</option>
+                  <option value="28">28</option>
+                  <option value="30">30</option>
+                  <option value="32">32</option>
+                  <option value="34">34</option>
+                  <option value="36">36</option>
+                </select>
+              </label>
+
+              <label>
+                Jersey pairs
+                <input
+                  id="jerseyPairs"
+                  name="jerseyPairs"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                />
+              </label>
+
               <p id="formMessage" class="form-message" aria-live="polite"></p>
 
               <button id="saveButton" type="submit" class="primary-btn">Save kid details</button>
@@ -283,7 +310,7 @@
                     <th>Name</th>
                     <th>Age</th>
                     <th>Time slot</th>
-                    <th>Kit</th>
+                    <th>Jersey</th>
                     <th>Status</th>
                     <th>Student type</th>
                     <th>Join date</th>
