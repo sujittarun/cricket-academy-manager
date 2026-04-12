@@ -1,4 +1,4 @@
-const CACHE_NAME = "gen-alpha-academy-v2";
+const CACHE_NAME = "gen-alpha-academy-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -23,6 +23,15 @@ const NETWORK_FIRST_PATHS = new Set([
 const isHttpRequest = (request) => request.url.startsWith("http");
 
 const getPathname = (request) => new URL(request.url).pathname;
+
+/** Only cache this origin — never cache Supabase/API GETs (cache-first would serve stale rows). */
+const isSameOriginRequest = (request) => {
+  try {
+    return new URL(request.url).origin === self.location.origin;
+  } catch {
+    return false;
+  }
+};
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
@@ -82,6 +91,10 @@ const cacheFirst = async (request) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || !isHttpRequest(event.request)) {
+    return;
+  }
+
+  if (!isSameOriginRequest(event.request)) {
     return;
   }
 

@@ -1142,9 +1142,10 @@ const initializeApp = async () => {
   }
 
   initializeAuthListener();
+  // Fetch next reg no before session/roster — those calls can be slow or stall; reg no must not wait on them.
+  await loadAdmissionRegNo();
   await refreshSession();
   await loadKids();
-  await loadAdmissionRegNo();
 };
 
 initializeApp();
