@@ -23,6 +23,7 @@ const authPanel = document.getElementById("authPanel");
 const authToggleButton = document.getElementById("authToggleButton");
 const authCloseButton = document.getElementById("authCloseButton");
 const quickLogoutButton = document.getElementById("quickLogoutButton");
+const editModeButton = document.getElementById("editModeButton");
 const managerIdentity = document.getElementById("managerIdentity");
 const lastLoginHint = document.getElementById("lastLoginHint");
 const formPanel = document.getElementById("formPanel");
@@ -93,6 +94,7 @@ let activeSlotFilter = "";
 let toastTimeoutId = null;
 let activeView = "admission";
 let hasTriggeredServiceWorkerRefresh = false;
+let isEditMode = false;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -386,6 +388,9 @@ const updateAuthPanel = () => {
   authPanel.hidden = !isAuthPanelOpen;
   authToggleButton.textContent = isManagerLoggedIn ? "Manager Access" : "Manager Login";
   quickLogoutButton.hidden = !isManagerLoggedIn;
+  editModeButton.hidden = !isManagerLoggedIn;
+  editModeButton.textContent = isEditMode ? "Done" : "Edit";
+  editModeButton.classList.toggle("active", isEditMode);
   managerIdentity.hidden = !isManagerLoggedIn || !lastManagerEmail;
   managerIdentity.textContent = isManagerLoggedIn ? `Logged in: ${lastManagerEmail}` : "";
   lastLoginHint.hidden = !isManagerLoggedIn || !lastManagerEmail;
@@ -435,9 +440,10 @@ const updateActiveView = () => {
 };
 
 const updateAccessUI = () => {
-  const canEdit = isBackendReady && isManagerLoggedIn;
+  const managerReady = isBackendReady && isManagerLoggedIn;
+  const canEdit = managerReady && isEditMode;
   const formControls = kidForm.querySelectorAll("input, select, button");
-  viewSwitcher.hidden = !canEdit;
+  viewSwitcher.hidden = !managerReady;
 
   if (!hasSupabaseConfig) {
     loginForm.hidden = true;
@@ -456,25 +462,31 @@ const updateAccessUI = () => {
     editorLock.hidden = false;
     editorLock.textContent = "Supabase client failed to load, so editing is unavailable.";
   } else {
-    loginForm.hidden = canEdit;
-    managerTools.hidden = !canEdit;
-    accessMode.textContent = canEdit ? "Manager edit mode" : "Admission mode";
-    loginHint.textContent = canEdit
-      ? "Manager editing is active on this device."
+    loginForm.hidden = managerReady;
+    managerTools.hidden = !managerReady;
+    accessMode.textContent = canEdit
+      ? "Manager edit mode"
+      : managerReady
+        ? "Manager roster mode"
+        : "Admission mode";
+    loginHint.textContent = managerReady
+      ? "Manager access is active. Use Edit to unlock entry and player actions."
       : "Sign in with a manager email created in Supabase Auth.";
     editorLock.hidden = canEdit;
-    editorLock.textContent = "Login as manager to add or edit academy records.";
+    editorLock.textContent = managerReady
+      ? "Click Edit to unlock New Gen Alpha Entry and the registered-player actions."
+      : "Login as manager to add or edit academy records.";
   }
 
   formControls.forEach((control) => {
     control.disabled = !canEdit;
   });
 
-  if (!canEdit && activeView !== "admission") {
+  if (!managerReady && activeView !== "admission") {
     activeView = "admission";
   }
 
-  if (canEdit && activeView !== "roster") {
+  if (managerReady && activeView !== "roster") {
     activeView = "roster";
   }
 
@@ -488,8 +500,10 @@ const updateAccessUI = () => {
 
   formPanel.hidden = !canEdit;
   recordsHelper.textContent = canEdit
-    ? "Manager editing is enabled. Use the table below to update, renew, or discontinue players."
-    : "Manager roster access is available only after login.";
+    ? "Edit mode is on. Use the table below to update, renew, or discontinue players."
+    : managerReady
+      ? "Roster view is open. Click Edit when you want to add players or change records."
+      : "Manager roster access is available only after login.";
   actionHeader.hidden = !canEdit;
 
   formMessage.textContent = !hasSupabaseConfig
@@ -497,14 +511,17 @@ const updateAccessUI = () => {
     : !isBackendReady
       ? "Supabase client failed to load."
       : canEdit
-      ? "Manager access enabled. You can add and update records."
-      : "Login is required before any edits can be made.";
+        ? "Edit mode enabled. You can add and update records."
+        : managerReady
+          ? "Roster access is enabled. Click Edit to make changes."
+          : "Login is required before any edits can be made.";
 
   if (!canEdit) {
     resetFormState();
   }
 
   syncAmountState();
+  updateActiveView();
   updateAuthPanel();
 };
 
@@ -520,7 +537,9 @@ const renderKids = () => {
     kidsTable.hidden = true;
     emptyState.textContent = isBackendReady
       ? isManagerLoggedIn
-        ? "No Gen Alpha players added yet. Use the form above to create the first record."
+        ? isEditMode
+          ? "No Gen Alpha players added yet. Use the form above to create the first record."
+          : "No Gen Alpha players added yet. Click Edit to add the first player."
         : "No Gen Alpha players added yet. Login as manager to create the first record."
       : "No data source is connected yet. Finish the Supabase setup to start storing academy records.";
     renderSummary([]);
@@ -596,7 +615,7 @@ const renderKids = () => {
       <td><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
       <td><span class="meta-text">Last updated by ${kid.updatedBy}</span></td>
       ${
-        isManagerLoggedIn
+        canEdit
           ? `<td>
             <div class="action-group">
               <button class="secondary-btn" data-action="edit" data-id="${kid.id}" type="button">Edit</button>
@@ -646,6 +665,9 @@ const refreshSession = async () => {
   }
 
   isManagerLoggedIn = Boolean(session);
+  if (!isManagerLoggedIn) {
+    isEditMode = false;
+  }
   updateAccessUI();
 };
 
@@ -688,6 +710,9 @@ const initializeAuthListener = () => {
       }
 
       isManagerLoggedIn = Boolean(session);
+      if (!isManagerLoggedIn) {
+        isEditMode = false;
+      }
       updateAccessUI();
       renderKids();
     }, 0);
@@ -723,6 +748,7 @@ loginForm.addEventListener("submit", async (event) => {
   loginForm.reset();
   loginMessage.textContent = "";
   isAuthPanelOpen = false;
+  isEditMode = false;
   activeView = "roster";
   await refreshSession();
   await loadKids();
@@ -742,6 +768,7 @@ const handleLogout = async () => {
 
   loginMessage.textContent = "";
   isAuthPanelOpen = false;
+  isEditMode = false;
   activeView = "admission";
   await refreshSession();
   renderKids();
@@ -753,8 +780,10 @@ quickLogoutButton.addEventListener("click", handleLogout);
 kidForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!isBackendReady || !isManagerLoggedIn) {
-    formMessage.textContent = "Login as manager after connecting Supabase to edit records.";
+  if (!isBackendReady || !isManagerLoggedIn || !isEditMode) {
+    formMessage.textContent = isManagerLoggedIn
+      ? "Click Edit to unlock academy record changes."
+      : "Login as manager after connecting Supabase to edit records.";
     return;
   }
 
@@ -819,7 +848,7 @@ kidForm.addEventListener("submit", async (event) => {
 kidsTableBody.addEventListener("click", async (event) => {
   const target = event.target;
 
-  if (!(target instanceof HTMLButtonElement) || !isBackendReady || !isManagerLoggedIn) {
+  if (!(target instanceof HTMLButtonElement) || !isBackendReady || !isManagerLoggedIn || !isEditMode) {
     return;
   }
 
@@ -939,6 +968,21 @@ authToggleButton.addEventListener("click", () => {
 authCloseButton.addEventListener("click", () => {
   isAuthPanelOpen = false;
   updateAuthPanel();
+});
+
+editModeButton.addEventListener("click", () => {
+  if (!isManagerLoggedIn || !isBackendReady) {
+    return;
+  }
+
+  isEditMode = !isEditMode;
+
+  if (!isEditMode) {
+    resetFormState();
+  }
+
+  updateAccessUI();
+  renderKids();
 });
 
 feesPaidSelect.addEventListener("change", syncAmountState);
