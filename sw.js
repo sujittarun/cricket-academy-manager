@@ -1,4 +1,4 @@
-const CACHE_NAME = "gen-alpha-academy-v4";
+const CACHE_NAME = "gen-alpha-academy-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,7 +6,10 @@ const APP_SHELL = [
   "./script.js",
   "./supabase-config.js",
   "./manifest.webmanifest",
-  "./assets/gen-alpha-badge-upscaled.png",
+  "./assets/og-image.jpg",
+  "./assets/og-image_forpreview.jpg",
+  "./assets/gen-alpha-favicon-192.png",
+  "./assets/gen-alpha-favicon-512.png",
   "./assets/gen-alpha-icon-192.png",
   "./assets/gen-alpha-icon-512.png",
 ];
