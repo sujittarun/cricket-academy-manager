@@ -304,215 +304,208 @@
               <p class="records-helper">This number is only used after the form is submitted successfully.</p>
             </div>
 
-            <div class="admission-form-grid">
-              <section class="admission-group admission-group-wide">
-                <div class="admission-group-head">
-                  <p class="section-kicker">Applicant Details</p>
-                  <h3>Player information</h3>
-                </div>
-                <div class="admission-grid three-col">
-                  <label>
-                    Applicant full name
-                    <input id="admissionApplicantName" name="applicantName" type="text" required />
-                  </label>
-                  <label>
-                    Nationality
-                    <input id="admissionNationality" name="nationality" type="text" value="Indian" required />
-                  </label>
-                  <label>
-                    Gender
-                    <select id="admissionGender" name="gender" required>
-                      <option value="">Select gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </label>
-                </div>
-                <div class="admission-grid dob-grid">
-                  <label>
-                    Date
-                    <select id="admissionBirthDay" name="birthDay" required>
-                      <option value="">DD</option>
-                    </select>
-                  </label>
-                  <label>
-                    Month
-                    <select id="admissionBirthMonth" name="birthMonth" required>
-                      <option value="">MON</option>
-                    </select>
-                  </label>
-                  <label>
-                    Year
-                    <select id="admissionBirthYear" name="birthYear" required>
-                      <option value="">YYYY</option>
-                    </select>
-                  </label>
-                  <div class="data-tile compact-data-tile">
-                    <span class="data-label">Age</span>
-                    <span id="admissionAge" class="data-value">Auto</span>
+            <div class="admission-compact-layout">
+              <div class="admission-column">
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Player</p>
+                    <h3>Basic details</h3>
                   </div>
-                </div>
-              </section>
+                  <div class="admission-grid compact-grid compact-grid-three">
+                    <label class="full-span">
+                      Applicant full name
+                      <input id="admissionApplicantName" name="applicantName" type="text" required />
+                    </label>
+                    <label>
+                      Nationality
+                      <input id="admissionNationality" name="nationality" type="text" value="Indian" required />
+                    </label>
+                    <label>
+                      Gender
+                      <select id="admissionGender" name="gender" required>
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+                    <div class="dob-compact-row full-span">
+                      <label>
+                        DOB
+                        <select id="admissionBirthDay" name="birthDay" required>
+                          <option value="">DD</option>
+                        </select>
+                      </label>
+                      <label>
+                        &nbsp;
+                        <select id="admissionBirthMonth" name="birthMonth" required>
+                          <option value="">MON</option>
+                        </select>
+                      </label>
+                      <label>
+                        &nbsp;
+                        <select id="admissionBirthYear" name="birthYear" required>
+                          <option value="">YYYY</option>
+                        </select>
+                      </label>
+                      <div class="data-tile compact-data-tile">
+                        <span class="data-label">Age</span>
+                        <span id="admissionAge" class="data-value">Auto</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
 
-              <section class="admission-group">
-                <div class="admission-group-head">
-                  <p class="section-kicker">Parent Details</p>
-                  <h3>Family contacts</h3>
-                </div>
-                <div class="admission-grid two-col">
-                  <label>
-                    Father / guardian name
-                    <input id="admissionGuardianName" name="guardianName" type="text" required />
-                  </label>
-                  <label>
-                    Parent contact number
-                    <input id="admissionParentContact" name="parentContact" type="tel" required />
-                  </label>
-                  <label>
-                    Alternate contact number
-                    <input id="admissionAlternateContact" name="alternateContact" type="tel" required />
-                  </label>
-                  <label>
-                    Parent Aadhaar / NIDA number
-                    <input id="admissionAadhaar" name="aadhaar" type="text" />
-                  </label>
-                </div>
-              </section>
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Family</p>
+                    <h3>Contacts</h3>
+                  </div>
+                  <div class="admission-grid compact-grid compact-grid-two">
+                    <label>
+                      Father / guardian name
+                      <input id="admissionGuardianName" name="guardianName" type="text" required />
+                    </label>
+                    <label>
+                      Parent contact number
+                      <input id="admissionParentContact" name="parentContact" type="tel" required />
+                    </label>
+                    <label>
+                      Alternate contact number
+                      <input id="admissionAlternateContact" name="alternateContact" type="tel" required />
+                    </label>
+                    <label>
+                      Parent Aadhaar / NIDA number
+                      <input id="admissionAadhaar" name="aadhaar" type="text" />
+                    </label>
+                  </div>
+                </section>
 
-              <section class="admission-group">
-                <div class="admission-group-head">
-                  <p class="section-kicker">Schooling</p>
-                  <h3>Player background</h3>
-                </div>
-                <div class="admission-grid two-col">
-                  <label>
-                    School / college
-                    <input id="admissionSchoolCollege" name="schoolCollege" type="text" />
-                  </label>
-                  <label>
-                    City
-                    <input id="admissionCity" name="city" type="text" required />
-                  </label>
-                </div>
-                <label class="full-span">
-                  Address
-                  <textarea id="admissionAddress" name="address" rows="3" required></textarea>
-                </label>
-              </section>
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Schooling</p>
+                    <h3>Background</h3>
+                  </div>
+                  <div class="admission-grid compact-grid compact-grid-two">
+                    <label>
+                      School / college
+                      <input id="admissionSchoolCollege" name="schoolCollege" type="text" />
+                    </label>
+                    <label>
+                      City
+                      <input id="admissionCity" name="city" type="text" required />
+                    </label>
+                    <label class="full-span">
+                      Address
+                      <textarea id="admissionAddress" name="address" rows="2" required></textarea>
+                    </label>
+                  </div>
+                </section>
+              </div>
 
-              <section class="admission-group">
-                <div class="admission-group-head">
-                  <p class="section-kicker">Training Details</p>
-                  <h3>Joining and payment</h3>
-                </div>
-                <div class="admission-grid three-col">
-                  <label>
-                    Time slot
-                    <select id="admissionTimeSlot" name="timeSlot" required>
-                      <option value="">Select slot</option>
-                      <option value="6AM">6AM</option>
-                      <option value="7:30AM">7:30AM</option>
-                      <option value="4PM">4PM</option>
-                      <option value="5:30PM">5:30PM</option>
-                      <option value="7PM">7PM</option>
-                    </select>
-                  </label>
-                  <label>
-                    Joining date
-                    <input id="admissionJoinDate" name="joinDate" type="date" required />
-                  </label>
-                  <label>
-                    Fees paid
-                    <select id="admissionFeesPaid" name="feesPaid" required>
-                      <option value="no">No</option>
-                      <option value="yes">Yes</option>
-                    </select>
-                  </label>
-                </div>
-                <div class="admission-grid two-col">
-                  <label>
-                    Amount paid
-                    <input id="admissionAmountPaid" name="amountPaid" type="number" min="0" step="0.01" />
-                  </label>
-                </div>
-              </section>
+              <div class="admission-column">
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Training</p>
+                    <h3>Joining and payment</h3>
+                  </div>
+                  <div class="admission-grid compact-grid compact-grid-two">
+                    <label>
+                      Time slot
+                      <select id="admissionTimeSlot" name="timeSlot" required>
+                        <option value="">Select slot</option>
+                        <option value="6AM">6AM</option>
+                        <option value="7:30AM">7:30AM</option>
+                        <option value="4PM">4PM</option>
+                        <option value="5:30PM">5:30PM</option>
+                        <option value="7PM">7PM</option>
+                      </select>
+                    </label>
+                    <label>
+                      Joining date
+                      <input id="admissionJoinDate" name="joinDate" type="date" required />
+                    </label>
+                    <label>
+                      Fees paid
+                      <select id="admissionFeesPaid" name="feesPaid" required>
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
+                    </label>
+                    <label>
+                      Amount paid
+                      <input id="admissionAmountPaid" name="amountPaid" type="number" min="0" step="0.01" />
+                    </label>
+                  </div>
+                </section>
 
-              <section class="admission-group">
-                <div class="admission-group-head">
-                  <p class="section-kicker">Skills and Playing Style</p>
-                  <h3>Playing preferences</h3>
-                </div>
-                <div class="single-check-row">
-                  <label class="checkbox-row">
-                    <input id="admissionReadyToStart" name="readyToStart" type="checkbox" />
-                    <span>Kick start the journey now</span>
-                  </label>
-                </div>
-                <div class="admission-grid two-col">
-                  <fieldset class="option-block">
-                    <legend>Batsman style</legend>
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Skills</p>
+                    <h3>Playing style</h3>
+                  </div>
+                  <div class="compact-inline-choice">
                     <label class="checkbox-row">
-                      <input type="radio" name="batsmanStyle" value="Right Handed Batsman" />
-                      <span>Right handed batsman</span>
+                      <input id="admissionReadyToStart" name="readyToStart" type="checkbox" />
+                      <span>Kick start the journey now</span>
                     </label>
-                    <label class="checkbox-row">
-                      <input type="radio" name="batsmanStyle" value="Left Handed Batsman" />
-                      <span>Left handed batsman</span>
-                    </label>
-                  </fieldset>
-                  <fieldset class="option-block">
-                    <legend>Bowling style</legend>
-                    <label class="checkbox-row">
-                      <input type="checkbox" name="bowlingStyles" value="Right Arm Fast Bowler" />
-                      <span>Right arm fast bowler</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" name="bowlingStyles" value="Left Arm Fast Bowler" />
-                      <span>Left arm fast bowler</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" name="bowlingStyles" value="Right Arm Off Spinner" />
-                      <span>Right arm off spinner</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" name="bowlingStyles" value="Left Arm Leg Spinner" />
-                      <span>Left arm leg spinner</span>
-                    </label>
-                  </fieldset>
-                </div>
-              </section>
+                  </div>
+                  <div class="admission-grid compact-grid compact-grid-two">
+                    <fieldset class="option-block compact-option-block">
+                      <legend>Batsman style</legend>
+                      <label class="checkbox-row">
+                        <input type="radio" name="batsmanStyle" value="Right Handed Batsman" />
+                        <span>Right handed batsman</span>
+                      </label>
+                      <label class="checkbox-row">
+                        <input type="radio" name="batsmanStyle" value="Left Handed Batsman" />
+                        <span>Left handed batsman</span>
+                      </label>
+                    </fieldset>
+                    <fieldset class="option-block compact-option-block">
+                      <legend>Bowling style</legend>
+                      <label class="checkbox-row">
+                        <input type="checkbox" name="bowlingStyles" value="Right Arm Fast Bowler" />
+                        <span>Right arm fast bowler</span>
+                      </label>
+                      <label class="checkbox-row">
+                        <input type="checkbox" name="bowlingStyles" value="Left Arm Fast Bowler" />
+                        <span>Left arm fast bowler</span>
+                      </label>
+                      <label class="checkbox-row">
+                        <input type="checkbox" name="bowlingStyles" value="Right Arm Off Spinner" />
+                        <span>Right arm off spinner</span>
+                      </label>
+                      <label class="checkbox-row">
+                        <input type="checkbox" name="bowlingStyles" value="Left Arm Leg Spinner" />
+                        <span>Left arm leg spinner</span>
+                      </label>
+                    </fieldset>
+                  </div>
+                </section>
 
-              <section class="admission-group admission-group-wide">
-                <div class="admission-group-head">
-                  <p class="section-kicker">Parent Consent</p>
-                  <h3>Required confirmations</h3>
-                </div>
-                <div class="consent-copy">
-                  <p>
-                    I request that my son / daughter be admitted as a player of Gen Alpha Cricket Academy. I agree
-                    that my child will abide by academy discipline, punctuality, and training rules.
-                  </p>
-                  <p>
-                    I understand that cricket is a physical sport and I accept the possibility of sports-related
-                    injuries during practice, coaching, or matches.
-                  </p>
-                  <p>
-                    I confirm that the academy will not be responsible for loss of personal belongings, and I agree
-                    to clear monthly fees within the first 10 days.
-                  </p>
-                </div>
-                <div class="consent-grid">
-                  <label class="checkbox-row consent-row">
-                    <input id="admissionConsentAccepted" name="consentAccepted" type="checkbox" required />
-                    <span>I accept the academy rules and the injury-related consent above.</span>
-                  </label>
-                  <label class="checkbox-row consent-row">
-                    <input id="admissionTermsAccepted" name="termsAccepted" type="checkbox" required />
-                    <span>I confirm the fee, discipline, and academy property terms.</span>
-                  </label>
-                </div>
-              </section>
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Consent</p>
+                    <h3>Required approval</h3>
+                  </div>
+                  <div class="consent-copy compact-consent-copy">
+                    <p>
+                      I agree to academy rules, punctuality, monthly fee timelines, and understand that cricket can involve sports-related injuries during training or matches.
+                    </p>
+                  </div>
+                  <div class="consent-grid compact-consent-grid">
+                    <label class="checkbox-row consent-row">
+                      <input id="admissionConsentAccepted" name="consentAccepted" type="checkbox" required />
+                      <span>I accept the academy rules and injury-related consent.</span>
+                    </label>
+                    <label class="checkbox-row consent-row">
+                      <input id="admissionTermsAccepted" name="termsAccepted" type="checkbox" required />
+                      <span>I confirm the fee, discipline, and academy property terms.</span>
+                    </label>
+                  </div>
+                </section>
+              </div>
             </div>
 
             <p id="admissionMessage" class="form-message" aria-live="polite"></p>
