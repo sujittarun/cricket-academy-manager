@@ -50,6 +50,8 @@ const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionAmountPaid = document.getElementById("admissionAmountPaid");
 const resetAdmissionButton = document.getElementById("resetAdmissionButton");
 const submitAdmissionButton = document.getElementById("submitAdmissionButton");
+const admissionReadyToStart = document.getElementById("admissionReadyToStart");
+const admissionStyleOptions = document.getElementById("admissionStyleOptions");
 
 const TIME_SLOTS = ["6AM", "7:30AM", "4PM", "5:30PM", "7PM"];
 const ADMISSION_MONTHS = [
@@ -251,6 +253,24 @@ const syncAdmissionAmountState = () => {
   }
 };
 
+const syncAdmissionStyleState = () => {
+  if (!admissionReadyToStart || !admissionStyleOptions) {
+    return;
+  }
+
+  const disableStyles = admissionReadyToStart.checked;
+  const styleInputs = admissionStyleOptions.querySelectorAll('input[name="batsmanStyle"], input[name="bowlingStyles"]');
+
+  styleInputs.forEach((input) => {
+    input.disabled = disableStyles;
+    if (disableStyles) {
+      input.checked = false;
+    }
+  });
+
+  admissionStyleOptions.classList.toggle("disabled", disableStyles);
+};
+
 const resetFormState = () => {
   editingKidId = null;
   kidForm.reset();
@@ -340,6 +360,7 @@ const resetAdmissionForm = async () => {
   admissionMessage.textContent = "";
   admissionAge.textContent = "Auto";
   syncAdmissionAmountState();
+  syncAdmissionStyleState();
   await loadAdmissionRegNo();
 };
 
@@ -883,6 +904,7 @@ authCloseButton.addEventListener("click", () => {
 
 feesPaidSelect.addEventListener("change", syncAmountState);
 admissionFeesPaid.addEventListener("change", syncAdmissionAmountState);
+admissionReadyToStart.addEventListener("change", syncAdmissionStyleState);
 admissionBirthDay.addEventListener("change", updateAdmissionAge);
 admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
@@ -981,6 +1003,7 @@ const initializeApp = async () => {
   updateAccessUI();
   renderKids();
   syncAdmissionAmountState();
+  syncAdmissionStyleState();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
