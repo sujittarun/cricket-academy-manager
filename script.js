@@ -474,6 +474,10 @@ const updateAccessUI = () => {
     activeView = "admission";
   }
 
+  if (canEdit && activeView !== "roster") {
+    activeView = "roster";
+  }
+
   if (lastManagerEmail) {
     document.getElementById("email").value = lastManagerEmail;
   }
@@ -719,6 +723,7 @@ loginForm.addEventListener("submit", async (event) => {
   loginForm.reset();
   loginMessage.textContent = "";
   isAuthPanelOpen = false;
+  activeView = "roster";
   await refreshSession();
   await loadKids();
 });
@@ -737,6 +742,7 @@ const handleLogout = async () => {
 
   loginMessage.textContent = "";
   isAuthPanelOpen = false;
+  activeView = "admission";
   await refreshSession();
   renderKids();
 };
