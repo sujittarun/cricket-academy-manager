@@ -530,6 +530,7 @@ const renderKids = () => {
   updateStats();
   renderSlotFilters();
 
+  const canEdit = isBackendReady && isManagerLoggedIn && isEditMode;
   const visibleKids = getFilteredKids();
 
   if (kids.length === 0) {
