@@ -1,4 +1,4 @@
-const CACHE_NAME = "gen-alpha-academy-v3";
+const CACHE_NAME = "gen-alpha-academy-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,14 +11,15 @@ const APP_SHELL = [
   "./assets/gen-alpha-icon-512.png",
 ];
 
-const NETWORK_FIRST_PATHS = new Set([
-  "/",
+/** Match GitHub Pages project URLs (e.g. /repo/script.js), not only root-hosted /script.js */
+const NETWORK_FIRST_PATH_ENDINGS = [
   "/index.html",
   "/styles.css",
   "/script.js",
   "/supabase-config.js",
   "/manifest.webmanifest",
-]);
+  "/sw.js",
+];
 
 const isHttpRequest = (request) => request.url.startsWith("http");
 
@@ -99,8 +100,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   const pathname = getPathname(event.request);
-  const shouldUseNetworkFirst =
-    event.request.mode === "navigate" || NETWORK_FIRST_PATHS.has(pathname);
+  const isAppShellAsset = NETWORK_FIRST_PATH_ENDINGS.some((end) => pathname.endsWith(end));
+  const shouldUseNetworkFirst = event.request.mode === "navigate" || isAppShellAsset;
 
   event.respondWith(shouldUseNetworkFirst ? networkFirst(event.request) : cacheFirst(event.request));
 });
