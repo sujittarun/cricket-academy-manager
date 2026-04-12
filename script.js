@@ -48,6 +48,8 @@ const admissionAge = document.getElementById("admissionAge");
 const admissionJoinDate = document.getElementById("admissionJoinDate");
 const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionAmountPaid = document.getElementById("admissionAmountPaid");
+const admissionJerseySize = document.getElementById("admissionJerseySize");
+const admissionJerseyPairs = document.getElementById("admissionJerseyPairs");
 const resetAdmissionButton = document.getElementById("resetAdmissionButton");
 const submitAdmissionButton = document.getElementById("submitAdmissionButton");
 const admissionReadyToStart = document.getElementById("admissionReadyToStart");
@@ -103,6 +105,8 @@ const normalizeKid = (kid) => {
     joinDate: kid.join_date || "",
     feesPaid: kid.fees_paid ? "yes" : "no",
     amountPaid: Number(kid.amount_paid) || 0,
+    jerseySize: kid.jersey_size || "",
+    jerseyPairs: Number(kid.jersey_pairs) || 0,
     renewals,
     addedBy: kid.added_by || "Unknown",
     updatedBy: kid.updated_by || kid.added_by || "Unknown",
@@ -252,6 +256,17 @@ const syncAdmissionAmountState = () => {
   if (!isPaid) {
     admissionAmountPaid.value = "0";
   }
+};
+
+const formatKitDetails = (kid) => {
+  const parts = [];
+  if (kid.jerseySize) {
+    parts.push(`Size ${kid.jerseySize}`);
+  }
+  if (kid.jerseyPairs > 0) {
+    parts.push(`${kid.jerseyPairs} pair${kid.jerseyPairs === 1 ? "" : "s"}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : '<span class="sub-copy">—</span>';
 };
 
 const syncAdmissionStyleState = () => {
@@ -539,6 +554,7 @@ const renderKids = () => {
       <td><strong>${kid.name}</strong></td>
       <td>${kid.age}</td>
       <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
+      <td><span class="meta-text">${formatKitDetails(kid)}</span></td>
       <td>
         <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
           ${kid.discontinued ? "Discontinued" : "Active"}
@@ -971,6 +987,8 @@ admissionForm.addEventListener("submit", async (event) => {
     p_join_date: String(formData.get("joinDate") || "").trim(),
     p_fees_paid: String(formData.get("feesPaid") || "no") === "yes",
     p_amount_paid: Number(formData.get("amountPaid") || 0),
+    p_jersey_size: String(formData.get("jerseySize") || "").trim(),
+    p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
     p_batsman_style: String(formData.get("batsmanStyle") || "").trim(),
     p_bowling_styles: formData.getAll("bowlingStyles").map((value) => String(value)),
     p_ready_to_start: formData.get("readyToStart") === "on",
