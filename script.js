@@ -401,18 +401,10 @@ const updateAuthPanel = () => {
 
 const renderSummary = (alertKids) => {
   if (!isManagerLoggedIn) {
-    if (activeView === "roster" && isBackendReady) {
-      heroLabel.textContent = "Academy roster";
-      const n = kids.length;
-      alertCount.textContent = n === 1 ? "1 player on file" : `${n} players on file`;
-      alertSummary.textContent =
-        "View only from this device. Use Manager Login when you need to add, edit, renew, or discontinue players.";
-      return;
-    }
     heroLabel.textContent = "Online Admission";
     alertCount.textContent = "Admission form is open";
     alertSummary.textContent =
-      "Parents can submit first-time admission below. Open Academy Roster to see current players (read-only).";
+      "Parents can submit first-time admission below. Manager tools stay locked until staff login.";
     return;
   }
 
@@ -451,7 +443,7 @@ const updateAccessUI = () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   const canEdit = managerReady && isEditMode;
   const formControls = kidForm.querySelectorAll("input, select, button");
-  viewSwitcher.hidden = !isBackendReady;
+  viewSwitcher.hidden = true;
 
   if (!hasSupabaseConfig) {
     loginForm.hidden = true;
@@ -489,6 +481,14 @@ const updateAccessUI = () => {
   formControls.forEach((control) => {
     control.disabled = !canEdit;
   });
+
+  if (!managerReady && activeView !== "admission") {
+    activeView = "admission";
+  }
+
+  if (managerReady && activeView !== "roster") {
+    activeView = "roster";
+  }
 
   if (lastManagerEmail) {
     document.getElementById("email").value = lastManagerEmail;
