@@ -372,7 +372,6 @@
                         <option value="">Select gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
-                        <option value="Other">Other</option>
                       </select>
                     </label>
                     <div class="dob-compact-row full-span">
@@ -430,20 +429,19 @@
                 <section class="admission-group">
                   <div class="admission-group-head compact-head">
                     <p class="section-kicker">Schooling</p>
-                    <h3>Background</h3>
+                    <h3>School & Home Address</h3>
                   </div>
                   <div class="admission-grid compact-grid compact-grid-two">
-                    <label>
-                      School / college
-                      <input id="admissionSchoolCollege" name="schoolCollege" type="text" />
+                    <label> School
+                      <input id="admissionSchoolCollege" name="schoolCollege" type="text" placeholder="School or college name" />
                     </label>
                     <label>
-                      City
+                      Home City
                       <input id="admissionCity" name="city" type="text" required />
                     </label>
                     <label class="full-span">
-                      Address
-                      <textarea id="admissionAddress" name="address" rows="2" required></textarea>
+                      Home Address (Student)
+                      <textarea id="admissionAddress" name="address" rows="2" placeholder="Full home address of the student" required></textarea>
                     </label>
                   </div>
                 </section>
