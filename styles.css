@@ -63,12 +63,13 @@ body {
 }
 
 .masthead-top {
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .masthead-bottom {
   justify-content: flex-start;
   gap: 18px;
+  margin-top: 18px;
 }
 
 .brand-badge {
@@ -80,7 +81,7 @@ body {
 
 .brand-copy {
   display: grid;
-  gap: 6px;
+  gap: 2px;
 }
 
 .view-switcher {
@@ -677,6 +678,7 @@ h1 {
   justify-content: space-between;
   gap: 18px;
   align-items: flex-start;
+  margin-bottom: 14px;
 }
 
 .admission-banner {
@@ -1012,6 +1014,10 @@ h1 {
     align-items: stretch;
   }
 
+  .masthead-top {
+    gap: 14px;
+  }
+
   .manager-bar,
   .hero-card {
     min-width: 0;
@@ -1034,19 +1040,23 @@ h1 {
 
   .masthead-top,
   .masthead-bottom,
-  .brand-lockup,
   .manager-bar {
     display: grid;
+  }
+
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
 
   .manager-actions {
     justify-content: stretch;
   }
 
-  .brand-lockup,
   .brand-copy {
-    justify-content: center;
-    text-align: center;
+    justify-content: start;
+    text-align: left;
   }
 
   .form-message {
@@ -1070,19 +1080,29 @@ h1 {
   }
 
   .brand-badge {
-    width: 72px;
-    height: 96px;
+    width: 64px;
+    height: 84px;
+    flex: 0 0 auto;
   }
 
   h1 {
-    font-size: 1.85rem;
-    max-width: none;
+    font-size: 1.55rem;
+    max-width: 12ch;
   }
 
   .hero-copy,
   .records-helper,
   .stat-copy {
     font-size: 0.9rem;
+  }
+
+  .eyebrow {
+    margin-bottom: 4px;
+    font-size: 0.7rem;
+  }
+
+  .admission-heading {
+    margin-bottom: 10px;
   }
 
   .hero-card {

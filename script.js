@@ -41,6 +41,7 @@ const admissionView = document.getElementById("admissionView");
 const rosterTabButton = document.getElementById("rosterTabButton");
 const admissionTabButton = document.getElementById("admissionTabButton");
 const viewSwitcher = document.getElementById("viewSwitcher");
+const mastheadBottom = document.getElementById("mastheadBottom");
 const heroLabel = document.getElementById("heroLabel");
 const actionHeader = document.getElementById("actionHeader");
 const admissionForm = document.getElementById("admissionForm");
@@ -407,13 +408,11 @@ const updateAuthPanel = () => {
 
 const renderSummary = (alertKids) => {
   if (!isManagerLoggedIn) {
-    heroLabel.textContent = "Online Admission";
-    alertCount.textContent = "Admission form is open";
-    alertSummary.textContent =
-      "Parents can submit first-time admission below. Manager tools stay locked until staff login.";
+    mastheadBottom.hidden = true;
     return;
   }
 
+  mastheadBottom.hidden = false;
   heroLabel.textContent = "30-Day Alerts";
   const totalAlerts = alertKids.length;
 
