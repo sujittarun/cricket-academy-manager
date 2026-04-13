@@ -405,6 +405,11 @@ const setPendingPaymentReturn = (provider) => {
 const openPaymentPopup = () => {
   paymentPopup.hidden = false;
   document.body.classList.add("popup-open");
+  if (!academyPaymentConfig.upiId) {
+    admissionMessage.textContent = "Payment popup opened, but academy UPI ID is not configured yet.";
+  } else if (getAdmissionAmount() <= 0) {
+    admissionMessage.textContent = "Payment popup opened. Enter the amount to generate QR or launch the UPI app.";
+  }
   updatePaymentAssist();
 };
 
@@ -518,10 +523,6 @@ const updatePaymentAssist = () => {
     : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
   paymentConfigNotice.hidden = hasConfig;
   paymentAppGrid.hidden = !isMobileBrowser;
-
-  if (openPaymentPopupButton) {
-    openPaymentPopupButton.disabled = !hasConfig || !hasAmount;
-  }
 
   [
     paymentGooglePayButton,
