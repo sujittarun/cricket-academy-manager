@@ -196,6 +196,10 @@ h1 {
   color: var(--accent-dark);
 }
 
+body.popup-open {
+  overflow: hidden;
+}
+
 .manager-bar {
   justify-content: space-between;
   align-items: center;
@@ -782,8 +786,9 @@ h1 {
   padding: 10px 12px;
 }
 
-.payment-assist {
+.payment-entry-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   margin-top: 2px;
   padding: 14px;
@@ -793,15 +798,24 @@ h1 {
     linear-gradient(180deg, rgba(244, 248, 255, 0.98) 0%, rgba(234, 242, 255, 0.86) 100%);
 }
 
-.payment-assist-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
+.payment-entry-copy {
+  display: grid;
+  gap: 4px;
 }
 
-.payment-assist-head h4 {
+.payment-entry-copy h4 {
   color: var(--accent-dark);
+}
+
+.payment-entry-side {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  align-content: start;
+}
+
+.payment-open-btn {
+  min-width: 132px;
 }
 
 .payment-assist-copy,
@@ -986,16 +1000,44 @@ h1 {
   min-height: 38px;
 }
 
-.payment-record-grid {
-  align-items: end;
-}
-
 .payment-return-hint {
   padding: 11px 12px;
   border-radius: 14px;
   background: rgba(21, 81, 173, 0.08);
   color: var(--accent-dark);
   font-weight: 600;
+}
+
+.payment-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(6, 18, 40, 0.48);
+  backdrop-filter: blur(6px);
+}
+
+.payment-popup {
+  width: min(100%, 820px);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  background:
+    linear-gradient(180deg, rgba(249, 252, 255, 0.98) 0%, rgba(238, 245, 255, 0.98) 100%);
+  box-shadow: 0 28px 70px rgba(10, 24, 48, 0.22);
+}
+
+.payment-popup-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
 }
 
 .compact-grid-two {
@@ -1215,8 +1257,11 @@ h1 {
   .dob-compact-row,
   .admission-style-layout,
   .payment-app-grid,
-  .payment-layout,
-  .payment-record-grid {
+  .payment-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-entry-card {
     grid-template-columns: 1fr;
   }
 }
@@ -1427,13 +1472,22 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .payment-assist-head,
+  .payment-popup-header,
   .payment-detail-row {
     display: grid;
   }
 
   .payment-qr-canvas {
     width: min(100%, 220px);
+  }
+
+  .payment-popup {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .payment-entry-side {
+    justify-items: start;
   }
 
   .admission-actions .primary-btn,

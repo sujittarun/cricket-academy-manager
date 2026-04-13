@@ -58,13 +58,16 @@ const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionAmountPaid = document.getElementById("admissionAmountPaid");
 const admissionJerseySize = document.getElementById("admissionJerseySize");
 const admissionJerseyPairs = document.getElementById("admissionJerseyPairs");
-const admissionPaymentMethod = document.getElementById("admissionPaymentMethod");
-const admissionPaymentPayerUpiId = document.getElementById("admissionPaymentPayerUpiId");
-const admissionPaymentReference = document.getElementById("admissionPaymentReference");
 const admissionPaymentAssist = document.getElementById("admissionPaymentAssist");
+const paymentEntryTitle = document.getElementById("paymentEntryTitle");
 const paymentAssistCopy = document.getElementById("paymentAssistCopy");
 const paymentDeviceBadge = document.getElementById("paymentDeviceBadge");
+const openPaymentPopupButton = document.getElementById("openPaymentPopupButton");
+const paymentPopup = document.getElementById("paymentPopup");
+const closePaymentPopupButton = document.getElementById("closePaymentPopupButton");
+const paymentPopupCopy = document.getElementById("paymentPopupCopy");
 const paymentConfigNotice = document.getElementById("paymentConfigNotice");
+const paymentAppGrid = document.getElementById("paymentAppGrid");
 const paymentGooglePayButton = document.getElementById("paymentGooglePayButton");
 const paymentPhonePeButton = document.getElementById("paymentPhonePeButton");
 const paymentUpiButton = document.getElementById("paymentUpiButton");
@@ -74,7 +77,6 @@ const paymentMerchantUpiId = document.getElementById("paymentMerchantUpiId");
 const paymentMerchantName = document.getElementById("paymentMerchantName");
 const paymentAmountValue = document.getElementById("paymentAmountValue");
 const copyPaymentUpiButton = document.getElementById("copyPaymentUpiButton");
-const copyPaymentLinkButton = document.getElementById("copyPaymentLinkButton");
 const paymentReturnHint = document.getElementById("paymentReturnHint");
 const resetAdmissionButton = document.getElementById("resetAdmissionButton");
 const submitAdmissionButton = document.getElementById("submitAdmissionButton");
@@ -400,6 +402,17 @@ const setPendingPaymentReturn = (provider) => {
   );
 };
 
+const openPaymentPopup = () => {
+  paymentPopup.hidden = false;
+  document.body.classList.add("popup-open");
+  updatePaymentAssist();
+};
+
+const closePaymentPopup = () => {
+  paymentPopup.hidden = true;
+  document.body.classList.remove("popup-open");
+};
+
 const refreshPaymentReturnHint = () => {
   if (!paymentReturnHint) {
     return;
@@ -492,21 +505,29 @@ const updatePaymentAssist = () => {
   paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
   paymentMerchantName.textContent = academyPaymentConfig.payeeName;
   paymentAmountValue.textContent = `Rs ${amount.toFixed(2)}`;
-  paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile app launch" : "Desktop QR mode";
+  paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile payment" : "Desktop QR";
+  paymentEntryTitle.textContent = isMobileBrowser ? "Pay from your UPI app" : "Open QR payment popup";
   paymentAssistCopy.textContent = isMobileBrowser
-    ? "Use a UPI app on this phone, then come back here and finish the form."
-    : "Desktop browsers work best with QR payment. Scan using your phone and continue the form here.";
+    ? "Open the payment popup to launch Google Pay, PhonePe, or another UPI app on this phone."
+    : "Open the payment popup to show a QR code and pay from your phone.";
+  paymentPopupCopy.textContent = isMobileBrowser
+    ? "Launch your UPI app, complete payment, then return here and finish the admission."
+    : "Scan the QR from your phone and finish the admission form here after payment.";
   paymentQrCaption.textContent = isMobileBrowser
-    ? "If app launch is blocked by the browser, use the copied link or scan the QR from another device."
+    ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
     : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
   paymentConfigNotice.hidden = hasConfig;
+  paymentAppGrid.hidden = !isMobileBrowser;
+
+  if (openPaymentPopupButton) {
+    openPaymentPopupButton.disabled = !hasConfig || !hasAmount;
+  }
 
   [
     paymentGooglePayButton,
     paymentPhonePeButton,
     paymentUpiButton,
     copyPaymentUpiButton,
-    copyPaymentLinkButton,
   ].forEach((button) => {
     if (!button) {
       return;
@@ -544,7 +565,6 @@ const launchPaymentApp = (provider) => {
     return;
   }
 
-  admissionPaymentMethod.value = provider;
   setPendingPaymentReturn(provider);
   refreshPaymentReturnHint();
 
@@ -556,8 +576,8 @@ const launchPaymentApp = (provider) => {
   }
 
   if (!isMobileBrowser) {
-    copyPaymentText(getGenericUpiUri(), "UPI payment link copied");
-    admissionMessage.textContent = `Desktop browsers work best with QR payment. Your ${provider} preference is saved for this admission.`;
+    admissionMessage.textContent = "Desktop browsers use the QR payment popup. Scan and pay from your phone.";
+    openPaymentPopup();
     return;
   }
 
@@ -646,9 +666,6 @@ const resetAdmissionForm = async () => {
   admissionAge.textContent = "Auto";
   admissionPaymentIntentId = buildPaymentIntentId();
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
-  if (admissionPaymentMethod) {
-    admissionPaymentMethod.value = "UPI";
-  }
   syncAdmissionAmountState();
   syncAdmissionStyleState();
   refreshPaymentReturnHint();
@@ -1267,17 +1284,25 @@ admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
 admissionAmountPaid.addEventListener("input", updatePaymentAssist);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
-admissionPaymentMethod.addEventListener("change", refreshPaymentReturnHint);
+openPaymentPopupButton.addEventListener("click", openPaymentPopup);
+closePaymentPopupButton.addEventListener("click", closePaymentPopup);
+paymentPopup.addEventListener("click", (event) => {
+  if (event.target === paymentPopup) {
+    closePaymentPopup();
+  }
+});
 paymentGooglePayButton.addEventListener("click", () => launchPaymentApp("Google Pay"));
 paymentPhonePeButton.addEventListener("click", () => launchPaymentApp("PhonePe"));
 paymentUpiButton.addEventListener("click", () => launchPaymentApp("UPI"));
 copyPaymentUpiButton.addEventListener("click", () =>
   copyPaymentText(academyPaymentConfig.upiId, "Academy UPI ID copied")
 );
-copyPaymentLinkButton.addEventListener("click", () =>
-  copyPaymentText(getGenericUpiUri(), "UPI payment link copied")
-);
 window.addEventListener("focus", refreshPaymentReturnHint);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && paymentPopup && !paymentPopup.hidden) {
+    closePaymentPopup();
+  }
+});
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     refreshPaymentReturnHint();
@@ -1327,11 +1352,6 @@ admissionForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (String(formData.get("paymentReference") || "").trim() && String(formData.get("feesPaid") || "no") !== "yes") {
-    admissionMessage.textContent = "If payment is complete and you are entering a UTR, please switch Fees paid to Yes.";
-    return;
-  }
-
   submitAdmissionButton.disabled = true;
   admissionMessage.textContent = "Submitting admission form...";
 
@@ -1354,9 +1374,6 @@ admissionForm.addEventListener("submit", async (event) => {
     p_amount_paid: Number(formData.get("amountPaid") || 0),
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
-    p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
-    p_payment_upi_id: String(formData.get("paymentPayerUpiId") || "").trim(),
-    p_payment_reference: String(formData.get("paymentReference") || "").trim(),
     p_comments: String(formData.get("comments") || "").trim(),
     p_batsman_style: String(formData.get("batsmanStyle") || "").trim(),
     p_bowling_styles: formData.getAll("bowlingStyles").map((value) => String(value)),
@@ -1375,6 +1392,7 @@ admissionForm.addEventListener("submit", async (event) => {
   const row = Array.isArray(data) ? data[0] : data;
   admissionMessage.textContent = `Admission submitted successfully. Reg No ${row?.reg_no ?? admissionRegNo.textContent}.`;
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+  closePaymentPopup();
   showToast(`Admission saved for ${String(formData.get("applicantName") || "").trim()}`);
   await resetAdmissionForm();
   await loadKids();
