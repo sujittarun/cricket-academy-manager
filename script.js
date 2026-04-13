@@ -74,9 +74,11 @@ const paymentUpiButton = document.getElementById("paymentUpiButton");
 const paymentQrCanvas = document.getElementById("paymentQrCanvas");
 const paymentQrCaption = document.getElementById("paymentQrCaption");
 const paymentMerchantUpiId = document.getElementById("paymentMerchantUpiId");
+const paymentMerchantMobile = document.getElementById("paymentMerchantMobile");
 const paymentMerchantName = document.getElementById("paymentMerchantName");
 const paymentAmountValue = document.getElementById("paymentAmountValue");
 const copyPaymentUpiButton = document.getElementById("copyPaymentUpiButton");
+const copyPaymentMobileButton = document.getElementById("copyPaymentMobileButton");
 const paymentReturnHint = document.getElementById("paymentReturnHint");
 const resetAdmissionButton = document.getElementById("resetAdmissionButton");
 const submitAdmissionButton = document.getElementById("submitAdmissionButton");
@@ -113,6 +115,7 @@ const isMobileBrowser = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const isAndroidBrowser = /Android/i.test(navigator.userAgent);
 const academyPaymentConfig = {
   upiId: String(PAYMENT_CONFIG.upiId || "").trim(),
+  mobileNumber: String(PAYMENT_CONFIG.mobileNumber || "9059962499").trim(),
   payeeName: String(PAYMENT_CONFIG.payeeName || "Gen Alpha Cricket Academy").trim(),
   notePrefix: String(PAYMENT_CONFIG.notePrefix || "Gen Alpha admission").trim(),
 };
@@ -501,6 +504,7 @@ const updatePaymentAssist = () => {
   const amount = getAdmissionAmount();
 
   paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
+  paymentMerchantMobile.textContent = academyPaymentConfig.mobileNumber || "Not available";
   paymentMerchantName.textContent = academyPaymentConfig.payeeName;
   paymentAmountValue.textContent = amount > 0 ? `Rs ${amount.toFixed(2)}` : "Enter in app";
   paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile payment" : "Desktop QR";
@@ -1289,6 +1293,9 @@ paymentPhonePeButton.addEventListener("click", () => launchPaymentApp("PhonePe")
 paymentUpiButton.addEventListener("click", () => launchPaymentApp("UPI"));
 copyPaymentUpiButton.addEventListener("click", () =>
   copyPaymentText(academyPaymentConfig.upiId, "Academy UPI ID copied")
+);
+copyPaymentMobileButton.addEventListener("click", () =>
+  copyPaymentText(academyPaymentConfig.mobileNumber, "Academy mobile number copied")
 );
 window.addEventListener("focus", refreshPaymentReturnHint);
 window.addEventListener("keydown", (event) => {
