@@ -408,7 +408,7 @@ const openPaymentPopup = () => {
   if (!academyPaymentConfig.upiId) {
     admissionMessage.textContent = "Payment popup opened, but academy UPI ID is not configured yet.";
   } else if (getAdmissionAmount() <= 0) {
-    admissionMessage.textContent = "Payment popup opened. Enter the amount to generate QR or launch the UPI app.";
+    admissionMessage.textContent = "Payment popup opened. Amount is optional here, but adding it helps parents pay faster.";
   }
   updatePaymentAssist();
 };
@@ -460,20 +460,14 @@ const renderPaymentQr = () => {
 
   const upiUri = getGenericUpiUri();
   const hasConfig = Boolean(academyPaymentConfig.upiId);
-  const hasAmount = getAdmissionAmount() > 0;
 
   if (!hasConfig) {
     paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Add the academy UPI ID in config to enable QR payment.</div>`;
     return;
   }
 
-  if (!hasAmount) {
-    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Enter the payment amount above to generate the QR.</div>`;
-    return;
-  }
-
   if (!window.QRCode?.toCanvas) {
-    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">QR library did not load. You can still copy the UPI ID or payment link.</div>`;
+    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">QR library did not load. You can still copy the academy UPI ID.</div>`;
     return;
   }
 
@@ -505,11 +499,10 @@ const updatePaymentAssist = () => {
 
   const hasConfig = Boolean(academyPaymentConfig.upiId);
   const amount = getAdmissionAmount();
-  const hasAmount = amount > 0;
 
   paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
   paymentMerchantName.textContent = academyPaymentConfig.payeeName;
-  paymentAmountValue.textContent = `Rs ${amount.toFixed(2)}`;
+  paymentAmountValue.textContent = amount > 0 ? `Rs ${amount.toFixed(2)}` : "Enter in app";
   paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile payment" : "Desktop QR";
   paymentEntryTitle.textContent = isMobileBrowser ? "Pay from your UPI app" : "Open QR payment popup";
   paymentAssistCopy.textContent = isMobileBrowser
@@ -519,8 +512,12 @@ const updatePaymentAssist = () => {
     ? "Launch your UPI app, complete payment, then return here and finish the admission."
     : "Scan the QR from your phone and finish the admission form here after payment.";
   paymentQrCaption.textContent = isMobileBrowser
-    ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
-    : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
+    ? amount > 0
+      ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
+      : "Amount is optional. Parents can enter it inside their UPI app after opening payment."
+    : amount > 0
+      ? "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone."
+      : "QR is ready. If amount is blank, parents can enter it inside their UPI app.";
   paymentConfigNotice.hidden = hasConfig;
   paymentAppGrid.hidden = !isMobileBrowser;
 
@@ -534,7 +531,7 @@ const updatePaymentAssist = () => {
       return;
     }
 
-    button.disabled = !hasConfig || !hasAmount;
+    button.disabled = !hasConfig;
   });
 
   renderPaymentQr();
@@ -558,11 +555,6 @@ const copyPaymentText = async (value, successMessage) => {
 const launchPaymentApp = (provider) => {
   if (!academyPaymentConfig.upiId) {
     admissionMessage.textContent = "Academy UPI payment is not configured yet.";
-    return;
-  }
-
-  if (getAdmissionAmount() <= 0) {
-    admissionMessage.textContent = "Enter the payment amount before opening a UPI app.";
     return;
   }
 
