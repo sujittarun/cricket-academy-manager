@@ -85,6 +85,24 @@ const submitAdmissionButton = document.getElementById("submitAdmissionButton");
 const admissionReadyToStart = document.getElementById("admissionReadyToStart");
 const admissionStyleOptions = document.getElementById("admissionStyleOptions");
 
+// Attendance
+const attendanceTabButton = document.getElementById("attendanceTabButton");
+const attendanceView = document.getElementById("attendanceView");
+const attendanceDate = document.getElementById("attendanceDate");
+const attendanceEditorLock = document.getElementById("attendanceEditorLock");
+const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
+const attendancePresentCount = document.getElementById("attendancePresentCount");
+const attendanceTotalCount = document.getElementById("attendanceTotalCount");
+const attendanceEmptyState = document.getElementById("attendanceEmptyState");
+const attendanceGridContainer = document.getElementById("attendanceGridContainer");
+const attendanceTableBody = document.getElementById("attendanceTableBody");
+
+// Payment verify
+const paymentVerifyFlow = document.getElementById("paymentVerifyFlow");
+const paymentVerifyForm = document.getElementById("paymentVerifyForm");
+const paymentUtrInput = document.getElementById("paymentUtrInput");
+const paymentHelpCopy = document.getElementById("paymentHelpCopy");
+
 const TIME_SLOTS = ["6AM", "7:30AM", "4PM", "5:30PM", "7PM"];
 const ADMISSION_MONTHS = [
   "January",
@@ -132,6 +150,11 @@ let activeView = "admission";
 let hasTriggeredServiceWorkerRefresh = false;
 let isEditMode = false;
 let admissionPaymentIntentId = "";
+let todayAttendanceIds = new Set();
+let attendanceDateValue = new Date().toISOString().split("T")[0];
+let isFeesVerified = false;
+let realtimeStudentsChannel = null;
+let realtimeAttendanceChannel = null;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -152,6 +175,10 @@ const normalizeKid = (kid) => {
     addedBy: kid.added_by || "Unknown",
     updatedBy: kid.updated_by || kid.added_by || "Unknown",
     discontinued: Boolean(kid.discontinued),
+    paymentMethod: kid.payment_method || "",
+    paymentUpiId: kid.payment_upi_id || "",
+    paymentReference: kid.payment_reference || "",
+    comments: kid.comments || "",
   };
 };
 
@@ -164,10 +191,13 @@ const toDatabasePayload = ({
   amountPaid,
   jerseySize,
   jerseyPairs,
-  renewals,
   addedBy,
   updatedBy,
   discontinued,
+  paymentMethod,
+  paymentUpiId,
+  paymentReference,
+  comments,
 }) => ({
   name,
   age,
@@ -181,6 +211,10 @@ const toDatabasePayload = ({
   added_by: addedBy,
   updated_by: updatedBy,
   discontinued: Boolean(discontinued),
+  payment_method: paymentMethod || "",
+  payment_upi_id: paymentUpiId || "",
+  payment_reference: paymentReference || "",
+  comments: comments || "",
 });
 
 const setJoinDateLimit = () => {
@@ -688,6 +722,15 @@ const resetAdmissionForm = async () => {
   admissionAge.textContent = "Auto";
   admissionPaymentIntentId = buildPaymentIntentId();
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+  
+  // Clear hidden payment fields
+  const methodInput = document.getElementById("admissionPaymentMethod");
+  const upiInput = document.getElementById("admissionPaymentUpiId");
+  const refInput = document.getElementById("admissionPaymentReference");
+  if (methodInput) methodInput.value = "UPI";
+  if (upiInput) upiInput.value = "";
+  if (refInput) refInput.value = "";
+  
   syncAdmissionAmountState();
   syncAdmissionStyleState();
   refreshPaymentReturnHint();
@@ -739,19 +782,26 @@ const renderSummary = (alertKids) => {
 
 const updateActiveView = () => {
   const isRoster = activeView === "roster";
+  const isAttendance = activeView === "attendance";
+  const isAdmission = !isRoster && !isAttendance;
   rosterView.hidden = !isRoster;
-  admissionView.hidden = isRoster;
+  admissionView.hidden = !isAdmission;
+  if (attendanceView) attendanceView.hidden = !isAttendance;
   rosterTabButton.classList.toggle("active", isRoster);
   rosterTabButton.setAttribute("aria-selected", String(isRoster));
-  admissionTabButton.classList.toggle("active", !isRoster);
-  admissionTabButton.setAttribute("aria-selected", String(!isRoster));
+  admissionTabButton.classList.toggle("active", isAdmission);
+  admissionTabButton.setAttribute("aria-selected", String(isAdmission));
+  if (attendanceTabButton) {
+    attendanceTabButton.classList.toggle("active", isAttendance);
+    attendanceTabButton.setAttribute("aria-selected", String(isAttendance));
+  }
 };
 
 const updateAccessUI = () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   const canEdit = managerReady && isEditMode;
   const formControls = kidForm.querySelectorAll("input, select, button");
-  viewSwitcher.hidden = true;
+  viewSwitcher.hidden = false;
 
   if (!hasSupabaseConfig) {
     loginForm.hidden = true;
@@ -790,12 +840,16 @@ const updateAccessUI = () => {
     control.disabled = !canEdit;
   });
 
-  if (!managerReady && activeView !== "admission") {
+  if (!managerReady && activeView !== "admission" && activeView !== "attendance") {
     activeView = "admission";
   }
 
-  if (managerReady && activeView !== "roster") {
-    activeView = "roster";
+  if (rosterTabButton) {
+    rosterTabButton.hidden = !managerReady;
+  }
+
+  if (managerReady && activeView === "admission") {
+    // Keep admission if user was on it
   }
 
   if (lastManagerEmail) {
@@ -1110,6 +1164,10 @@ kidForm.addEventListener("submit", async (event) => {
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
     discontinued: false,
+    paymentMethod: formData.get("paymentMethod")?.toString() || "",
+    paymentUpiId: formData.get("paymentUpiId")?.toString() || "",
+    paymentReference: formData.get("paymentReference")?.toString() || "",
+    comments: formData.get("comments")?.toString() || "",
   };
 
   if (!payload.name || !payload.joinDate || !payload.timeSlot) {
@@ -1181,6 +1239,9 @@ kidsTableBody.addEventListener("click", async (event) => {
     amountPaidInput.value = String(kidToEdit.amountPaid);
     jerseySizeSelect.value = kidToEdit.jerseySize || "";
     jerseyPairsInput.value = String(kidToEdit.jerseyPairs || 0);
+    document.getElementById("paymentMethod").value = kidToEdit.paymentMethod || "";
+    document.getElementById("paymentReference").value = kidToEdit.paymentReference || "";
+    document.getElementById("comments").value = kidToEdit.comments || "";
     saveButton.textContent = "Save changes";
     cancelEditButton.hidden = false;
     syncAmountState();
@@ -1423,9 +1484,7 @@ admissionForm.addEventListener("submit", async (event) => {
   await loadKids();
 });
 
-resetAdmissionButton.addEventListener("click", async () => {
-  await resetAdmissionForm();
-});
+// Reset is handled in the payment verify section below to also unlock fees field.
 
 const initializeApp = async () => {
   populateAdmissionSelectors();
@@ -1495,6 +1554,363 @@ const initializeApp = async () => {
   await loadAdmissionRegNo();
   await refreshSession();
   await loadKids();
+  initRealtimeSync();
 };
 
 initializeApp();
+
+// ── Attendance Tracker ───────────────────────────────────────────────────────
+
+const getTodayIso = () => new Date().toISOString().split("T")[0];
+
+const loadAttendance = async (date = attendanceDateValue) => {
+  if (!isBackendReady || !isManagerLoggedIn) {
+    renderAttendance(new Set());
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("attendance")
+      .select("student_id")
+      .eq("attendance_date", date);
+
+    if (error) {
+      renderAttendance(new Set());
+      return;
+    }
+
+    const ids = new Set((data || []).map((r) => r.student_id));
+    todayAttendanceIds = ids;
+    renderAttendance(ids);
+  } catch (_) {
+    renderAttendance(new Set());
+  }
+};
+
+const renderAttendance = (attendedIds) => {
+  const managerReady = isBackendReady && isManagerLoggedIn;
+
+  if (attendanceEditorLock) {
+    attendanceEditorLock.hidden = managerReady;
+  }
+
+  if (!managerReady) {
+    if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceEmptyState) attendanceEmptyState.hidden = true;
+    if (attendanceGridContainer) attendanceGridContainer.hidden = true;
+    return;
+  }
+
+  const activePlayers = kids.filter((k) => !k.discontinued);
+
+  if (attendanceTotalCount) attendanceTotalCount.textContent = String(activePlayers.length);
+  if (attendancePresentCount)
+    attendancePresentCount.textContent = String(
+      activePlayers.filter((k) => attendedIds.has(k.id)).length
+    );
+
+  if (activePlayers.length === 0) {
+    if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceEmptyState) attendanceEmptyState.hidden = false;
+    if (attendanceGridContainer) attendanceGridContainer.hidden = true;
+    return;
+  }
+
+  if (attendanceSummaryBar) attendanceSummaryBar.hidden = false;
+  if (attendanceEmptyState) attendanceEmptyState.hidden = true;
+  if (attendanceGridContainer) attendanceGridContainer.hidden = false;
+
+  const isToday = attendanceDateValue === getTodayIso();
+  const canMark = managerReady && isToday;
+
+  attendanceTableBody.innerHTML = activePlayers
+    .map((kid) => {
+      const isPresent = attendedIds.has(kid.id);
+      const rowClass = isPresent ? "active-row" : "";
+      return `
+        <tr class="${rowClass}">
+          <td><strong>${kid.name}</strong></td>
+          <td>${kid.age}</td>
+          <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
+          <td class="attendance-toggle-cell">
+            <label class="attendance-toggle">
+              <span class="toggle-switch">
+                <input
+                  type="checkbox"
+                  ${isPresent ? "checked" : ""}
+                  ${!canMark ? "disabled" : ""}
+                  data-attendance-id="${kid.id}"
+                  aria-label="Mark ${kid.name} ${isPresent ? "absent" : "present"}"
+                />
+                <span class="toggle-track"></span>
+              </span>
+              <span class="toggle-label ${isPresent ? "present" : ""}">${isPresent ? "Present" : "Absent"}</span>
+            </label>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+};
+
+// Attendance toggle handler
+attendanceTableBody?.addEventListener("change", async (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || !input.dataset.attendanceId) return;
+  if (!isBackendReady || !isManagerLoggedIn) return;
+
+  const studentId = input.dataset.attendanceId;
+  const isNowPresent = input.checked;
+  const rpcName = isNowPresent ? "mark_player_attendance" : "unmark_player_attendance";
+
+  // Optimistic UI update
+  const labelEl = input.closest(".attendance-toggle")?.querySelector(".toggle-label");
+  if (labelEl) {
+    labelEl.textContent = isNowPresent ? "Present" : "Absent";
+    labelEl.classList.toggle("present", isNowPresent);
+  }
+
+  if (isNowPresent) {
+    todayAttendanceIds.add(studentId);
+  } else {
+    todayAttendanceIds.delete(studentId);
+  }
+
+  // Update summary counts
+  const activePlayers = kids.filter((k) => !k.discontinued);
+  if (attendancePresentCount)
+    attendancePresentCount.textContent = String(
+      activePlayers.filter((k) => todayAttendanceIds.has(k.id)).length
+    );
+
+  try {
+    const { error } = await supabaseClient.rpc(rpcName, {
+      p_student_id: studentId,
+      p_attendance_date: attendanceDateValue,
+    });
+
+    if (error) {
+      showToast(`⚠ Failed to update attendance: ${error.message}`);
+      // Revert optimistic update
+      input.checked = !isNowPresent;
+      if (labelEl) {
+        labelEl.textContent = !isNowPresent ? "Present" : "Absent";
+        labelEl.classList.toggle("present", !isNowPresent);
+      }
+      if (isNowPresent) {
+        todayAttendanceIds.delete(studentId);
+      } else {
+        todayAttendanceIds.add(studentId);
+      }
+    }
+  } catch (err) {
+    showToast("⚠ Attendance update failed.");
+    input.checked = !isNowPresent;
+  }
+});
+
+// Attendance date change
+attendanceDate?.addEventListener("change", () => {
+  attendanceDateValue = attendanceDate.value || getTodayIso();
+  loadAttendance(attendanceDateValue);
+});
+
+// Third tab — Attendance
+attendanceTabButton?.addEventListener("click", () => {
+  activeView = "attendance";
+  updateActiveView();
+  attendanceDate.value = attendanceDateValue;
+  loadAttendance(attendanceDateValue);
+});
+
+// ── Realtime Sync ────────────────────────────────────────────────────────────
+
+const showRealtimeToast = (message) => {
+  if (!globalToast) return;
+  if (toastTimeoutId) window.clearTimeout(toastTimeoutId);
+  globalToast.textContent = message;
+  globalToast.className = "global-toast realtime-toast";
+  globalToast.hidden = false;
+  toastTimeoutId = window.setTimeout(() => {
+    globalToast.hidden = true;
+    globalToast.className = "global-toast";
+  }, 2800);
+};
+
+const initRealtimeSync = () => {
+  if (!isBackendReady) return;
+
+  // Students table — fast sync for roster edits/adds/deletes
+  realtimeStudentsChannel = supabaseClient
+    .channel("public:students")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "students" },
+      async (payload) => {
+        const event = payload.eventType;
+        if (event === "INSERT") {
+          const newKid = normalizeKid(payload.new);
+          kids.unshift(newKid);
+          showRealtimeToast(`New player added: ${newKid.name}`);
+        } else if (event === "UPDATE") {
+          const updated = normalizeKid(payload.new);
+          kids = kids.map((k) => (k.id === updated.id ? updated : k));
+          showRealtimeToast(`Player updated: ${updated.name}`);
+        } else if (event === "DELETE") {
+          const deletedId = payload.old?.id;
+          if (deletedId) {
+            kids = kids.filter((k) => k.id !== deletedId);
+          }
+        }
+        renderKids();
+        if (activeView === "attendance") renderAttendance(todayAttendanceIds);
+      }
+    )
+    .subscribe();
+
+  // Attendance table — instant reflect when mobile app marks/unmarks
+  realtimeAttendanceChannel = supabaseClient
+    .channel("public:attendance")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "attendance" },
+      async (payload) => {
+        const event = payload.eventType;
+        if (event === "INSERT") {
+          const sid = payload.new?.student_id;
+          const adate = payload.new?.attendance_date;
+          if (sid && adate === attendanceDateValue) {
+            todayAttendanceIds.add(sid);
+            const playerName = kids.find((k) => k.id === sid)?.name;
+            if (playerName) showRealtimeToast(`✓ ${playerName} marked present`);
+            if (activeView === "attendance") renderAttendance(todayAttendanceIds);
+          }
+        } else if (event === "DELETE") {
+          const sid = payload.old?.student_id;
+          const adate = payload.old?.attendance_date;
+          if (sid && adate === attendanceDateValue) {
+            todayAttendanceIds.delete(sid);
+            const playerName = kids.find((k) => k.id === sid)?.name;
+            if (playerName) showRealtimeToast(`${playerName} marked absent`);
+            if (activeView === "attendance") renderAttendance(todayAttendanceIds);
+          }
+        }
+      }
+    )
+    .subscribe();
+  updatePaymentAssist();
+};
+
+const showVerificationFlow = () => {
+  if (paymentVerifyFlow) paymentVerifyFlow.hidden = false;
+  if (paymentHelpCopy) paymentHelpCopy.hidden = true;
+  if (paymentReturnHint) paymentReturnHint.hidden = true;
+  const trigger = document.getElementById("alreadyPaidTrigger");
+  if (trigger) trigger.hidden = true;
+};
+
+// ── Payment Verification Flow ────────────────────────────────────────────────
+
+// When user returns to the page after launching a UPI app, show the verify flow
+const maybeShowPaymentVerify = () => {
+  const rawValue = sessionStorage.getItem(PAYMENT_RETURN_STORAGE_KEY);
+  if (!rawValue) return;
+
+  try {
+    const pending = JSON.parse(rawValue);
+    const isFresh =
+      typeof pending?.timestamp === "number" &&
+      Date.now() - pending.timestamp < 1000 * 60 * 20;
+
+    if (!isFresh) {
+      sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+      return;
+    }
+
+    // Show UTR verify panel inside the popup
+    if (paymentVerifyFlow) paymentVerifyFlow.hidden = false;
+    if (paymentHelpCopy) paymentHelpCopy.hidden = true;
+    if (paymentReturnHint) paymentReturnHint.hidden = true;
+
+    // Reopen popup so user can confirm
+    if (paymentPopup && paymentPopup.hidden) {
+      paymentPopup.hidden = false;
+      document.body.classList.add("popup-open");
+    }
+  } catch (_) {
+    sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+  }
+};
+
+// UTR confirm submission — lock fees to "yes" and close
+paymentVerifyForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const utr = paymentUtrInput?.value?.trim();
+  if (!utr || utr.length < 4) {
+    showToast("Please enter a valid Transaction/UTR reference.");
+    return;
+  }
+
+  // Mark fees as paid and lock the field
+  if (admissionFeesPaid) {
+    admissionFeesPaid.value = "yes";
+    admissionFeesPaid.disabled = true;
+  }
+  if (admissionAmountPaid) {
+    admissionAmountPaid.disabled = false; // amount stays editable
+  }
+
+  // Populate hidden parity fields
+  const methodInput = document.getElementById("admissionPaymentMethod");
+  const refInput = document.getElementById("admissionPaymentReference");
+  if (methodInput) methodInput.value = sessionStorage.getItem(PAYMENT_RETURN_STORAGE_KEY) ? JSON.parse(sessionStorage.getItem(PAYMENT_RETURN_STORAGE_KEY)).provider : "UPI";
+  if (refInput) refInput.value = utr;
+
+  isFeesVerified = true;
+  sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+
+  // Close popup and show confirmation
+  closePaymentPopup();
+  showToast(`✓ Payment confirmed (Ref: ${utr}). Fees marked as paid.`);
+
+  // Reset verify UI for next time
+  if (paymentVerifyForm) paymentVerifyForm.reset();
+  if (paymentVerifyFlow) paymentVerifyFlow.hidden = true;
+  if (paymentHelpCopy) paymentHelpCopy.hidden = false;
+  if (paymentReturnHint) paymentReturnHint.hidden = true;
+
+  // Focus the submit button
+  submitAdmissionButton?.focus();
+});
+
+// Override the visibilitychange and window focus handlers to trigger verify flow
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    refreshPaymentReturnHint();
+    maybeShowPaymentVerify();
+  }
+});
+
+window.removeEventListener("focus", refreshPaymentReturnHint);
+window.addEventListener("focus", () => {
+  refreshPaymentReturnHint();
+  maybeShowPaymentVerify();
+});
+
+// Reset fees lock when the form is reset
+const _origReset = admissionForm?.addEventListener;
+resetAdmissionButton?.addEventListener("click", async () => {
+  if (admissionFeesPaid) admissionFeesPaid.disabled = false;
+  isFeesVerified = false;
+  if (paymentVerifyFlow) paymentVerifyFlow.hidden = true;
+  if (paymentHelpCopy) paymentHelpCopy.hidden = false;
+  await resetAdmissionForm();
+});
+
+// Init attendance date input default
+if (attendanceDate) {
+  attendanceDate.max = getTodayIso();
+  attendanceDate.value = attendanceDateValue;
+}
+

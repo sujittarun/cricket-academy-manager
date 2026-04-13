@@ -76,7 +76,7 @@
         </div>
       </section>
 
-      <section id="viewSwitcher" class="view-switcher panel" hidden>
+      <section id="viewSwitcher" class="view-switcher panel">
         <div class="view-switcher-copy">
           <p class="section-kicker">Workspace</p>
           <h2>Choose what you want to work on</h2>
@@ -89,6 +89,7 @@
             data-view-target="roster"
             role="tab"
             aria-selected="false"
+            hidden
           >
             Academy Roster
           </button>
@@ -101,6 +102,16 @@
             aria-selected="true"
           >
             Admission Form
+          </button>
+          <button
+            id="attendanceTabButton"
+            type="button"
+            class="view-tab"
+            data-view-target="attendance"
+            role="tab"
+            aria-selected="false"
+          >
+            Attendance
           </button>
         </div>
       </section>
@@ -268,6 +279,21 @@
                 />
               </label>
 
+              <label>
+                Payment Method
+                <input id="paymentMethod" name="paymentMethod" type="text" placeholder="UPI" readonly />
+              </label>
+
+              <label>
+                Ref / UTR
+                <input id="paymentReference" name="paymentReference" type="text" placeholder="Transaction ID" readonly />
+              </label>
+
+              <label class="full-span">
+                Comments
+                <textarea id="comments" name="comments" rows="2" placeholder="Notes..."></textarea>
+              </label>
+
               <p id="formMessage" class="form-message" aria-live="polite"></p>
 
               <button id="saveButton" type="submit" class="primary-btn">Save kid details</button>
@@ -323,6 +349,51 @@
               </table>
             </div>
           </section>
+        </section>
+      </section>
+
+      <section id="attendanceView" class="dashboard-view" hidden>
+        <section class="panel attendance-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Daily Tracking</p>
+              <h2>Attendance Tracker</h2>
+            </div>
+            <div class="date-selector">
+              <input id="attendanceDate" type="date" required />
+            </div>
+          </div>
+          
+          <div id="attendanceEditorLock" class="editor-lock">
+            Login as manager to view or edit attendance.
+          </div>
+
+          <div class="attendance-summary-bar" hidden id="attendanceSummaryBar">
+            <div class="attendance-stats">
+              <strong id="attendancePresentCount">0</strong> Present
+            </div>
+            <div class="attendance-stats-sub">
+              out of <span id="attendanceTotalCount">0</span> active players
+            </div>
+          </div>
+
+          <div id="attendanceEmptyState" class="empty-state" hidden>
+            No active players found to mark attendance.
+          </div>
+
+          <div class="attendance-grid-container table-wrap" hidden id="attendanceGridContainer">
+            <table class="kids-table attendance-table">
+              <thead>
+                <tr>
+                  <th>Player Name</th>
+                  <th>Age</th>
+                  <th>Time slot</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTableBody"></tbody>
+            </table>
+          </div>
         </section>
       </section>
 
@@ -610,6 +681,10 @@
 
             <p id="admissionMessage" class="form-message" aria-live="polite"></p>
 
+            <input type="hidden" id="admissionPaymentMethod" name="paymentMethod" value="UPI" />
+            <input type="hidden" id="admissionPaymentUpiId" name="paymentUpiId" value="" />
+            <input type="hidden" id="admissionPaymentReference" name="paymentReference" value="" />
+
             <div class="admission-actions">
               <button id="submitAdmissionButton" type="submit" class="primary-btn">Submit admission</button>
               <button id="resetAdmissionButton" type="button" class="secondary-btn">Reset form</button>
@@ -687,10 +762,25 @@
               <button id="copyPaymentMobileButton" type="button" class="secondary-btn">Copy mobile number</button>
             </div>
 
-            <p class="payment-help-copy">
+            <p class="payment-help-copy" id="paymentHelpCopy">
               After payment, come back to the form and switch Fees paid to Yes before submitting the admission.
             </p>
             <p id="paymentReturnHint" class="payment-return-hint" hidden></p>
+            
+            <p class="payment-help-copy" id="alreadyPaidTrigger">
+              Already paid? <a href="#" onclick="showVerificationFlow(); return false;" style="color: var(--accent); font-weight: 700;">Verify with UTR now</a>
+            </p>
+            
+            <div id="paymentVerifyFlow" class="payment-verify-flow" hidden>
+              <div class="verify-heading">
+                <h4>Payment Successful?</h4>
+                <p>Enter the 12-digit UTR or Reference No. from your app to verify the transaction.</p>
+              </div>
+              <form id="paymentVerifyForm" class="verify-form">
+                <input id="paymentUtrInput" type="text" placeholder="e.g. 312345678901" required minlength="4" />
+                <button type="submit" class="primary-btn">Confirm Payment</button>
+              </form>
+            </div>
           </div>
         </div>
       </section>
