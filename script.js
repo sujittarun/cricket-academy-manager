@@ -1067,6 +1067,7 @@ admissionForm.addEventListener("submit", async (event) => {
     p_amount_paid: Number(formData.get("amountPaid") || 0),
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
+    p_comments: String(formData.get("comments") || "").trim(),
     p_batsman_style: String(formData.get("batsmanStyle") || "").trim(),
     p_bowling_styles: formData.getAll("bowlingStyles").map((value) => String(value)),
     p_ready_to_start: formData.get("readyToStart") === "on",
