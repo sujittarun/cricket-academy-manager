@@ -4,7 +4,7 @@ window.GEN_ALPHA_SUPABASE_CONFIG = {
 };
 
 window.GEN_ALPHA_PAYMENT_CONFIG = {
-  upiId: "",
+  upiId: "laxmitrading1738@okhdfcbank",
   payeeName: "Gen Alpha Cricket Academy",
   notePrefix: "Gen Alpha admission",
 };
