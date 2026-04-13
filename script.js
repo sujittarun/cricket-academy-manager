@@ -1,4 +1,5 @@
 const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
+const PAYMENT_CONFIG = window.GEN_ALPHA_PAYMENT_CONFIG ?? {};
 
 const kidForm = document.getElementById("kidForm");
 const kidsTable = document.getElementById("kidsTable");
@@ -45,6 +46,7 @@ const mastheadBottom = document.getElementById("mastheadBottom");
 const heroLabel = document.getElementById("heroLabel");
 const actionHeader = document.getElementById("actionHeader");
 const admissionForm = document.getElementById("admissionForm");
+const admissionApplicantName = document.getElementById("admissionApplicantName");
 const admissionRegNo = document.getElementById("admissionRegNo");
 const admissionMessage = document.getElementById("admissionMessage");
 const admissionBirthDay = document.getElementById("admissionBirthDay");
@@ -56,6 +58,24 @@ const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionAmountPaid = document.getElementById("admissionAmountPaid");
 const admissionJerseySize = document.getElementById("admissionJerseySize");
 const admissionJerseyPairs = document.getElementById("admissionJerseyPairs");
+const admissionPaymentMethod = document.getElementById("admissionPaymentMethod");
+const admissionPaymentPayerUpiId = document.getElementById("admissionPaymentPayerUpiId");
+const admissionPaymentReference = document.getElementById("admissionPaymentReference");
+const admissionPaymentAssist = document.getElementById("admissionPaymentAssist");
+const paymentAssistCopy = document.getElementById("paymentAssistCopy");
+const paymentDeviceBadge = document.getElementById("paymentDeviceBadge");
+const paymentConfigNotice = document.getElementById("paymentConfigNotice");
+const paymentGooglePayButton = document.getElementById("paymentGooglePayButton");
+const paymentPhonePeButton = document.getElementById("paymentPhonePeButton");
+const paymentUpiButton = document.getElementById("paymentUpiButton");
+const paymentQrCanvas = document.getElementById("paymentQrCanvas");
+const paymentQrCaption = document.getElementById("paymentQrCaption");
+const paymentMerchantUpiId = document.getElementById("paymentMerchantUpiId");
+const paymentMerchantName = document.getElementById("paymentMerchantName");
+const paymentAmountValue = document.getElementById("paymentAmountValue");
+const copyPaymentUpiButton = document.getElementById("copyPaymentUpiButton");
+const copyPaymentLinkButton = document.getElementById("copyPaymentLinkButton");
+const paymentReturnHint = document.getElementById("paymentReturnHint");
 const resetAdmissionButton = document.getElementById("resetAdmissionButton");
 const submitAdmissionButton = document.getElementById("submitAdmissionButton");
 const admissionReadyToStart = document.getElementById("admissionReadyToStart");
@@ -86,6 +106,14 @@ const supabaseClient =
 const isBackendReady = Boolean(supabaseClient);
 const LAST_EMAIL_STORAGE_KEY = "gen-alpha-last-manager-email";
 const LAST_PASSWORD_STORAGE_KEY = "gen-alpha-last-manager-password";
+const PAYMENT_RETURN_STORAGE_KEY = "gen-alpha-payment-return";
+const isMobileBrowser = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isAndroidBrowser = /Android/i.test(navigator.userAgent);
+const academyPaymentConfig = {
+  upiId: String(PAYMENT_CONFIG.upiId || "").trim(),
+  payeeName: String(PAYMENT_CONFIG.payeeName || "Gen Alpha Cricket Academy").trim(),
+  notePrefix: String(PAYMENT_CONFIG.notePrefix || "Gen Alpha admission").trim(),
+};
 
 let kids = [];
 let isManagerLoggedIn = false;
@@ -98,6 +126,7 @@ let toastTimeoutId = null;
 let activeView = "admission";
 let hasTriggeredServiceWorkerRefresh = false;
 let isEditMode = false;
+let admissionPaymentIntentId = "";
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -261,12 +290,8 @@ const syncAmountState = () => {
 };
 
 const syncAdmissionAmountState = () => {
-  const isPaid = admissionFeesPaid.value === "yes";
-  admissionAmountPaid.disabled = !isPaid;
-
-  if (!isPaid) {
-    admissionAmountPaid.value = "0";
-  }
+  admissionAmountPaid.disabled = false;
+  updatePaymentAssist();
 };
 
 const formatJerseyDetails = (kid) => {
@@ -304,6 +329,239 @@ const resetFormState = () => {
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
   syncAmountState();
+};
+
+const buildPaymentIntentId = () =>
+  `GA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+const getAdmissionAmount = () => {
+  const value = Number(admissionAmountPaid.value || 0);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+};
+
+const getPaymentDescriptor = () => {
+  const applicantName = String(admissionApplicantName?.value || "").trim();
+  return applicantName ? `${academyPaymentConfig.notePrefix} - ${applicantName}` : academyPaymentConfig.notePrefix;
+};
+
+const buildUpiQueryString = (params) =>
+  new URLSearchParams(
+    Object.entries(params).reduce((accumulator, [key, value]) => {
+      if (value !== undefined && value !== null && String(value).trim() !== "") {
+        accumulator[key] = String(value);
+      }
+      return accumulator;
+    }, {})
+  ).toString();
+
+const buildBaseUpiQuery = () => {
+  const amount = getAdmissionAmount();
+  return buildUpiQueryString({
+    pa: academyPaymentConfig.upiId,
+    pn: academyPaymentConfig.payeeName,
+    tr: admissionPaymentIntentId,
+    tn: getPaymentDescriptor(),
+    am: amount > 0 ? amount.toFixed(2) : "",
+    cu: "INR",
+  });
+};
+
+const getGenericUpiUri = () => {
+  const query = buildBaseUpiQuery();
+  return query ? `upi://pay?${query}` : "";
+};
+
+const getProviderPaymentUri = (provider) => {
+  const query = buildBaseUpiQuery();
+
+  if (!query) {
+    return "";
+  }
+
+  if (provider === "Google Pay") {
+    return `gpay://upi/pay?${query}`;
+  }
+
+  if (provider === "PhonePe" && isAndroidBrowser) {
+    return `intent://pay?${query}#Intent;scheme=upi;package=com.phonepe.app;end`;
+  }
+
+  return `upi://pay?${query}`;
+};
+
+const setPendingPaymentReturn = (provider) => {
+  sessionStorage.setItem(
+    PAYMENT_RETURN_STORAGE_KEY,
+    JSON.stringify({
+      provider,
+      timestamp: Date.now(),
+      amount: getAdmissionAmount(),
+    })
+  );
+};
+
+const refreshPaymentReturnHint = () => {
+  if (!paymentReturnHint) {
+    return;
+  }
+
+  const rawValue = sessionStorage.getItem(PAYMENT_RETURN_STORAGE_KEY);
+
+  if (!rawValue) {
+    paymentReturnHint.hidden = true;
+    paymentReturnHint.textContent = "";
+    return;
+  }
+
+  try {
+    const pending = JSON.parse(rawValue);
+    const isFresh = typeof pending?.timestamp === "number" && Date.now() - pending.timestamp < 1000 * 60 * 20;
+
+    if (!isFresh) {
+      sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+      paymentReturnHint.hidden = true;
+      paymentReturnHint.textContent = "";
+      return;
+    }
+
+    paymentReturnHint.hidden = false;
+    paymentReturnHint.textContent = `Back from ${pending.provider || "UPI payment"}? If the payment is complete, switch Fees paid to Yes and enter the UTR if your app shows one.`;
+  } catch (error) {
+    sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+    paymentReturnHint.hidden = true;
+    paymentReturnHint.textContent = "";
+  }
+};
+
+const renderPaymentQr = () => {
+  if (!paymentQrCanvas) {
+    return;
+  }
+
+  paymentQrCanvas.innerHTML = "";
+
+  const upiUri = getGenericUpiUri();
+  const hasConfig = Boolean(academyPaymentConfig.upiId);
+  const hasAmount = getAdmissionAmount() > 0;
+
+  if (!hasConfig) {
+    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Add the academy UPI ID in config to enable QR payment.</div>`;
+    return;
+  }
+
+  if (!hasAmount) {
+    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Enter the payment amount above to generate the QR.</div>`;
+    return;
+  }
+
+  if (!window.QRCode?.toCanvas) {
+    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">QR library did not load. You can still copy the UPI ID or payment link.</div>`;
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  paymentQrCanvas.appendChild(canvas);
+  window.QRCode.toCanvas(
+    canvas,
+    upiUri,
+    {
+      width: 176,
+      margin: 1,
+      color: {
+        dark: "#102547",
+        light: "#ffffff",
+      },
+    },
+    (error) => {
+      if (error) {
+        paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Unable to generate the QR right now. Please use the copy actions instead.</div>`;
+      }
+    }
+  );
+};
+
+const updatePaymentAssist = () => {
+  if (!admissionPaymentAssist) {
+    return;
+  }
+
+  const hasConfig = Boolean(academyPaymentConfig.upiId);
+  const amount = getAdmissionAmount();
+  const hasAmount = amount > 0;
+
+  paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
+  paymentMerchantName.textContent = academyPaymentConfig.payeeName;
+  paymentAmountValue.textContent = `Rs ${amount.toFixed(2)}`;
+  paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile app launch" : "Desktop QR mode";
+  paymentAssistCopy.textContent = isMobileBrowser
+    ? "Use a UPI app on this phone, then come back here and finish the form."
+    : "Desktop browsers work best with QR payment. Scan using your phone and continue the form here.";
+  paymentQrCaption.textContent = isMobileBrowser
+    ? "If app launch is blocked by the browser, use the copied link or scan the QR from another device."
+    : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
+  paymentConfigNotice.hidden = hasConfig;
+
+  [
+    paymentGooglePayButton,
+    paymentPhonePeButton,
+    paymentUpiButton,
+    copyPaymentUpiButton,
+    copyPaymentLinkButton,
+  ].forEach((button) => {
+    if (!button) {
+      return;
+    }
+
+    button.disabled = !hasConfig || !hasAmount;
+  });
+
+  renderPaymentQr();
+  refreshPaymentReturnHint();
+};
+
+const copyPaymentText = async (value, successMessage) => {
+  if (!value) {
+    admissionMessage.textContent = "Payment details are not ready yet.";
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast(successMessage);
+  } catch (error) {
+    admissionMessage.textContent = "Unable to copy payment details from this browser.";
+  }
+};
+
+const launchPaymentApp = (provider) => {
+  if (!academyPaymentConfig.upiId) {
+    admissionMessage.textContent = "Academy UPI payment is not configured yet.";
+    return;
+  }
+
+  if (getAdmissionAmount() <= 0) {
+    admissionMessage.textContent = "Enter the payment amount before opening a UPI app.";
+    return;
+  }
+
+  admissionPaymentMethod.value = provider;
+  setPendingPaymentReturn(provider);
+  refreshPaymentReturnHint();
+
+  const providerUri = getProviderPaymentUri(provider);
+
+  if (!providerUri) {
+    admissionMessage.textContent = "Unable to prepare the payment request.";
+    return;
+  }
+
+  if (!isMobileBrowser) {
+    copyPaymentText(getGenericUpiUri(), "UPI payment link copied");
+    admissionMessage.textContent = `Desktop browsers work best with QR payment. Your ${provider} preference is saved for this admission.`;
+    return;
+  }
+
+  window.location.href = providerUri;
 };
 
 const buildDobIso = () => {
@@ -386,8 +644,14 @@ const resetAdmissionForm = async () => {
   admissionJoinDate.value = new Date().toISOString().split("T")[0];
   admissionMessage.textContent = "";
   admissionAge.textContent = "Auto";
+  admissionPaymentIntentId = buildPaymentIntentId();
+  sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+  if (admissionPaymentMethod) {
+    admissionPaymentMethod.value = "UPI";
+  }
   syncAdmissionAmountState();
   syncAdmissionStyleState();
+  refreshPaymentReturnHint();
   await loadAdmissionRegNo();
 };
 
@@ -1001,6 +1265,24 @@ admissionReadyToStart.addEventListener("change", syncAdmissionStyleState);
 admissionBirthDay.addEventListener("change", updateAdmissionAge);
 admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
+admissionAmountPaid.addEventListener("input", updatePaymentAssist);
+admissionApplicantName.addEventListener("input", updatePaymentAssist);
+admissionPaymentMethod.addEventListener("change", refreshPaymentReturnHint);
+paymentGooglePayButton.addEventListener("click", () => launchPaymentApp("Google Pay"));
+paymentPhonePeButton.addEventListener("click", () => launchPaymentApp("PhonePe"));
+paymentUpiButton.addEventListener("click", () => launchPaymentApp("UPI"));
+copyPaymentUpiButton.addEventListener("click", () =>
+  copyPaymentText(academyPaymentConfig.upiId, "Academy UPI ID copied")
+);
+copyPaymentLinkButton.addEventListener("click", () =>
+  copyPaymentText(getGenericUpiUri(), "UPI payment link copied")
+);
+window.addEventListener("focus", refreshPaymentReturnHint);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    refreshPaymentReturnHint();
+  }
+});
 rosterTabButton.addEventListener("click", () => {
   activeView = "roster";
   updateActiveView();
@@ -1045,6 +1327,11 @@ admissionForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (String(formData.get("paymentReference") || "").trim() && String(formData.get("feesPaid") || "no") !== "yes") {
+    admissionMessage.textContent = "If payment is complete and you are entering a UTR, please switch Fees paid to Yes.";
+    return;
+  }
+
   submitAdmissionButton.disabled = true;
   admissionMessage.textContent = "Submitting admission form...";
 
@@ -1067,6 +1354,9 @@ admissionForm.addEventListener("submit", async (event) => {
     p_amount_paid: Number(formData.get("amountPaid") || 0),
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
+    p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
+    p_payment_upi_id: String(formData.get("paymentPayerUpiId") || "").trim(),
+    p_payment_reference: String(formData.get("paymentReference") || "").trim(),
     p_comments: String(formData.get("comments") || "").trim(),
     p_batsman_style: String(formData.get("batsmanStyle") || "").trim(),
     p_bowling_styles: formData.getAll("bowlingStyles").map((value) => String(value)),
@@ -1084,6 +1374,7 @@ admissionForm.addEventListener("submit", async (event) => {
 
   const row = Array.isArray(data) ? data[0] : data;
   admissionMessage.textContent = `Admission submitted successfully. Reg No ${row?.reg_no ?? admissionRegNo.textContent}.`;
+  sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
   showToast(`Admission saved for ${String(formData.get("applicantName") || "").trim()}`);
   await resetAdmissionForm();
   await loadKids();
@@ -1097,11 +1388,13 @@ const initializeApp = async () => {
   populateAdmissionSelectors();
   setJoinDateLimit();
   admissionJoinDate.value = new Date().toISOString().split("T")[0];
+  admissionPaymentIntentId = buildPaymentIntentId();
   updateActiveView();
   updateAccessUI();
   renderKids();
   syncAdmissionAmountState();
   syncAdmissionStyleState();
+  updatePaymentAssist();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

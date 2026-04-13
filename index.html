@@ -474,9 +474,108 @@
                       </select>
                     </label>
                     <label>
-                      Amount paid
+                      Amount
                       <input id="admissionAmountPaid" name="amountPaid" type="number" min="0" step="0.01" />
                     </label>
+                    <div id="admissionPaymentAssist" class="payment-assist full-span">
+                      <div class="payment-assist-head">
+                        <div>
+                          <p class="section-kicker">UPI Payment</p>
+                          <h4>Pay with Google Pay, PhonePe, or any UPI app</h4>
+                          <p id="paymentAssistCopy" class="payment-assist-copy">
+                            Enter the amount above, launch payment on mobile, or use the QR on desktop.
+                          </p>
+                        </div>
+                        <span id="paymentDeviceBadge" class="payment-device-badge">Payment assist</span>
+                      </div>
+
+                      <div id="paymentConfigNotice" class="payment-config-notice" hidden>
+                        Academy UPI payment is not configured yet. Add the UPI ID in <code>supabase-config.js</code> to enable app launch and QR payment.
+                      </div>
+
+                      <div class="payment-app-grid">
+                        <button id="paymentGooglePayButton" type="button" class="payment-app-btn google-pay">
+                          <span>Google Pay</span>
+                          <small>Open app</small>
+                        </button>
+                        <button id="paymentPhonePeButton" type="button" class="payment-app-btn phonepe-pay">
+                          <span>PhonePe</span>
+                          <small>Open app</small>
+                        </button>
+                        <button id="paymentUpiButton" type="button" class="payment-app-btn upi-pay">
+                          <span>Any UPI App</span>
+                          <small>Open chooser</small>
+                        </button>
+                      </div>
+
+                      <div class="payment-layout">
+                        <div class="payment-qr-card">
+                          <div id="paymentQrCanvas" class="payment-qr-canvas" aria-hidden="true"></div>
+                          <p id="paymentQrCaption" class="payment-qr-caption">
+                            Desktop browsers show QR so parents can pay from their phone.
+                          </p>
+                        </div>
+
+                        <div class="payment-details-card">
+                          <div class="payment-detail-list">
+                            <div class="payment-detail-row">
+                              <span>Academy UPI</span>
+                              <strong id="paymentMerchantUpiId">Not configured</strong>
+                            </div>
+                            <div class="payment-detail-row">
+                              <span>Payee</span>
+                              <strong id="paymentMerchantName">Gen Alpha Cricket Academy</strong>
+                            </div>
+                            <div class="payment-detail-row">
+                              <span>Amount</span>
+                              <strong id="paymentAmountValue">Rs 0.00</strong>
+                            </div>
+                          </div>
+
+                          <div class="payment-copy-actions">
+                            <button id="copyPaymentUpiButton" type="button" class="secondary-btn">Copy UPI ID</button>
+                            <button id="copyPaymentLinkButton" type="button" class="secondary-btn">Copy payment link</button>
+                          </div>
+
+                          <p class="payment-help-copy">
+                            Mobile browsers can try app launch directly. After payment, come back here, mark fees paid, and add the UTR if available.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="admission-grid compact-grid compact-grid-three payment-record-grid">
+                        <label>
+                          Preferred app
+                          <select id="admissionPaymentMethod" name="paymentMethod">
+                            <option value="UPI">Any UPI app</option>
+                            <option value="Google Pay">Google Pay</option>
+                            <option value="PhonePe">PhonePe</option>
+                          </select>
+                        </label>
+                        <label>
+                          Parent UPI ID (optional)
+                          <input
+                            id="admissionPaymentPayerUpiId"
+                            name="paymentPayerUpiId"
+                            type="text"
+                            placeholder="name@bank"
+                            autocomplete="off"
+                          />
+                        </label>
+                        <label>
+                          UPI reference / UTR (optional)
+                          <input
+                            id="admissionPaymentReference"
+                            name="paymentReference"
+                            type="text"
+                            placeholder="Enter UTR after payment"
+                            autocomplete="off"
+                          />
+                        </label>
+                      </div>
+
+                      <p id="paymentReturnHint" class="payment-return-hint" hidden></p>
+                    </div>
                     <label>
                       Jersey size
                       <select id="admissionJerseySize" name="jerseySize">
@@ -607,6 +706,7 @@
     <div id="globalToast" class="global-toast" hidden aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script src="./supabase-config.js"></script>
     <script src="./script.js"></script>
   </body>
