@@ -469,30 +469,55 @@ const renderPaymentQr = () => {
     return;
   }
 
-  if (!window.QRCode?.toCanvas) {
-    paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">QR library did not load. You can still copy the academy UPI ID.</div>`;
+  const qrServerUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(
+    upiUri
+  )}`;
+  const quickChartUrl = `https://quickchart.io/qr?size=320&text=${encodeURIComponent(
+    upiUri
+  )}`;
+
+  const renderQrImage = (sourceUrl, fallbackUrl = "") => {
+    const image = document.createElement("img");
+    image.alt = "UPI payment QR";
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.src = sourceUrl;
+    image.onerror = () => {
+      if (fallbackUrl && image.src !== fallbackUrl) {
+        image.src = fallbackUrl;
+        return;
+      }
+
+      paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Unable to load QR right now. Please use the academy UPI ID.</div>`;
+    };
+    paymentQrCanvas.innerHTML = "";
+    paymentQrCanvas.appendChild(image);
+  };
+
+  if (window.QRCode?.toCanvas) {
+    const canvas = document.createElement("canvas");
+    paymentQrCanvas.appendChild(canvas);
+    window.QRCode.toCanvas(
+      canvas,
+      upiUri,
+      {
+        width: 176,
+        margin: 1,
+        color: {
+          dark: "#102547",
+          light: "#ffffff",
+        },
+      },
+      (error) => {
+        if (error) {
+          renderQrImage(qrServerUrl, quickChartUrl);
+        }
+      }
+    );
     return;
   }
 
-  const canvas = document.createElement("canvas");
-  paymentQrCanvas.appendChild(canvas);
-  window.QRCode.toCanvas(
-    canvas,
-    upiUri,
-    {
-      width: 176,
-      margin: 1,
-      color: {
-        dark: "#102547",
-        light: "#ffffff",
-      },
-    },
-    (error) => {
-      if (error) {
-        paymentQrCanvas.innerHTML = `<div class="payment-empty-qr">Unable to generate the QR right now. Please use the copy actions instead.</div>`;
-      }
-    }
-  );
+  renderQrImage(qrServerUrl, quickChartUrl);
 };
 
 const updatePaymentAssist = () => {
