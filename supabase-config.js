@@ -4,7 +4,7 @@ window.GEN_ALPHA_SUPABASE_CONFIG = {
 };
 
 window.GEN_ALPHA_PAYMENT_CONFIG = {
-  upiId: "9059962498@ybl",
+  upiId: "9059962499@ybl",
   mobileNumber: "9059962499",
   payeeName: "Gen Alpha Cricket Academy",
   notePrefix: "Gen Alpha admission",
