@@ -195,10 +195,6 @@ const toDatabasePayload = ({
   addedBy,
   updatedBy,
   discontinued,
-  paymentMethod,
-  paymentUpiId,
-  paymentReference,
-  comments,
 }) => ({
   name,
   age,
@@ -212,10 +208,6 @@ const toDatabasePayload = ({
   added_by: addedBy,
   updated_by: updatedBy,
   discontinued: Boolean(discontinued),
-  payment_method: paymentMethod || "",
-  payment_upi_id: paymentUpiId || "",
-  payment_reference: paymentReference || "",
-  comments: comments || "",
 });
 
 const setJoinDateLimit = () => {
@@ -1165,10 +1157,6 @@ kidForm.addEventListener("submit", async (event) => {
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
     discontinued: false,
-    paymentMethod: "",
-    paymentUpiId: "",
-    paymentReference: "",
-    comments: "",
   };
 
   if (!payload.name || !payload.joinDate || !payload.timeSlot) {
@@ -1196,10 +1184,6 @@ kidForm.addEventListener("submit", async (event) => {
           addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
           updatedBy: getActiveManagerEmail(),
           discontinued: currentKid ? currentKid.discontinued : false,
-          paymentMethod: currentKid ? currentKid.paymentMethod : "",
-          paymentUpiId: currentKid ? currentKid.paymentUpiId : "",
-          paymentReference: currentKid ? currentKid.paymentReference : "",
-          comments: currentKid ? currentKid.comments : "",
         })
       )
       .eq("id", editingKidId));
