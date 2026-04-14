@@ -1798,9 +1798,9 @@ const initRealtimeSync = () => {
 window.setInterval(() => {
   if (!isBackendReady) return;
   if (document.visibilityState !== "visible") return;
-  if (activeView !== "attendance") return;
+  if (!isManagerLoggedIn) return;
   loadAttendance(attendanceDateValue);
-}, 2500);
+}, 1000);
 
 const showVerificationFlow = () => {
   if (paymentVerifyFlow) paymentVerifyFlow.hidden = false;
