@@ -1490,6 +1490,46 @@ admissionForm.addEventListener("submit", async (event) => {
     ({ data, error } = await supabaseClient.rpc("submit_admission_form", legacyPayload));
   }
 
+  // Final fallback: direct insert into admissions table when RPC signature/cache is inconsistent.
+  if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
+    const { data: insertedRow, error: insertError } = await supabaseClient
+      .from("admissions")
+      .insert({
+        applicant_name: baseAdmissionPayload.p_applicant_name,
+        nationality: baseAdmissionPayload.p_nationality,
+        date_of_birth: baseAdmissionPayload.p_date_of_birth,
+        age: baseAdmissionPayload.p_age,
+        gender: baseAdmissionPayload.p_gender,
+        father_guardian_name: baseAdmissionPayload.p_father_guardian_name,
+        emergency_contact_no: baseAdmissionPayload.p_alternate_contact_no,
+        parent_contact_no: baseAdmissionPayload.p_parent_contact_no,
+        city: baseAdmissionPayload.p_city,
+        address: baseAdmissionPayload.p_address,
+        school_college: baseAdmissionPayload.p_school_college,
+        parent_aadhaar_no: baseAdmissionPayload.p_parent_aadhaar_no,
+        time_slot: baseAdmissionPayload.p_time_slot,
+        join_date: baseAdmissionPayload.p_join_date,
+        fees_paid: baseAdmissionPayload.p_fees_paid,
+        amount_paid: baseAdmissionPayload.p_amount_paid,
+        jersey_size: baseAdmissionPayload.p_jersey_size,
+        jersey_pairs: baseAdmissionPayload.p_jersey_pairs,
+        payment_method: baseAdmissionPayload.p_payment_method || "UPI",
+        payment_upi_id: baseAdmissionPayload.p_payment_upi_id || "",
+        payment_reference: baseAdmissionPayload.p_payment_reference || "",
+        comments: baseAdmissionPayload.p_comments || "",
+        batsman_style: baseAdmissionPayload.p_batsman_style || "",
+        bowling_styles: baseAdmissionPayload.p_bowling_styles || [],
+        ready_to_start: baseAdmissionPayload.p_ready_to_start,
+        consent_accepted: baseAdmissionPayload.p_consent_accepted,
+        terms_accepted: baseAdmissionPayload.p_terms_accepted,
+      })
+      .select("id, reg_no")
+      .single();
+
+    data = insertedRow;
+    error = insertError;
+  }
+
   submitAdmissionButton.disabled = false;
 
   if (error) {
