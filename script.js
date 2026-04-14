@@ -1630,10 +1630,10 @@ const renderAttendance = (attendedIds) => {
       const rowClass = isPresent ? "active-row" : "";
       return `
         <tr class="${rowClass}">
-          <td><strong>${kid.name}</strong></td>
-          <td>${kid.age}</td>
-          <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
-          <td class="attendance-toggle-cell">
+          <td data-label="Player"><strong>${kid.name}</strong></td>
+          <td data-label="Age">${kid.age}</td>
+          <td data-label="Time slot"><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
+          <td data-label="Status" class="attendance-toggle-cell">
             <label class="attendance-toggle">
               <span class="toggle-switch">
                 <input
@@ -1786,6 +1786,13 @@ const initRealtimeSync = () => {
             if (playerName) showRealtimeToast(`✓ ${playerName} marked present`);
             if (activeView === "attendance") renderAttendance(todayAttendanceIds);
           }
+        } else if (event === "UPDATE") {
+          const sid = payload.new?.student_id;
+          const adate = payload.new?.attendance_date;
+          if (sid && adate === attendanceDateValue) {
+            todayAttendanceIds.add(sid);
+            if (activeView === "attendance") renderAttendance(todayAttendanceIds);
+          }
         } else if (event === "DELETE") {
           const sid = payload.old?.student_id;
           const adate = payload.old?.attendance_date;
@@ -1913,4 +1920,3 @@ if (attendanceDate) {
   attendanceDate.max = getTodayIso();
   attendanceDate.value = attendanceDateValue;
 }
-
