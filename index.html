@@ -469,11 +469,11 @@
                     </label>
                     <label>
                       Parent contact number
-                      <input id="admissionParentContact" name="parentContact" type="tel" required />
+                      <input id="admissionParentContact" name="parentContact" type="tel" pattern="[0-9]{10}" minlength="10" maxlength="10" required />
                     </label>
                     <label>
                       Alternate contact number
-                      <input id="admissionAlternateContact" name="alternateContact" type="tel" required />
+                      <input id="admissionAlternateContact" name="alternateContact" type="tel" pattern="[0-9]{10}" minlength="10" maxlength="10" required />
                     </label>
                     <label>
                       Parent Aadhaar (optional)

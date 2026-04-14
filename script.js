@@ -1423,9 +1423,16 @@ admissionForm.addEventListener("submit", async (event) => {
   const formData = new FormData(admissionForm);
   const dateOfBirth = buildDobIso();
   const age = calculateAge(dateOfBirth);
+  const parentContact = String(formData.get("parentContact") || "").replace(/\D/g, "");
+  const alternateContact = String(formData.get("alternateContact") || "").replace(/\D/g, "");
 
   if (!dateOfBirth || age === null) {
     admissionMessage.textContent = "Please complete the date of birth properly.";
+    return;
+  }
+
+  if (parentContact.length !== 10 || alternateContact.length !== 10) {
+    admissionMessage.textContent = "Parent and alternate contact numbers must be exactly 10 digits.";
     return;
   }
 
@@ -1439,8 +1446,8 @@ admissionForm.addEventListener("submit", async (event) => {
     p_age: age,
     p_gender: String(formData.get("gender") || "").trim(),
     p_father_guardian_name: String(formData.get("guardianName") || "").trim(),
-    p_alternate_contact_no: String(formData.get("alternateContact") || "").trim(),
-    p_parent_contact_no: String(formData.get("parentContact") || "").trim(),
+    p_alternate_contact_no: alternateContact,
+    p_parent_contact_no: parentContact,
     p_city: String(formData.get("city") || "").trim(),
     p_address: String(formData.get("address") || "").trim(),
     p_school_college: String(formData.get("schoolCollege") || "").trim(),
