@@ -1,4 +1,4 @@
-const CACHE_NAME = "gen-alpha-academy-v5";
+const CACHE_NAME = "gen-alpha-academy-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,8 +10,6 @@ const APP_SHELL = [
   "./assets/og-image_forpreview.jpg",
   "./assets/gen-alpha-favicon-192.png",
   "./assets/gen-alpha-favicon-512.png",
-  "./assets/gen-alpha-icon-192.png",
-  "./assets/gen-alpha-icon-512.png",
 ];
 
 /** Match GitHub Pages project URLs (e.g. /repo/script.js), not only root-hosted /script.js */

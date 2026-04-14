@@ -8,13 +8,13 @@
   "description": "Manage academy players, renewals, fees, and time slots for Gen Alpha Cricket Academy.",
   "icons": [
     {
-      "src": "./assets/gen-alpha-icon-192.png",
+      "src": "./assets/gen-alpha-favicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./assets/gen-alpha-icon-512.png",
+      "src": "./assets/gen-alpha-favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
