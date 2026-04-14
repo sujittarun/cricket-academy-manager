@@ -191,6 +191,7 @@ const toDatabasePayload = ({
   amountPaid,
   jerseySize,
   jerseyPairs,
+  renewals,
   addedBy,
   updatedBy,
   discontinued,
@@ -1164,10 +1165,10 @@ kidForm.addEventListener("submit", async (event) => {
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
     discontinued: false,
-    paymentMethod: formData.get("paymentMethod")?.toString() || "",
-    paymentUpiId: formData.get("paymentUpiId")?.toString() || "",
-    paymentReference: formData.get("paymentReference")?.toString() || "",
-    comments: formData.get("comments")?.toString() || "",
+    paymentMethod: "",
+    paymentUpiId: "",
+    paymentReference: "",
+    comments: "",
   };
 
   if (!payload.name || !payload.joinDate || !payload.timeSlot) {
@@ -1195,6 +1196,10 @@ kidForm.addEventListener("submit", async (event) => {
           addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
           updatedBy: getActiveManagerEmail(),
           discontinued: currentKid ? currentKid.discontinued : false,
+          paymentMethod: currentKid ? currentKid.paymentMethod : "",
+          paymentUpiId: currentKid ? currentKid.paymentUpiId : "",
+          paymentReference: currentKid ? currentKid.paymentReference : "",
+          comments: currentKid ? currentKid.comments : "",
         })
       )
       .eq("id", editingKidId));
@@ -1239,9 +1244,6 @@ kidsTableBody.addEventListener("click", async (event) => {
     amountPaidInput.value = String(kidToEdit.amountPaid);
     jerseySizeSelect.value = kidToEdit.jerseySize || "";
     jerseyPairsInput.value = String(kidToEdit.jerseyPairs || 0);
-    document.getElementById("paymentMethod").value = kidToEdit.paymentMethod || "";
-    document.getElementById("paymentReference").value = kidToEdit.paymentReference || "";
-    document.getElementById("comments").value = kidToEdit.comments || "";
     saveButton.textContent = "Save changes";
     cancelEditButton.hidden = false;
     syncAmountState();
@@ -1808,6 +1810,13 @@ const initRealtimeSync = () => {
     .subscribe();
   updatePaymentAssist();
 };
+
+window.setInterval(() => {
+  if (!isBackendReady) return;
+  if (document.visibilityState !== "visible") return;
+  if (activeView !== "attendance") return;
+  loadAttendance(attendanceDateValue);
+}, 2500);
 
 const showVerificationFlow = () => {
   if (paymentVerifyFlow) paymentVerifyFlow.hidden = false;
