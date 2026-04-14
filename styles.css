@@ -814,6 +814,12 @@ body.popup-open {
   align-content: start;
 }
 
+.payment-entry-only-action {
+  width: 100%;
+  justify-items: center;
+  align-content: center;
+}
+
 .payment-open-btn {
   min-width: 132px;
 }

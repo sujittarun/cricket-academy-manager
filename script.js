@@ -564,23 +564,29 @@ const updatePaymentAssist = () => {
   const hasConfig = Boolean(academyPaymentConfig.upiId);
   const amount = getAdmissionAmount();
 
-  paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
-  paymentMerchantMobile.textContent = academyPaymentConfig.mobileNumber || "Not available";
-  paymentMerchantName.textContent = academyPaymentConfig.payeeName;
-  paymentAmountValue.textContent = `Rs ${amount.toFixed(2)}`;
-  paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile payment" : "Desktop QR";
-  paymentEntryTitle.textContent = isMobileBrowser ? "Pay from your UPI app" : "Open QR payment popup";
-  paymentAssistCopy.textContent = isMobileBrowser
-    ? "Open the payment popup to launch Google Pay, PhonePe, or another UPI app on this phone."
-    : "Open the payment popup to show a QR code and pay from your phone.";
-  paymentPopupCopy.textContent = isMobileBrowser
-    ? "Launch your UPI app, complete payment, then return here and finish the admission."
-    : "Scan the QR from your phone and finish the admission form here after payment.";
-  paymentQrCaption.textContent = isMobileBrowser
-    ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
-    : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
-  paymentConfigNotice.hidden = hasConfig;
-  paymentAppGrid.hidden = !isMobileBrowser;
+  if (paymentMerchantUpiId) paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
+  if (paymentMerchantMobile) paymentMerchantMobile.textContent = academyPaymentConfig.mobileNumber || "Not available";
+  if (paymentMerchantName) paymentMerchantName.textContent = academyPaymentConfig.payeeName;
+  if (paymentAmountValue) paymentAmountValue.textContent = `Rs ${amount.toFixed(2)}`;
+  if (paymentDeviceBadge) paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile payment" : "Desktop QR";
+  if (paymentEntryTitle) paymentEntryTitle.textContent = isMobileBrowser ? "Pay from your UPI app" : "Open QR payment popup";
+  if (paymentAssistCopy) {
+    paymentAssistCopy.textContent = isMobileBrowser
+      ? "Open the payment popup to launch Google Pay, PhonePe, or another UPI app on this phone."
+      : "Open the payment popup to show a QR code and pay from your phone.";
+  }
+  if (paymentPopupCopy) {
+    paymentPopupCopy.textContent = isMobileBrowser
+      ? "Launch your UPI app, complete payment, then return here and finish the admission."
+      : "Scan the QR from your phone and finish the admission form here after payment.";
+  }
+  if (paymentQrCaption) {
+    paymentQrCaption.textContent = isMobileBrowser
+      ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
+      : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
+  }
+  if (paymentConfigNotice) paymentConfigNotice.hidden = hasConfig;
+  if (paymentAppGrid) paymentAppGrid.hidden = !isMobileBrowser;
 
   [
     paymentGooglePayButton,
