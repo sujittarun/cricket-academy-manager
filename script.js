@@ -1798,6 +1798,12 @@ const initRealtimeSync = () => {
 window.setInterval(() => {
   if (!isBackendReady) return;
   if (document.visibilityState !== "visible") return;
+  loadKids();
+}, 1000);
+
+window.setInterval(() => {
+  if (!isBackendReady) return;
+  if (document.visibilityState !== "visible") return;
   if (!isManagerLoggedIn) return;
   loadAttendance(attendanceDateValue);
 }, 1000);
