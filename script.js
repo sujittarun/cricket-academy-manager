@@ -55,7 +55,8 @@ const admissionBirthYear = document.getElementById("admissionBirthYear");
 const admissionAge = document.getElementById("admissionAge");
 const admissionJoinDate = document.getElementById("admissionJoinDate");
 const admissionFeesPaid = document.getElementById("admissionFeesPaid");
-const admissionAmountPaid = document.getElementById("admissionAmountPaid");
+const admissionFeePlan = document.getElementById("admissionFeePlan");
+const admissionFeeSummary = document.getElementById("admissionFeeSummary");
 const admissionJerseySize = document.getElementById("admissionJerseySize");
 const admissionJerseyPairs = document.getElementById("admissionJerseyPairs");
 const admissionPaymentAssist = document.getElementById("admissionPaymentAssist");
@@ -118,6 +119,12 @@ const ADMISSION_MONTHS = [
   "November",
   "December",
 ];
+const ADMISSION_ONE_TIME_FEE = 500;
+const ADMISSION_FEE_PLANS = {
+  monthly: { title: "Monthly", base: 3500 },
+  quarterly: { title: "3 months", base: 9000 },
+  special: { title: "Special training", base: 10000 },
+};
 const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + index));
 
 const hasSupabaseConfig = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
@@ -322,7 +329,11 @@ const syncAmountState = () => {
 };
 
 const syncAdmissionAmountState = () => {
-  admissionAmountPaid.disabled = false;
+  const selectedPlan = ADMISSION_FEE_PLANS[admissionFeePlan?.value] || ADMISSION_FEE_PLANS.monthly;
+  const total = selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+  if (admissionFeeSummary) {
+    admissionFeeSummary.textContent = `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")} + Rs ${ADMISSION_ONE_TIME_FEE} admission. First payment Rs ${total.toLocaleString("en-IN")}.`;
+  }
   updatePaymentAssist();
 };
 
@@ -367,8 +378,8 @@ const buildPaymentIntentId = () =>
   `GA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
 const getAdmissionAmount = () => {
-  const value = Number(admissionAmountPaid.value || 0);
-  return Number.isFinite(value) && value > 0 ? value : 0;
+  const selectedPlan = ADMISSION_FEE_PLANS[admissionFeePlan?.value] || ADMISSION_FEE_PLANS.monthly;
+  return selectedPlan.base + ADMISSION_ONE_TIME_FEE;
 };
 
 const getPaymentDescriptor = () => {
@@ -437,8 +448,6 @@ const openPaymentPopup = () => {
   document.body.classList.add("popup-open");
   if (!academyPaymentConfig.upiId) {
     admissionMessage.textContent = "Payment popup opened, but academy UPI ID is not configured yet.";
-  } else if (getAdmissionAmount() <= 0) {
-    admissionMessage.textContent = "Payment popup opened. Amount is optional here, but adding it helps parents pay faster.";
   }
   updatePaymentAssist();
 };
@@ -558,7 +567,7 @@ const updatePaymentAssist = () => {
   paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
   paymentMerchantMobile.textContent = academyPaymentConfig.mobileNumber || "Not available";
   paymentMerchantName.textContent = academyPaymentConfig.payeeName;
-  paymentAmountValue.textContent = amount > 0 ? `Rs ${amount.toFixed(2)}` : "Enter in app";
+  paymentAmountValue.textContent = `Rs ${amount.toFixed(2)}`;
   paymentDeviceBadge.textContent = isMobileBrowser ? "Mobile payment" : "Desktop QR";
   paymentEntryTitle.textContent = isMobileBrowser ? "Pay from your UPI app" : "Open QR payment popup";
   paymentAssistCopy.textContent = isMobileBrowser
@@ -568,12 +577,8 @@ const updatePaymentAssist = () => {
     ? "Launch your UPI app, complete payment, then return here and finish the admission."
     : "Scan the QR from your phone and finish the admission form here after payment.";
   paymentQrCaption.textContent = isMobileBrowser
-    ? amount > 0
-      ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
-      : "Amount is optional. Parents can enter it inside their UPI app after opening payment."
-    : amount > 0
-      ? "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone."
-      : "QR is ready. If amount is blank, parents can enter it inside their UPI app.";
+    ? "If app launch is blocked by the browser, scan the QR from another device or use the academy UPI ID."
+    : "Scan this QR from Google Pay, PhonePe, or any UPI app on your phone.";
   paymentConfigNotice.hidden = hasConfig;
   paymentAppGrid.hidden = !isMobileBrowser;
 
@@ -1351,7 +1356,7 @@ admissionReadyToStart.addEventListener("change", syncAdmissionStyleState);
 admissionBirthDay.addEventListener("change", updateAdmissionAge);
 admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
-admissionAmountPaid.addEventListener("input", updatePaymentAssist);
+admissionFeePlan?.addEventListener("change", syncAdmissionAmountState);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
 closePaymentPopupButton.addEventListener("click", closePaymentPopup);
@@ -1443,7 +1448,10 @@ admissionForm.addEventListener("submit", async (event) => {
     p_time_slot: String(formData.get("timeSlot") || "").trim(),
     p_join_date: String(formData.get("joinDate") || "").trim(),
     p_fees_paid: String(formData.get("feesPaid") || "no") === "yes",
-    p_amount_paid: Number(formData.get("amountPaid") || 0),
+    p_amount_paid:
+      String(formData.get("feesPaid") || "no") === "yes"
+        ? getAdmissionAmount()
+        : 0,
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
     p_comments: String(formData.get("comments") || "").trim(),
@@ -1863,10 +1871,6 @@ paymentVerifyForm?.addEventListener("submit", (event) => {
     admissionFeesPaid.value = "yes";
     admissionFeesPaid.disabled = true;
   }
-  if (admissionAmountPaid) {
-    admissionAmountPaid.disabled = false; // amount stays editable
-  }
-
   // Populate hidden parity fields
   const methodInput = document.getElementById("admissionPaymentMethod");
   const refInput = document.getElementById("admissionPaymentReference");

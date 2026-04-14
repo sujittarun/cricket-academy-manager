@@ -530,15 +530,22 @@
                       </select>
                     </label>
                     <label>
-                      Amount
-                      <input id="admissionAmountPaid" name="amountPaid" type="number" min="0" step="0.01" />
+                      Fee plan
+                      <select id="admissionFeePlan" name="feePlan" required>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">3 months</option>
+                        <option value="special">Special training</option>
+                      </select>
                     </label>
+                    <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
+                      Monthly: Rs 3,500 + Rs 500 admission. First payment Rs 4,000.
+                    </div>
                     <div id="admissionPaymentAssist" class="payment-entry-card full-span">
                       <div class="payment-entry-copy">
                         <p class="section-kicker">UPI Payment</p>
                         <h4 id="paymentEntryTitle">Open payment popup</h4>
                         <p id="paymentAssistCopy" class="payment-assist-copy">
-                          Enter the amount, then open the payment popup for QR or app payment.
+                          Pick a fee plan, then open payment popup for QR or UPI app payment.
                         </p>
                       </div>
                       <div class="payment-entry-side">
