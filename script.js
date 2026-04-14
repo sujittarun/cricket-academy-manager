@@ -1432,7 +1432,7 @@ admissionForm.addEventListener("submit", async (event) => {
   submitAdmissionButton.disabled = true;
   admissionMessage.textContent = "Submitting admission form...";
 
-  const { data, error } = await supabaseClient.rpc("submit_admission_form", {
+  const baseAdmissionPayload = {
     p_applicant_name: String(formData.get("applicantName") || "").trim(),
     p_nationality: String(formData.get("nationality") || "").trim(),
     p_date_of_birth: dateOfBirth,
@@ -1464,7 +1464,18 @@ admissionForm.addEventListener("submit", async (event) => {
     p_ready_to_start: formData.get("readyToStart") === "on",
     p_consent_accepted: formData.get("consentAccepted") === "on",
     p_terms_accepted: formData.get("termsAccepted") === "on",
-  });
+  };
+
+  let { data, error } = await supabaseClient.rpc("submit_admission_form", baseAdmissionPayload);
+
+  // Backward compatibility: some DBs still expose an older RPC signature without payment args.
+  if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
+    const legacyPayload = { ...baseAdmissionPayload };
+    delete legacyPayload.p_payment_method;
+    delete legacyPayload.p_payment_upi_id;
+    delete legacyPayload.p_payment_reference;
+    ({ data, error } = await supabaseClient.rpc("submit_admission_form", legacyPayload));
+  }
 
   submitAdmissionButton.disabled = false;
 
