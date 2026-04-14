@@ -1454,6 +1454,10 @@ admissionForm.addEventListener("submit", async (event) => {
         : 0,
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
+    p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
+    p_payment_upi_id:
+      String(formData.get("paymentUpiId") || academyPaymentConfig.upiId || "").trim(),
+    p_payment_reference: String(formData.get("paymentReference") || "").trim(),
     p_comments: String(formData.get("comments") || "").trim(),
     p_batsman_style: String(formData.get("batsmanStyle") || "").trim(),
     p_bowling_styles: formData.getAll("bowlingStyles").map((value) => String(value)),
