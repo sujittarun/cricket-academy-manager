@@ -229,6 +229,9 @@ let attendanceDateValue = new Date().toISOString().split("T")[0];
 let isFeesVerified = false;
 let realtimeStudentsChannel = null;
 let realtimeAttendanceChannel = null;
+let realtimeFinanceChannel = null;
+let financeReloadTimer = null;
+let financeLoadSeq = 0;
 let financePayments = [];
 let financeExpenses = [];
 
@@ -1403,10 +1406,12 @@ const loadFinance = async () => {
   if (financeRecent) financeRecent.hidden = !managerReady;
   if (!managerReady) return;
 
+  const requestSeq = ++financeLoadSeq;
   const [paymentsResult, expensesResult] = await Promise.all([
     supabaseClient.from("student_payments").select("*").order("paid_on", { ascending: false }),
     supabaseClient.from("academy_expenses").select("*").order("expense_date", { ascending: false }),
   ]);
+  if (requestSeq !== financeLoadSeq) return;
 
   financePayments = paymentsResult.data || [];
   financeExpenses = expensesResult.data || [];
@@ -1570,6 +1575,15 @@ const loadFinance = async () => {
   }
 };
 
+const queueFinanceRefresh = () => {
+  if (!isBackendReady || !isManagerLoggedIn) return;
+  if (financeReloadTimer) window.clearTimeout(financeReloadTimer);
+  financeReloadTimer = window.setTimeout(() => {
+    financeReloadTimer = null;
+    loadFinance();
+  }, 120);
+};
+
 const initializeAuthListener = () => {
   if (!isBackendReady) {
     return;
@@ -1588,6 +1602,7 @@ const initializeAuthListener = () => {
       }
       updateAccessUI();
       renderKids();
+      restartRealtimeSync();
     }, 0);
   });
 };
@@ -2404,8 +2419,24 @@ const showRealtimeToast = (message) => {
   }, 2800);
 };
 
+const stopRealtimeSync = () => {
+  [realtimeStudentsChannel, realtimeAttendanceChannel, realtimeFinanceChannel].forEach((channel) => {
+    if (channel) supabaseClient.removeChannel(channel);
+  });
+  realtimeStudentsChannel = null;
+  realtimeAttendanceChannel = null;
+  realtimeFinanceChannel = null;
+};
+
+const restartRealtimeSync = () => {
+  if (!isBackendReady) return;
+  stopRealtimeSync();
+  initRealtimeSync();
+};
+
 const initRealtimeSync = () => {
   if (!isBackendReady) return;
+  if (realtimeStudentsChannel || realtimeAttendanceChannel || realtimeFinanceChannel) return;
 
   // Students table — fast sync for roster edits/adds/deletes
   realtimeStudentsChannel = supabaseClient
@@ -2472,6 +2503,27 @@ const initRealtimeSync = () => {
       }
     )
     .subscribe();
+
+  // Finance tables — keeps browser and Android app finance screens in sync without manual refresh.
+  realtimeFinanceChannel = supabaseClient
+    .channel("public:finance")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "academy_expenses" },
+      () => {
+        queueFinanceRefresh();
+        if (activeView === "finance") showRealtimeToast("Finance expenses updated");
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "student_payments" },
+      () => {
+        queueFinanceRefresh();
+        if (activeView === "finance") showRealtimeToast("Fee payment timeline updated");
+      }
+    )
+    .subscribe();
   updatePaymentAssist();
 };
 
@@ -2479,14 +2531,14 @@ window.setInterval(() => {
   if (!isBackendReady) return;
   if (document.visibilityState !== "visible") return;
   loadKids();
-}, 1000);
+}, 30000);
 
 window.setInterval(() => {
   if (!isBackendReady) return;
   if (document.visibilityState !== "visible") return;
   if (!isManagerLoggedIn) return;
   loadAttendance(attendanceDateValue);
-}, 1000);
+}, 30000);
 
 const showVerificationFlow = () => {
   if (paymentVerifyFlow) paymentVerifyFlow.hidden = false;
