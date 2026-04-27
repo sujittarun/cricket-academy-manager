@@ -132,6 +132,7 @@ const financeOneMonthChurn = document.getElementById("financeOneMonthChurn");
 const financeSixMonthStudents = document.getElementById("financeSixMonthStudents");
 const financeChurnRate = document.getElementById("financeChurnRate");
 const financeMiniChart = document.getElementById("financeMiniChart");
+const financeNetTimeline = document.getElementById("financeNetTimeline");
 const expenseForm = document.getElementById("expenseForm");
 const expenseMessage = document.getElementById("expenseMessage");
 const financeRecent = document.getElementById("financeRecent");
@@ -1439,6 +1440,7 @@ const loadFinance = async () => {
   if (financeMonthNet) {
     financeMonthNet.textContent = rupees(monthFees - monthExpenses);
     financeMonthNet.parentElement?.classList.toggle("negative", monthFees - monthExpenses < 0);
+    financeMonthNet.parentElement?.classList.toggle("positive", monthFees - monthExpenses >= 0);
   }
   if (financeStudentMix) financeStudentMix.textContent = `${activeStudents} active / ${discontinuedStudents} left`;
   if (financeOneMonthChurn) financeOneMonthChurn.textContent = String(oneMonthDropouts);
@@ -1461,7 +1463,7 @@ const loadFinance = async () => {
       const feeHeight = Math.max(6, Math.round((month.fees / maxChartValue) * 76));
       const expenseHeight = Math.max(6, Math.round((month.expenses / maxChartValue) * 76));
       return `
-        <div class="finance-chart-month" title="${month.label}: Fees ${rupees(month.fees)}, Expenses ${rupees(month.expenses)}">
+        <div class="finance-chart-month" data-tooltip="${month.label}: Fees ${rupees(month.fees)} | Expenses ${rupees(month.expenses)} | Net ${rupees(month.fees - month.expenses)}">
           <div class="finance-bars">
             <span class="fee-bar" style="height:${feeHeight}px"></span>
             <span class="expense-bar" style="height:${expenseHeight}px"></span>
@@ -1470,6 +1472,17 @@ const loadFinance = async () => {
         </div>
       `;
     }).join("");
+    if (financeNetTimeline) {
+      financeNetTimeline.innerHTML = monthBuckets.map((month) => {
+        const net = month.fees - month.expenses;
+        return `
+          <div class="finance-net-chip ${net < 0 ? "negative" : "positive"}">
+            <span>${month.label}</span>
+            <strong>${rupees(net)}</strong>
+          </div>
+        `;
+      }).join("");
+    }
   }
   
   const renderExpensesTable = () => {

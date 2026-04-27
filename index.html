@@ -403,15 +403,15 @@
           </div>
           <div id="financeLock" class="editor-lock">Login as manager to view finance details.</div>
           <section class="finance-stats" id="financeStats" hidden>
-            <article class="finance-metric"><p>This Month</p><strong id="financeMonthFees">Rs 0</strong><span>fees collected</span></article>
-            <article class="finance-metric"><p>This Year</p><strong id="financeYearFees">Rs 0</strong><span>fees collected</span></article>
-            <article class="finance-metric"><p>Overall Fees</p><strong id="financeTotalFees">Rs 0</strong><span>all payments</span></article>
-            <article class="finance-metric expense"><p>Expenses</p><strong id="financeTotalExpenses">Rs 0</strong><span>overall spend</span></article>
+            <article class="finance-metric hero"><p>Month Fees</p><strong id="financeMonthFees">Rs 0</strong><span>fees collected</span></article>
+            <article class="finance-metric hero expense"><p>Month Expense</p><strong id="financeMonthExpenses">Rs 0</strong><span>this month spend</span></article>
+            <article class="finance-metric hero net"><p>Month Net</p><strong id="financeMonthNet">Rs 0</strong><span>fees minus expense</span></article>
+            <article class="finance-metric quiet"><p>This Year</p><strong id="financeYearFees">Rs 0</strong><span>fees</span></article>
+            <article class="finance-metric quiet"><p>Overall Fees</p><strong id="financeTotalFees">Rs 0</strong><span>all payments</span></article>
+            <article class="finance-metric quiet expense"><p>Expenses</p><strong id="financeTotalExpenses">Rs 0</strong><span>overall spend</span></article>
           </section>
           <section id="financeInsights" class="finance-insights" hidden>
             <div class="finance-mini-metrics">
-              <article class="finance-mini-card"><p>Month Expense</p><strong id="financeMonthExpenses">Rs 0</strong></article>
-              <article class="finance-mini-card positive"><p>Month Net</p><strong id="financeMonthNet">Rs 0</strong></article>
               <article class="finance-mini-card split"><p>Students</p><strong id="financeStudentMix">0 active / 0 left</strong></article>
               <article class="finance-mini-card warning"><p>1-Month Dropouts</p><strong id="financeOneMonthChurn">0</strong></article>
               <article class="finance-mini-card positive"><p>6+ Month Active</p><strong id="financeSixMonthStudents">0</strong></article>
@@ -429,6 +429,7 @@
                 </div>
               </div>
               <div id="financeMiniChart" class="finance-mini-chart"></div>
+              <div id="financeNetTimeline" class="finance-net-timeline"></div>
             </div>
           </section>
           <form id="expenseForm" class="kid-form finance-expense-form" hidden>
