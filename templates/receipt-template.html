@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gen Alpha Receipt Template</title>
+    <style>
+      :root {
+        --navy: #071a3e;
+        --blue: #1f5fbf;
+        --gold: #f4be2e;
+        --ink: #10264f;
+        --muted: #66748c;
+        --paper: #ffffff;
+        --soft-blue: #f2f7ff;
+        --soft-gold: #fff6d8;
+        --success: #178553;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+        background:
+          radial-gradient(circle at 8% 8%, #dbe9ff 0 16%, transparent 17%),
+          radial-gradient(circle at 96% 92%, #fff0bd 0 16%, transparent 17%),
+          #eaf1fb;
+        font-family: "Aptos", "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+
+      .receipt {
+        width: min(680px, 100%);
+        border-radius: 34px;
+        padding: 22px;
+        background: var(--paper);
+        border: 1px solid #d9e3f2;
+        box-shadow: 0 30px 80px rgba(7, 26, 62, 0.16);
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        min-height: 230px;
+        border-radius: 28px;
+        padding: 28px;
+        background:
+          radial-gradient(circle at 92% 8%, rgba(31, 95, 191, 0.32) 0 18%, transparent 19%),
+          radial-gradient(circle at 4% 100%, rgba(255, 255, 255, 0.13) 0 16%, transparent 17%),
+          var(--navy);
+        color: white;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 11px;
+        background: linear-gradient(90deg, var(--gold), #ffe996, var(--blue));
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .brand img {
+        width: 76px;
+        height: 106px;
+        object-fit: contain;
+        border-radius: 22px;
+        padding: 8px;
+        background: white;
+      }
+
+      .kicker {
+        margin: 0 0 8px;
+        color: var(--gold);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 5vw, 2.55rem);
+        line-height: 1;
+      }
+
+      .sub {
+        margin: 10px 0 0;
+        color: #dceaff;
+        font-weight: 700;
+      }
+
+      .status {
+        position: absolute;
+        top: 28px;
+        right: 28px;
+        padding: 9px 18px;
+        border-radius: 999px;
+        background: var(--success);
+        font-weight: 950;
+        letter-spacing: 0.08em;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: 14px;
+        margin-top: -34px;
+        padding: 0 20px;
+        position: relative;
+      }
+
+      .summary-card,
+      .player-card,
+      .detail-card,
+      .footer {
+        border: 1px solid #e1e9f5;
+        border-radius: 22px;
+        background: white;
+      }
+
+      .summary-card {
+        padding: 18px 20px;
+        box-shadow: 0 16px 35px rgba(7, 26, 62, 0.1);
+      }
+
+      .amount {
+        background: var(--soft-gold);
+      }
+
+      .label {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .value {
+        display: block;
+        color: var(--ink);
+        font-size: 1.25rem;
+        font-weight: 950;
+        line-height: 1.1;
+      }
+
+      .player-card {
+        margin: 18px 20px 0;
+        padding: 18px 20px;
+        background: var(--soft-blue);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 20px 0;
+      }
+
+      .detail-card {
+        padding: 15px 16px;
+      }
+
+      .footer {
+        margin: 18px 20px 0;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        background: #f8fbff;
+      }
+
+      .footer p {
+        margin: 0;
+        color: var(--muted);
+        font-weight: 650;
+      }
+
+      .footer strong {
+        color: var(--navy);
+        font-size: 1.15rem;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <article class="receipt">
+      <section class="hero">
+        <div class="brand">
+          <img src="../assets/og-image.jpg" alt="Gen Alpha Cricket Academy logo" />
+          <div>
+            <p class="kicker">Gen Alpha Cricket Academy</p>
+            <h1>{{receiptType}}</h1>
+            <p class="sub">Official digital receipt • Manikonda</p>
+          </div>
+        </div>
+        <span class="status">PAID</span>
+      </section>
+
+      <section class="summary">
+        <div class="summary-card">
+          <span class="label">Receipt No</span>
+          <strong class="value">{{receiptNo}}</strong>
+        </div>
+        <div class="summary-card amount">
+          <span class="label">Amount Paid</span>
+          <strong class="value">{{amountPaid}}</strong>
+        </div>
+      </section>
+
+      <section class="player-card">
+        <div>
+          <span class="label">Player</span>
+          <strong class="value">{{playerName}}</strong>
+        </div>
+        <div>
+          <span class="label">Reg No</span>
+          <strong class="value">{{regNo}}</strong>
+        </div>
+      </section>
+
+      <section class="details">{{detailCards}}</section>
+
+      <footer class="footer">
+        <p>Fees once paid are recorded against the player profile. Please keep this confirmation for academy reference.</p>
+        <strong>Thank you</strong>
+      </footer>
+    </article>
+  </body>
+</html>
