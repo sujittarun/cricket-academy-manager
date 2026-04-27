@@ -325,7 +325,7 @@
                     <th>Latest renewal</th>
                     <th>Fees paid</th>
                     <th>Amount paid</th>
-                    <th>Renewal status</th>
+                    <th>Next fee due</th>
                     <th>Updated</th>
                     <th id="actionHeader">Action</th>
                   </tr>
@@ -549,8 +549,14 @@
                       <select id="admissionFeePlan" name="feePlan" required>
                         <option value="monthly">Monthly</option>
                         <option value="quarterly">3 months</option>
+                        <option value="halfyearly">6 months</option>
                         <option value="special">Special training</option>
+                        <option value="custom">Custom amount</option>
                       </select>
+                    </label>
+                    <label id="admissionCustomAmountLabel" hidden>
+                      Custom amount
+                      <input id="admissionCustomAmount" name="customAmount" type="number" min="0" step="0.01" placeholder="Enter amount" />
                     </label>
                     <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
                       Monthly: Rs 3,500 + Rs 500 admission. First payment Rs 4,000.
@@ -782,6 +788,21 @@
             </div>
           </div>
         </div>
+      </section>
+    </div>
+
+    <div id="playerDetailPopup" class="player-popup-backdrop" hidden>
+      <section class="player-popup panel" role="dialog" aria-modal="true" aria-labelledby="playerDetailTitle">
+        <div class="payment-popup-header">
+          <div>
+            <p class="section-kicker">Player Profile</p>
+            <h3 id="playerDetailTitle">Player details</h3>
+          </div>
+          <button id="closePlayerDetailButton" type="button" class="icon-button" aria-label="Close player details">
+            Close
+          </button>
+        </div>
+        <div id="playerDetailContent" class="player-detail-content"></div>
       </section>
     </div>
 

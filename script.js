@@ -68,6 +68,8 @@ const admissionTimeSlot = document.getElementById("admissionTimeSlot");
 const admissionJoinDate = document.getElementById("admissionJoinDate");
 const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionFeePlan = document.getElementById("admissionFeePlan");
+const admissionCustomAmountLabel = document.getElementById("admissionCustomAmountLabel");
+const admissionCustomAmount = document.getElementById("admissionCustomAmount");
 const admissionFeeSummary = document.getElementById("admissionFeeSummary");
 const admissionJerseySize = document.getElementById("admissionJerseySize");
 const admissionJerseyPairs = document.getElementById("admissionJerseyPairs");
@@ -97,6 +99,10 @@ const resetAdmissionButton = document.getElementById("resetAdmissionButton");
 const submitAdmissionButton = document.getElementById("submitAdmissionButton");
 const admissionReadyToStart = document.getElementById("admissionReadyToStart");
 const admissionStyleOptions = document.getElementById("admissionStyleOptions");
+const playerDetailPopup = document.getElementById("playerDetailPopup");
+const playerDetailContent = document.getElementById("playerDetailContent");
+const playerDetailTitle = document.getElementById("playerDetailTitle");
+const closePlayerDetailButton = document.getElementById("closePlayerDetailButton");
 
 // Attendance
 const attendanceTabButton = document.getElementById("attendanceTabButton");
@@ -135,7 +141,9 @@ const ADMISSION_ONE_TIME_FEE = 500;
 const ADMISSION_FEE_PLANS = {
   monthly: { title: "Monthly", base: 3500 },
   quarterly: { title: "3 months", base: 9000 },
+  halfyearly: { title: "6 months", base: 20000 },
   special: { title: "Special training", base: 10000 },
+  custom: { title: "Custom amount", base: 0 },
 };
 const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + index));
 
@@ -198,6 +206,9 @@ const normalizeKid = (kid) => {
     paymentUpiId: kid.payment_upi_id || "",
     paymentReference: kid.payment_reference || "",
     comments: kid.comments || "",
+    fatherGuardianName: kid.father_guardian_name || "",
+    parentContactNo: kid.parent_contact_no || "",
+    alternateContactNo: kid.alternate_contact_no || "",
   };
 };
 
@@ -243,8 +254,30 @@ const formatDate = (value) =>
       })
     : "Not renewed";
 
+const addDaysIso = (dateValue, days) => {
+  const date = new Date(`${dateValue}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split("T")[0];
+};
+
 const getReferenceDate = (kid) =>
   kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : kid.joinDate;
+
+const getNextRenewalCycleDate = (kid) => {
+  let cycleDate = getReferenceDate(kid);
+  while (getDaysSinceDate(cycleDate) >= 30) {
+    cycleDate = addDaysIso(cycleDate, 30);
+  }
+  return cycleDate;
+};
+
+const getTrainingDuration = (kid) => {
+  const days = Math.max(getDaysSinceDate(kid.joinDate), 0);
+  const months = Math.floor(days / 30);
+  const remainingDays = days % 30;
+  if (months <= 0) return `${days} day${days === 1 ? "" : "s"}`;
+  return `${months} month${months === 1 ? "" : "s"}, ${remainingDays} day${remainingDays === 1 ? "" : "s"}`;
+};
 
 const getDaysSinceDate = (dateValue) => {
   const targetDate = new Date(`${dateValue}T00:00:00`);
@@ -342,9 +375,16 @@ const syncAmountState = () => {
 
 const syncAdmissionAmountState = () => {
   const selectedPlan = ADMISSION_FEE_PLANS[admissionFeePlan?.value] || ADMISSION_FEE_PLANS.monthly;
-  const total = selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+  const total = admissionFeePlan?.value === "custom"
+    ? Number(admissionCustomAmount?.value || 0)
+    : selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+  if (admissionCustomAmountLabel) {
+    admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
+  }
   if (admissionFeeSummary) {
-    admissionFeeSummary.textContent = `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")} + Rs ${ADMISSION_ONE_TIME_FEE} admission. First payment Rs ${total.toLocaleString("en-IN")}.`;
+    admissionFeeSummary.textContent = admissionFeePlan?.value === "custom"
+      ? `Custom amount: Rs ${total.toLocaleString("en-IN")}.`
+      : `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")} + Rs ${ADMISSION_ONE_TIME_FEE} admission. First payment Rs ${total.toLocaleString("en-IN")}.`;
   }
   updatePaymentAssist();
 };
@@ -391,6 +431,9 @@ const buildPaymentIntentId = () =>
 
 const getAdmissionAmount = () => {
   const selectedPlan = ADMISSION_FEE_PLANS[admissionFeePlan?.value] || ADMISSION_FEE_PLANS.monthly;
+  if (admissionFeePlan?.value === "custom") {
+    return Number(admissionCustomAmount?.value || 0);
+  }
   return selectedPlan.base + ADMISSION_ONE_TIME_FEE;
 };
 
@@ -1092,7 +1135,7 @@ const renderKids = () => {
     const row = document.createElement("tr");
     row.className = needsAttention ? "alert-row" : "";
     row.innerHTML = `
-      <td><strong>${kid.name}</strong></td>
+      <td><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
       <td>${kid.age}</td>
       <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
       <td><span class="meta-text">${formatJerseyDetails(kid)}</span></td>
@@ -1126,7 +1169,7 @@ const renderKids = () => {
               </button>
               ${
                 canRenew
-                  ? `<button class="renew-btn" data-action="renew" data-id="${kid.id}" type="button">Mark renewal paid</button>`
+                  ? `<button class="renew-btn" data-action="renew" data-id="${kid.id}" type="button">Mark fee paid</button>`
                   : `<span class="action-note">${
                       kid.discontinued
                         ? "Renewal paused"
@@ -1197,6 +1240,66 @@ const loadKids = async () => {
 
   kids = data.map(normalizeKid);
   renderKids();
+};
+
+const loadPlayerTimeline = async (studentId) => {
+  if (!isBackendReady || !isManagerLoggedIn) return [];
+
+  const { data, error } = await supabaseClient
+    .from("student_timeline")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    return [];
+  }
+
+  return data || [];
+};
+
+const renderPlayerDetails = async (kid) => {
+  if (!kid || !playerDetailPopup || !playerDetailContent) return;
+  const timeline = await loadPlayerTimeline(kid.id);
+
+  playerDetailTitle.textContent = kid.name;
+  playerDetailContent.innerHTML = `
+    <div class="player-profile-grid">
+      <div class="profile-stat"><span>Training duration</span><strong>${getTrainingDuration(kid)}</strong></div>
+      <div class="profile-stat"><span>Joined</span><strong>${formatDate(kid.joinDate)}</strong></div>
+      <div class="profile-stat"><span>Next fee due</span><strong>${kid.discontinued ? "Paused" : formatDate(addDaysIso(getReferenceDate(kid), 30))}</strong></div>
+      <div class="profile-stat"><span>Amount paid</span><strong>Rs ${Number(kid.amountPaid).toFixed(2)}</strong></div>
+    </div>
+    <div class="player-detail-section">
+      <h4>Parent details</h4>
+      <p><strong>${kid.fatherGuardianName || "Parent name not saved"}</strong></p>
+      <p>
+        ${
+          kid.parentContactNo
+            ? `<a class="call-link" href="tel:${kid.parentContactNo}">${kid.parentContactNo}</a>`
+            : "Parent contact not saved"
+        }
+      </p>
+      ${kid.alternateContactNo ? `<p>Alternate: <a class="call-link" href="tel:${kid.alternateContactNo}">${kid.alternateContactNo}</a></p>` : ""}
+    </div>
+    <div class="player-detail-section">
+      <h4>Timeline</h4>
+      ${
+        timeline.length > 0
+          ? `<ol class="timeline-list">${timeline.map((item) => `
+              <li>
+                <strong>${item.title || item.event_type}</strong>
+                <span>${formatDate(item.event_date)} · ${item.changed_by || "System"}</span>
+                ${item.details ? `<p>${item.details}</p>` : ""}
+              </li>
+            `).join("")}</ol>`
+          : `<p class="sub-copy">No timeline records yet. Run the player profile timeline SQL migration to start capturing changes.</p>`
+      }
+    </div>
+  `;
+  playerDetailPopup.hidden = false;
+  document.body.classList.add("popup-open");
 };
 
 const initializeAuthListener = () => {
@@ -1303,6 +1406,9 @@ kidForm.addEventListener("submit", async (event) => {
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
     discontinued: false,
+    fatherGuardianName: "",
+    parentContactNo: "",
+    alternateContactNo: "",
   };
 
   if (!payload.name || !payload.joinDate || !payload.timeSlot) {
@@ -1330,6 +1436,9 @@ kidForm.addEventListener("submit", async (event) => {
           addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
           updatedBy: getActiveManagerEmail(),
           discontinued: currentKid ? currentKid.discontinued : false,
+          fatherGuardianName: currentKid ? currentKid.fatherGuardianName : "",
+          parentContactNo: currentKid ? currentKid.parentContactNo : "",
+          alternateContactNo: currentKid ? currentKid.alternateContactNo : "",
         })
       )
       .eq("id", editingKidId));
@@ -1352,11 +1461,21 @@ kidForm.addEventListener("submit", async (event) => {
 kidsTableBody.addEventListener("click", async (event) => {
   const target = event.target;
 
-  if (!(target instanceof HTMLButtonElement) || !isBackendReady || !isManagerLoggedIn || !isEditMode) {
+  if (!(target instanceof HTMLButtonElement)) {
     return;
   }
 
   const { id, action } = target.dataset;
+
+  if (action === "details") {
+    const kid = kids.find((item) => item.id === id);
+    await renderPlayerDetails(kid);
+    return;
+  }
+
+  if (!isBackendReady || !isManagerLoggedIn || !isEditMode) {
+    return;
+  }
 
   if (action === "edit") {
     const kidToEdit = kids.find((kid) => kid.id === id);
@@ -1415,7 +1534,8 @@ kidsTableBody.addEventListener("click", async (event) => {
       return;
     }
 
-    const renewals = [...kidToRenew.renewals, new Date().toISOString().split("T")[0]];
+    const cycleDate = getNextRenewalCycleDate(kidToRenew);
+    const renewals = [...kidToRenew.renewals, cycleDate];
     const { error } = await supabaseClient
       .from("students")
       .update({
@@ -1429,7 +1549,7 @@ kidsTableBody.addEventListener("click", async (event) => {
       return;
     }
 
-    formMessage.textContent = `${kidToRenew.name} marked as renewed for the next 30-day cycle.`;
+    formMessage.textContent = `${kidToRenew.name} marked paid for cycle starting ${formatDate(cycleDate)}.`;
     await loadKids();
     return;
   }
@@ -1498,6 +1618,7 @@ admissionBirthDay.addEventListener("change", updateAdmissionAge);
 admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
 admissionFeePlan?.addEventListener("change", syncAdmissionAmountState);
+admissionCustomAmount?.addEventListener("input", syncAdmissionAmountState);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 admissionDocumentUpload?.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
@@ -1521,10 +1642,24 @@ copyPaymentUpiButton.addEventListener("click", () =>
 copyPaymentMobileButton.addEventListener("click", () =>
   copyPaymentText(academyPaymentConfig.mobileNumber, "Academy mobile number copied")
 );
+closePlayerDetailButton?.addEventListener("click", () => {
+  playerDetailPopup.hidden = true;
+  document.body.classList.remove("popup-open");
+});
+playerDetailPopup?.addEventListener("click", (event) => {
+  if (event.target === playerDetailPopup) {
+    playerDetailPopup.hidden = true;
+    document.body.classList.remove("popup-open");
+  }
+});
 window.addEventListener("focus", refreshPaymentReturnHint);
 window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && paymentPopup && !paymentPopup.hidden) {
     closePaymentPopup();
+  }
+  if (event.key === "Escape" && playerDetailPopup && !playerDetailPopup.hidden) {
+    playerDetailPopup.hidden = true;
+    document.body.classList.remove("popup-open");
   }
 });
 document.addEventListener("visibilitychange", () => {

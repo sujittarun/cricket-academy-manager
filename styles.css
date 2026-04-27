@@ -726,6 +726,104 @@ body.popup-open {
   white-space: nowrap;
 }
 
+.player-link {
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.player-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 16, 34, 0.48);
+}
+
+.player-popup {
+  width: min(760px, 100%);
+  max-height: min(760px, 90vh);
+  overflow: auto;
+}
+
+.player-detail-content {
+  display: grid;
+  gap: 14px;
+}
+
+.player-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profile-stat,
+.player-detail-section {
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.profile-stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profile-stat strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.player-detail-section h4 {
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+
+.call-link {
+  color: var(--accent-dark);
+  font-weight: 900;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.timeline-list li strong,
+.timeline-list li span {
+  display: block;
+}
+
+.timeline-list li span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.timeline-list li p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .admission-reg-value {
   display: block;
   font-size: 1.65rem;
@@ -1537,6 +1635,10 @@ body.popup-open {
   .payment-entry-card {
     grid-template-columns: 1fr;
   }
+
+  .player-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 980px) {
@@ -1857,5 +1959,9 @@ body.popup-open {
   .admission-actions .primary-btn,
   .admission-actions .secondary-btn {
     width: 100%;
+  }
+
+  .player-profile-grid {
+    grid-template-columns: 1fr;
   }
 }
