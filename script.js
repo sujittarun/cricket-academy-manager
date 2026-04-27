@@ -127,8 +127,10 @@ const financeTotalExpenses = document.getElementById("financeTotalExpenses");
 const financeInsights = document.getElementById("financeInsights");
 const financeMonthExpenses = document.getElementById("financeMonthExpenses");
 const financeMonthNet = document.getElementById("financeMonthNet");
-const financeActiveStudents = document.getElementById("financeActiveStudents");
-const financeDiscontinuedStudents = document.getElementById("financeDiscontinuedStudents");
+const financeStudentMix = document.getElementById("financeStudentMix");
+const financeOneMonthChurn = document.getElementById("financeOneMonthChurn");
+const financeSixMonthStudents = document.getElementById("financeSixMonthStudents");
+const financeChurnRate = document.getElementById("financeChurnRate");
 const financeMiniChart = document.getElementById("financeMiniChart");
 const expenseForm = document.getElementById("expenseForm");
 const expenseMessage = document.getElementById("expenseMessage");
@@ -1430,13 +1432,18 @@ const loadFinance = async () => {
   const monthFees = sum(allFees, monthKey);
   const activeStudents = kids.filter((kid) => !kid.discontinued).length;
   const discontinuedStudents = kids.filter((kid) => kid.discontinued).length;
+  const oneMonthDropouts = kids.filter((kid) => kid.discontinued && kid.renewals.length === 0).length;
+  const sixMonthActiveStudents = kids.filter((kid) => !kid.discontinued && getDaysSinceDate(kid.joinDate) >= 180).length;
+  const churnRate = kids.length > 0 ? Math.round((discontinuedStudents / kids.length) * 100) : 0;
   if (financeMonthExpenses) financeMonthExpenses.textContent = rupees(monthExpenses);
   if (financeMonthNet) {
     financeMonthNet.textContent = rupees(monthFees - monthExpenses);
     financeMonthNet.parentElement?.classList.toggle("negative", monthFees - monthExpenses < 0);
   }
-  if (financeActiveStudents) financeActiveStudents.textContent = String(activeStudents);
-  if (financeDiscontinuedStudents) financeDiscontinuedStudents.textContent = String(discontinuedStudents);
+  if (financeStudentMix) financeStudentMix.textContent = `${activeStudents} active / ${discontinuedStudents} left`;
+  if (financeOneMonthChurn) financeOneMonthChurn.textContent = String(oneMonthDropouts);
+  if (financeSixMonthStudents) financeSixMonthStudents.textContent = String(sixMonthActiveStudents);
+  if (financeChurnRate) financeChurnRate.textContent = `${churnRate}%`;
 
   if (financeMiniChart) {
     const monthBuckets = Array.from({ length: 6 }, (_, index) => {
