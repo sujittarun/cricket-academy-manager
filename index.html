@@ -400,6 +400,21 @@
               <p class="records-helper">This number is only used after the form is submitted successfully.</p>
             </div>
 
+            <section class="admission-ai-upload">
+              <div>
+                <p class="section-kicker">AI Assist</p>
+                <h3>Upload old admission form</h3>
+                <p>
+                  Upload a photo or PDF of a filled admission form. AI will fill what it can read, then you can review before submitting.
+                </p>
+              </div>
+              <label class="secondary-btn admission-upload-button">
+                Upload document
+                <input id="admissionDocumentUpload" type="file" accept="image/*,application/pdf" hidden />
+              </label>
+            </section>
+            <p id="admissionExtractMessage" class="form-message" aria-live="polite"></p>
+
             <div class="admission-compact-layout">
               <div class="admission-column">
                 <section class="admission-group">

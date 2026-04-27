@@ -49,10 +49,22 @@ const admissionForm = document.getElementById("admissionForm");
 const admissionApplicantName = document.getElementById("admissionApplicantName");
 const admissionRegNo = document.getElementById("admissionRegNo");
 const admissionMessage = document.getElementById("admissionMessage");
+const admissionExtractMessage = document.getElementById("admissionExtractMessage");
+const admissionDocumentUpload = document.getElementById("admissionDocumentUpload");
 const admissionBirthDay = document.getElementById("admissionBirthDay");
 const admissionBirthMonth = document.getElementById("admissionBirthMonth");
 const admissionBirthYear = document.getElementById("admissionBirthYear");
 const admissionAge = document.getElementById("admissionAge");
+const admissionNationality = document.getElementById("admissionNationality");
+const admissionGender = document.getElementById("admissionGender");
+const admissionGuardianName = document.getElementById("admissionGuardianName");
+const admissionParentContact = document.getElementById("admissionParentContact");
+const admissionAlternateContact = document.getElementById("admissionAlternateContact");
+const admissionAadhaar = document.getElementById("admissionAadhaar");
+const admissionSchoolCollege = document.getElementById("admissionSchoolCollege");
+const admissionCity = document.getElementById("admissionCity");
+const admissionAddress = document.getElementById("admissionAddress");
+const admissionTimeSlot = document.getElementById("admissionTimeSlot");
 const admissionJoinDate = document.getElementById("admissionJoinDate");
 const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionFeePlan = document.getElementById("admissionFeePlan");
@@ -686,6 +698,128 @@ const updateAdmissionAge = () => {
   admissionAge.textContent = age === null ? "Auto" : String(age);
 };
 
+const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error("Unable to read file."));
+    reader.readAsDataURL(file);
+  });
+
+const setIfReadable = (element, value) => {
+  const nextValue = String(value || "").trim();
+  if (element && nextValue) {
+    element.value = nextValue;
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+};
+
+const setAdmissionDobFromIso = (dateValue) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || "").trim());
+  if (!match) return;
+
+  const [, year, month, day] = match;
+  const monthName = ADMISSION_MONTHS[Number(month) - 1];
+  if (!monthName) return;
+
+  setIfReadable(admissionBirthYear, year);
+  setIfReadable(admissionBirthMonth, monthName);
+  setIfReadable(admissionBirthDay, String(Number(day)));
+  updateAdmissionAge();
+};
+
+const normalizeExtractedTimeSlot = (value) => {
+  const compact = String(value || "").toUpperCase().replace(/\s+/g, "");
+  return TIME_SLOTS.find((slot) => slot.toUpperCase().replace(/\s+/g, "") === compact) || "";
+};
+
+const applyAdmissionExtraction = (fields = {}) => {
+  setIfReadable(admissionApplicantName, fields.applicantName);
+  setIfReadable(admissionNationality, fields.nationality);
+  setIfReadable(admissionGender, fields.gender);
+  setIfReadable(admissionGuardianName, fields.fatherGuardianName);
+  setIfReadable(admissionParentContact, String(fields.parentContactNo || "").replace(/\D/g, "").slice(0, 10));
+  setIfReadable(admissionAlternateContact, String(fields.alternateContactNo || "").replace(/\D/g, "").slice(0, 10));
+  setIfReadable(admissionAadhaar, String(fields.parentAadhaarNo || "").replace(/\D/g, ""));
+  setIfReadable(admissionSchoolCollege, fields.schoolCollege);
+  setIfReadable(admissionCity, fields.city);
+  setIfReadable(admissionAddress, fields.address);
+  setIfReadable(admissionTimeSlot, normalizeExtractedTimeSlot(fields.timeSlot));
+  setAdmissionDobFromIso(fields.dateOfBirth);
+
+  if (fields.readyToStartNow === true && admissionReadyToStart) {
+    admissionReadyToStart.checked = true;
+    syncAdmissionStyleState();
+  }
+
+  const batsmanInput = fields.batsmanStyle
+    ? admissionForm.querySelector(`input[name="batsmanStyle"][value="${CSS.escape(fields.batsmanStyle)}"]`)
+    : null;
+  if (batsmanInput && !admissionReadyToStart?.checked) {
+    batsmanInput.checked = true;
+  }
+
+  if (Array.isArray(fields.bowlingStyles) && !admissionReadyToStart?.checked) {
+    fields.bowlingStyles.forEach((style) => {
+      const checkbox = admissionForm.querySelector(`input[name="bowlingStyles"][value="${CSS.escape(style)}"]`);
+      if (checkbox) checkbox.checked = true;
+    });
+  }
+
+  const comments = String(fields.comments || "").trim();
+  const commentsBox = document.getElementById("admissionComments");
+  if (comments && commentsBox && !commentsBox.value.trim()) {
+    commentsBox.value = comments;
+  }
+};
+
+const extractAdmissionDocument = async (file) => {
+  if (!isBackendReady) {
+    admissionExtractMessage.textContent = "Supabase setup is required before AI document reading can run.";
+    return;
+  }
+
+  admissionExtractMessage.textContent = "Reading document with AI. Please wait...";
+  admissionDocumentUpload.disabled = true;
+
+  try {
+    const fileBase64 = await fileToBase64(file);
+    const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/extract-admission`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_CONFIG.anonKey,
+        Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`,
+      },
+      body: JSON.stringify({
+        fileBase64,
+        mimeType: file.type || "image/jpeg",
+        fileName: file.name || "admission-form",
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Unable to read the admission document.");
+    }
+
+    applyAdmissionExtraction(result.fields || {});
+    const warnings = Array.isArray(result.warnings) ? result.warnings.filter(Boolean) : [];
+    admissionExtractMessage.textContent =
+      warnings.length > 0
+        ? `AI filled the readable fields. Please review carefully: ${warnings.join(" ")}`
+        : "AI filled the readable fields. Please review before submitting.";
+  } catch (error) {
+    admissionExtractMessage.textContent = error.message || "Unable to read the admission document.";
+  } finally {
+    admissionDocumentUpload.disabled = false;
+    admissionDocumentUpload.value = "";
+  }
+};
+
 const populateAdmissionSelectors = () => {
   admissionBirthDay.innerHTML += Array.from({ length: 31 }, (_, index) => {
     const day = String(index + 1);
@@ -723,6 +857,7 @@ const resetAdmissionForm = async () => {
   admissionForm.reset();
   admissionJoinDate.value = new Date().toISOString().split("T")[0];
   admissionMessage.textContent = "";
+  if (admissionExtractMessage) admissionExtractMessage.textContent = "";
   admissionAge.textContent = "Auto";
   admissionPaymentIntentId = buildPaymentIntentId();
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
@@ -1364,6 +1499,12 @@ admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
 admissionFeePlan?.addEventListener("change", syncAdmissionAmountState);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
+admissionDocumentUpload?.addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  if (file) {
+    extractAdmissionDocument(file);
+  }
+});
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
 closePaymentPopupButton.addEventListener("click", closePaymentPopup);
 paymentPopup.addEventListener("click", (event) => {
