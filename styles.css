@@ -844,7 +844,62 @@ body.popup-open {
 }
 
 .finance-stats {
-  margin: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+
+.finance-metric {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(26, 79, 157, 0.12);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(244, 191, 42, 0.18), transparent 38%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.9));
+  box-shadow: 0 12px 26px rgba(11, 52, 112, 0.08);
+}
+
+.finance-metric.expense {
+  background:
+    radial-gradient(circle at top right, rgba(199, 45, 45, 0.1), transparent 38%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 246, 239, 0.92));
+}
+
+.finance-metric p,
+.finance-metric span {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.finance-metric p {
+  overflow: hidden;
+  font-size: clamp(0.66rem, 0.9vw, 0.75rem);
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.finance-metric strong {
+  display: block;
+  overflow: hidden;
+  margin: 8px 0 4px;
+  color: var(--accent-dark);
+  font-size: clamp(1.1rem, 2vw, 1.7rem);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-metric span {
+  display: block;
+  overflow: hidden;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .finance-expense-form {
@@ -857,6 +912,34 @@ body.popup-open {
   border: 1px solid rgba(15, 34, 64, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.68);
+}
+
+.finance-toolbar {
+  margin-top: 0;
+  background: rgba(239, 246, 255, 0.82);
+}
+
+.finance-search {
+  min-height: 40px;
+  max-width: 260px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.finance-table-wrap {
+  margin-top: 12px;
+}
+
+.finance-expenses-table {
+  width: 100%;
+  min-width: 760px;
+}
+
+.finance-comment {
+  max-width: 220px;
+  white-space: normal;
 }
 
 .admission-reg-value {
@@ -1644,6 +1727,10 @@ body.popup-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .finance-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .kid-form {
     grid-template-columns: 1fr;
   }
@@ -1684,6 +1771,12 @@ body.popup-open {
 
   .slot-filters {
     justify-content: flex-start;
+  }
+
+  .finance-toolbar .slot-filters,
+  .finance-search {
+    width: 100%;
+    max-width: none;
   }
 
   .masthead-top,
@@ -1744,6 +1837,15 @@ body.popup-open {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .finance-stats {
+    gap: 10px;
+  }
+
+  .finance-metric {
+    padding: 13px;
+    border-radius: 16px;
   }
 
   .app-shell {
@@ -1838,6 +1940,65 @@ body.popup-open {
 
   .kids-table td strong {
     max-width: 132px;
+  }
+
+  .finance-table-wrap {
+    overflow: visible;
+    margin: 10px 0 0;
+    padding-bottom: 0;
+  }
+
+  .finance-expenses-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+
+  .finance-expenses-table thead {
+    display: none;
+  }
+
+  .finance-expenses-table,
+  .finance-expenses-table tbody,
+  .finance-expenses-table tr,
+  .finance-expenses-table td {
+    display: block;
+  }
+
+  .finance-expenses-table tr {
+    padding: 12px;
+    border: 1px solid rgba(15, 34, 64, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+  }
+
+  .finance-expenses-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(15, 34, 64, 0.06);
+    white-space: normal;
+  }
+
+  .finance-expenses-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .finance-expenses-table td::before {
+    content: attr(data-label);
+    flex: 0 0 86px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .finance-comment {
+    max-width: none;
+    text-align: right;
   }
 
   .attendance-panel {
@@ -2003,7 +2164,7 @@ body.popup-open {
 
 /* Roster width rescue layer.
    Revert by removing this block only; the original table structure above stays unchanged. */
-@media (max-width: 1180px) {
+@media (max-width: 1400px) {
   #rosterView .table-wrap {
     overflow: visible;
     margin: 0;

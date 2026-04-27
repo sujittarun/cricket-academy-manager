@@ -1453,11 +1453,11 @@ const loadFinance = async () => {
       financeExpensesTableBody.innerHTML = filtered.length
         ? filtered.map((item) => `
             <tr>
-              <td><span class="type-pill">${item.expense_type}</span></td>
-              <td><strong>${rupees(item.amount)}</strong></td>
-              <td>${formatDate(item.expense_date)}</td>
-              <td>${item.paid_by}</td>
-              <td class="meta-text" style="max-width: 200px; white-space: normal;">${item.comment || "-"}</td>
+              <td data-label="Type"><span class="type-pill">${item.expense_type}</span></td>
+              <td data-label="Amount"><strong>${rupees(item.amount)}</strong></td>
+              <td data-label="Date">${formatDate(item.expense_date)}</td>
+              <td data-label="Paid by">${item.paid_by}</td>
+              <td data-label="Comment" class="meta-text finance-comment">${item.comment || "-"}</td>
             </tr>
           `).join("")
         : `<tr><td colspan="5" class="sub-copy" style="text-align: center; padding: 20px;">No expenses found.</td></tr>`;

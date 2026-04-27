@@ -402,11 +402,11 @@
             </div>
           </div>
           <div id="financeLock" class="editor-lock">Login as manager to view finance details.</div>
-          <section class="stats-grid finance-stats" id="financeStats" hidden>
-            <article class="panel stat-card"><p class="section-kicker">This Month Fees</p><strong id="financeMonthFees" class="stat-value">Rs 0</strong></article>
-            <article class="panel stat-card"><p class="section-kicker">This Year Fees</p><strong id="financeYearFees" class="stat-value">Rs 0</strong></article>
-            <article class="panel stat-card"><p class="section-kicker">Overall Fees</p><strong id="financeTotalFees" class="stat-value">Rs 0</strong></article>
-            <article class="panel stat-card"><p class="section-kicker">Overall Expenses</p><strong id="financeTotalExpenses" class="stat-value">Rs 0</strong></article>
+          <section class="finance-stats" id="financeStats" hidden>
+            <article class="finance-metric"><p>This Month</p><strong id="financeMonthFees">Rs 0</strong><span>fees collected</span></article>
+            <article class="finance-metric"><p>This Year</p><strong id="financeYearFees">Rs 0</strong><span>fees collected</span></article>
+            <article class="finance-metric"><p>Overall Fees</p><strong id="financeTotalFees">Rs 0</strong><span>all payments</span></article>
+            <article class="finance-metric expense"><p>Expenses</p><strong id="financeTotalExpenses">Rs 0</strong><span>overall spend</span></article>
           </section>
           <form id="expenseForm" class="kid-form finance-expense-form" hidden>
             <label>
@@ -440,17 +440,17 @@
             <p id="expenseMessage" class="form-message"></p>
           </form>
           <div id="financeRecent" class="finance-recent" hidden>
-            <div class="slot-toolbar" style="margin-top: 24px;">
+            <div class="slot-toolbar finance-toolbar">
               <div class="slot-toolbar-copy">
                 <h3>Recent expenses</h3>
                 <p class="slot-helper">Sort and filter expenses</p>
               </div>
               <div class="slot-filters">
-                <input type="text" id="expenseSearch" class="search-input" placeholder="Search by name or type..." style="padding: 0 14px; min-height: 40px; border-radius: 12px; border: 1px solid var(--border);" />
+                <input type="text" id="expenseSearch" class="search-input finance-search" placeholder="Search by name or type..." />
               </div>
             </div>
-            <div class="table-wrap">
-              <table class="kids-table">
+            <div class="table-wrap finance-table-wrap">
+              <table class="kids-table finance-expenses-table">
                 <thead>
                   <tr>
                     <th style="cursor: pointer;" id="sortExpenseType">Type ↕</th>
