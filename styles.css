@@ -942,6 +942,153 @@ body.popup-open {
   white-space: normal;
 }
 
+.finance-insights {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.finance-mini-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.finance-mini-card,
+.finance-chart-card {
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 10px 22px rgba(11, 52, 112, 0.06);
+}
+
+.finance-mini-card {
+  min-width: 0;
+  padding: 13px;
+}
+
+.finance-mini-card p {
+  overflow: hidden;
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.finance-mini-card strong {
+  display: block;
+  overflow: hidden;
+  color: var(--accent-dark);
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-mini-card.positive strong {
+  color: var(--success);
+}
+
+.finance-mini-card.negative strong,
+.finance-mini-card.warning strong {
+  color: var(--danger);
+}
+
+.finance-chart-card {
+  min-width: 0;
+  padding: 14px;
+}
+
+.finance-chart-head,
+.finance-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.finance-chart-head {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.finance-chart-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.finance-chart-legend {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.finance-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.finance-chart-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.fee-dot,
+.fee-bar {
+  background: var(--accent);
+}
+
+.expense-dot,
+.expense-bar {
+  background: var(--danger);
+}
+
+.finance-mini-chart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+  min-height: 116px;
+}
+
+.finance-chart-month {
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.finance-bars {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 4px;
+  height: 82px;
+  width: 100%;
+  padding: 0 4px;
+  border-radius: 12px;
+  background: rgba(15, 34, 64, 0.04);
+}
+
+.finance-bars span {
+  width: min(16px, 34%);
+  min-height: 6px;
+  border-radius: 999px 999px 3px 3px;
+}
+
+.finance-chart-month strong {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 .admission-reg-value {
   display: block;
   font-size: 1.65rem;
@@ -1731,6 +1878,10 @@ body.popup-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .finance-insights {
+    grid-template-columns: 1fr;
+  }
+
   .kid-form {
     grid-template-columns: 1fr;
   }
@@ -1846,6 +1997,15 @@ body.popup-open {
   .finance-metric {
     padding: 13px;
     border-radius: 16px;
+  }
+
+  .finance-mini-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .finance-chart-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .app-shell {

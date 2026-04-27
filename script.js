@@ -124,6 +124,12 @@ const financeMonthFees = document.getElementById("financeMonthFees");
 const financeYearFees = document.getElementById("financeYearFees");
 const financeTotalFees = document.getElementById("financeTotalFees");
 const financeTotalExpenses = document.getElementById("financeTotalExpenses");
+const financeInsights = document.getElementById("financeInsights");
+const financeMonthExpenses = document.getElementById("financeMonthExpenses");
+const financeMonthNet = document.getElementById("financeMonthNet");
+const financeActiveStudents = document.getElementById("financeActiveStudents");
+const financeDiscontinuedStudents = document.getElementById("financeDiscontinuedStudents");
+const financeMiniChart = document.getElementById("financeMiniChart");
 const expenseForm = document.getElementById("expenseForm");
 const expenseMessage = document.getElementById("expenseMessage");
 const financeRecent = document.getElementById("financeRecent");
@@ -1389,6 +1395,7 @@ const loadFinance = async () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   if (financeLock) financeLock.hidden = managerReady;
   if (financeStats) financeStats.hidden = !managerReady;
+  if (financeInsights) financeInsights.hidden = !managerReady;
   if (expenseForm) expenseForm.hidden = !managerReady;
   if (financeRecent) financeRecent.hidden = !managerReady;
   if (!managerReady) return;
@@ -1402,7 +1409,8 @@ const loadFinance = async () => {
   financeExpenses = expensesResult.data || [];
 
   const now = new Date();
-  const monthKey = now.toISOString().slice(0, 7);
+  const localMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  const monthKey = localMonthKey(now);
   const yearKey = String(now.getFullYear());
   const initialFees = kids
     .filter((kid) => kid.feesPaid === "yes")
@@ -1417,6 +1425,45 @@ const loadFinance = async () => {
   financeYearFees.textContent = rupees(sum(allFees, yearKey));
   financeTotalFees.textContent = rupees(sum(allFees));
   financeTotalExpenses.textContent = rupees(sum(financeExpenses));
+
+  const monthExpenses = sum(financeExpenses, monthKey);
+  const monthFees = sum(allFees, monthKey);
+  const activeStudents = kids.filter((kid) => !kid.discontinued).length;
+  const discontinuedStudents = kids.filter((kid) => kid.discontinued).length;
+  if (financeMonthExpenses) financeMonthExpenses.textContent = rupees(monthExpenses);
+  if (financeMonthNet) {
+    financeMonthNet.textContent = rupees(monthFees - monthExpenses);
+    financeMonthNet.parentElement?.classList.toggle("negative", monthFees - monthExpenses < 0);
+  }
+  if (financeActiveStudents) financeActiveStudents.textContent = String(activeStudents);
+  if (financeDiscontinuedStudents) financeDiscontinuedStudents.textContent = String(discontinuedStudents);
+
+  if (financeMiniChart) {
+    const monthBuckets = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+      const key = localMonthKey(date);
+      return {
+        key,
+        label: date.toLocaleString("en-IN", { month: "short" }),
+        fees: sum(allFees, key),
+        expenses: sum(financeExpenses, key),
+      };
+    });
+    const maxChartValue = Math.max(1, ...monthBuckets.flatMap((month) => [month.fees, month.expenses]));
+    financeMiniChart.innerHTML = monthBuckets.map((month) => {
+      const feeHeight = Math.max(6, Math.round((month.fees / maxChartValue) * 76));
+      const expenseHeight = Math.max(6, Math.round((month.expenses / maxChartValue) * 76));
+      return `
+        <div class="finance-chart-month" title="${month.label}: Fees ${rupees(month.fees)}, Expenses ${rupees(month.expenses)}">
+          <div class="finance-bars">
+            <span class="fee-bar" style="height:${feeHeight}px"></span>
+            <span class="expense-bar" style="height:${expenseHeight}px"></span>
+          </div>
+          <strong>${month.label}</strong>
+        </div>
+      `;
+    }).join("");
+  }
   
   const renderExpensesTable = () => {
     let filtered = financeExpenses;

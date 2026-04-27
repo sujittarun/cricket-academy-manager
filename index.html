@@ -408,6 +408,27 @@
             <article class="finance-metric"><p>Overall Fees</p><strong id="financeTotalFees">Rs 0</strong><span>all payments</span></article>
             <article class="finance-metric expense"><p>Expenses</p><strong id="financeTotalExpenses">Rs 0</strong><span>overall spend</span></article>
           </section>
+          <section id="financeInsights" class="finance-insights" hidden>
+            <div class="finance-mini-metrics">
+              <article class="finance-mini-card"><p>Month Expense</p><strong id="financeMonthExpenses">Rs 0</strong></article>
+              <article class="finance-mini-card positive"><p>Month Net</p><strong id="financeMonthNet">Rs 0</strong></article>
+              <article class="finance-mini-card"><p>Active Students</p><strong id="financeActiveStudents">0</strong></article>
+              <article class="finance-mini-card warning"><p>Discontinued</p><strong id="financeDiscontinuedStudents">0</strong></article>
+            </div>
+            <div class="finance-chart-card">
+              <div class="finance-chart-head">
+                <div>
+                  <p class="section-kicker">6 Month View</p>
+                  <h3>Fees vs expenses</h3>
+                </div>
+                <div class="finance-chart-legend">
+                  <span><i class="fee-dot"></i>Fees</span>
+                  <span><i class="expense-dot"></i>Expenses</span>
+                </div>
+              </div>
+              <div id="financeMiniChart" class="finance-mini-chart"></div>
+            </div>
+          </section>
           <form id="expenseForm" class="kid-form finance-expense-form" hidden>
             <label>
               Type of expense
