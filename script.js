@@ -127,6 +127,17 @@ const financeTotalExpenses = document.getElementById("financeTotalExpenses");
 const expenseForm = document.getElementById("expenseForm");
 const expenseMessage = document.getElementById("expenseMessage");
 const financeRecent = document.getElementById("financeRecent");
+const expenseSearch = document.getElementById("expenseSearch");
+const financeExpensesTableBody = document.getElementById("financeExpensesTableBody");
+const sortExpenseType = document.getElementById("sortExpenseType");
+const sortExpenseAmount = document.getElementById("sortExpenseAmount");
+const sortExpenseDate = document.getElementById("sortExpenseDate");
+const sortExpensePaidBy = document.getElementById("sortExpensePaidBy");
+
+let expenseSortKey = "date";
+let expenseSortOrder = "desc";
+let expenseSearchQuery = "";
+
 const attendanceDate = document.getElementById("attendanceDate");
 const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
@@ -1406,16 +1417,90 @@ const loadFinance = async () => {
   financeYearFees.textContent = rupees(sum(allFees, yearKey));
   financeTotalFees.textContent = rupees(sum(allFees));
   financeTotalExpenses.textContent = rupees(sum(financeExpenses));
-  financeRecent.innerHTML = `
-    <h3>Recent expenses</h3>
-    ${
-      financeExpenses.length
-        ? `<ol class="timeline-list">${financeExpenses.slice(0, 8).map((item) => `
-          <li><strong>${item.expense_type} - ${rupees(item.amount)}</strong><span>${formatDate(item.expense_date)} · Paid by ${item.paid_by}</span>${item.comment ? `<p>${item.comment}</p>` : ""}</li>
-        `).join("")}</ol>`
-        : `<p class="sub-copy">No expenses added yet.</p>`
+  
+  const renderExpensesTable = () => {
+    let filtered = financeExpenses;
+    if (expenseSearchQuery) {
+      const q = expenseSearchQuery.toLowerCase();
+      filtered = financeExpenses.filter((item) =>
+        (item.expense_type || "").toLowerCase().includes(q) ||
+        (item.paid_by || "").toLowerCase().includes(q)
+      );
     }
-  `;
+
+    filtered.sort((a, b) => {
+      let valA, valB;
+      if (expenseSortKey === "type") {
+        valA = a.expense_type || "";
+        valB = b.expense_type || "";
+      } else if (expenseSortKey === "amount") {
+        valA = Number(a.amount || 0);
+        valB = Number(b.amount || 0);
+      } else if (expenseSortKey === "paid_by") {
+        valA = a.paid_by || "";
+        valB = b.paid_by || "";
+      } else {
+        valA = a.expense_date || "";
+        valB = b.expense_date || "";
+      }
+      
+      if (valA < valB) return expenseSortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return expenseSortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    if (financeExpensesTableBody) {
+      financeExpensesTableBody.innerHTML = filtered.length
+        ? filtered.map((item) => `
+            <tr>
+              <td><span class="type-pill">${item.expense_type}</span></td>
+              <td><strong>${rupees(item.amount)}</strong></td>
+              <td>${formatDate(item.expense_date)}</td>
+              <td>${item.paid_by}</td>
+              <td class="meta-text" style="max-width: 200px; white-space: normal;">${item.comment || "-"}</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="5" class="sub-copy" style="text-align: center; padding: 20px;">No expenses found.</td></tr>`;
+    }
+    
+    // Update header visual state
+    [sortExpenseType, sortExpenseAmount, sortExpenseDate, sortExpensePaidBy].forEach(th => {
+      if (!th) return;
+      const keyMap = { sortExpenseType: "type", sortExpenseAmount: "amount", sortExpenseDate: "date", sortExpensePaidBy: "paid_by" };
+      const baseText = th.textContent.replace(" ↑", "").replace(" ↓", "").replace(" ↕", "");
+      if (keyMap[th.id] === expenseSortKey) {
+        th.textContent = `${baseText} ${expenseSortOrder === "asc" ? "↑" : "↓"}`;
+      } else {
+        th.textContent = `${baseText} ↕`;
+      }
+    });
+  };
+
+  renderExpensesTable();
+
+  // Attach events if not already attached
+  if (expenseSearch && !expenseSearch.hasAttribute("data-bound")) {
+    expenseSearch.setAttribute("data-bound", "true");
+    expenseSearch.addEventListener("input", (e) => {
+      expenseSearchQuery = e.target.value;
+      renderExpensesTable();
+    });
+    
+    const handleSort = (key) => {
+      if (expenseSortKey === key) {
+        expenseSortOrder = expenseSortOrder === "asc" ? "desc" : "asc";
+      } else {
+        expenseSortKey = key;
+        expenseSortOrder = "asc";
+      }
+      renderExpensesTable();
+    };
+
+    if (sortExpenseType) sortExpenseType.addEventListener("click", () => handleSort("type"));
+    if (sortExpenseAmount) sortExpenseAmount.addEventListener("click", () => handleSort("amount"));
+    if (sortExpenseDate) sortExpenseDate.addEventListener("click", () => handleSort("date"));
+    if (sortExpensePaidBy) sortExpensePaidBy.addEventListener("click", () => handleSort("paid_by"));
+  }
 };
 
 const initializeAuthListener = () => {

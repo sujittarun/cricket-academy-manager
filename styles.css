@@ -293,7 +293,7 @@ body.popup-open {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 24px;
 }
@@ -320,13 +320,32 @@ body.popup-open {
 
 .stat-card {
   margin-bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 248, 255, 0.95) 100%);
+  border: 1px solid rgba(26, 79, 157, 0.15);
+  box-shadow: 0 8px 24px rgba(11, 52, 112, 0.08);
+  border-radius: 20px;
+  padding: 22px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(11, 52, 112, 0.12);
+}
+
+.stat-card .section-kicker {
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
 }
 
 .stat-value {
   display: block;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
   color: var(--accent-dark);
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .manager-tools {

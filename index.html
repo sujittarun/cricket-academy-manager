@@ -439,7 +439,32 @@
             <button class="primary-btn" type="submit">Add expense</button>
             <p id="expenseMessage" class="form-message"></p>
           </form>
-          <div id="financeRecent" class="finance-recent" hidden></div>
+          <div id="financeRecent" class="finance-recent" hidden>
+            <div class="slot-toolbar" style="margin-top: 24px;">
+              <div class="slot-toolbar-copy">
+                <h3>Recent expenses</h3>
+                <p class="slot-helper">Sort and filter expenses</p>
+              </div>
+              <div class="slot-filters">
+                <input type="text" id="expenseSearch" class="search-input" placeholder="Search by name or type..." style="padding: 0 14px; min-height: 40px; border-radius: 12px; border: 1px solid var(--border);" />
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="kids-table">
+                <thead>
+                  <tr>
+                    <th style="cursor: pointer;" id="sortExpenseType">Type ↕</th>
+                    <th style="cursor: pointer;" id="sortExpenseAmount">Amount ↕</th>
+                    <th style="cursor: pointer;" id="sortExpenseDate">Date ↕</th>
+                    <th style="cursor: pointer;" id="sortExpensePaidBy">Paid By ↕</th>
+                    <th>Comment</th>
+                  </tr>
+                </thead>
+                <tbody id="financeExpensesTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
       </section>
 
