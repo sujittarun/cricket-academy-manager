@@ -2000,3 +2000,86 @@ body.popup-open {
     grid-template-columns: 1fr;
   }
 }
+
+/* Roster width rescue layer.
+   Revert by removing this block only; the original table structure above stays unchanged. */
+@media (max-width: 1180px) {
+  #rosterView .table-wrap {
+    overflow: visible;
+    margin: 0;
+    padding-bottom: 0;
+  }
+
+  #rosterView .kids-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+  }
+
+  #rosterView .kids-table thead {
+    display: none;
+  }
+
+  #rosterView .kids-table,
+  #rosterView .kids-table tbody,
+  #rosterView .kids-table tr,
+  #rosterView .kids-table td {
+    display: block;
+  }
+
+  #rosterView .kids-table tr {
+    padding: 12px;
+    border: 1px solid rgba(15, 34, 64, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 12px 26px rgba(15, 34, 64, 0.08);
+  }
+
+  #rosterView .kids-table tr.alert-row {
+    background: linear-gradient(135deg, rgba(255, 246, 222, 0.96), rgba(255, 255, 255, 0.92));
+    border-color: rgba(244, 191, 42, 0.26);
+  }
+
+  #rosterView .kids-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 2px;
+    border-bottom: 1px solid rgba(15, 34, 64, 0.06);
+    white-space: normal;
+    font-size: 0.82rem;
+  }
+
+  #rosterView .kids-table td:last-child {
+    border-bottom: 0;
+  }
+
+  #rosterView .kids-table td::before {
+    content: attr(data-label);
+    flex: 0 0 112px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #rosterView .kids-table td[data-label="Player"] {
+    display: block;
+    padding-bottom: 10px;
+  }
+
+  #rosterView .kids-table td[data-label="Player"]::before {
+    display: none;
+  }
+
+  #rosterView .player-link {
+    max-width: 100%;
+    font-size: 1rem;
+  }
+
+  #rosterView .action-group {
+    justify-content: flex-end;
+  }
+}

@@ -1199,33 +1199,33 @@ const renderKids = () => {
     const row = document.createElement("tr");
     row.className = needsAttention ? "alert-row" : "";
     row.innerHTML = `
-      <td><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
-      <td>${kid.age}</td>
-      <td><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
-      <td><span class="meta-text">${formatJerseyDetails(kid)}</span></td>
-      <td>
+      <td data-label="Player"><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
+      <td data-label="Age">${kid.age}</td>
+      <td data-label="Time slot"><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
+      <td data-label="Jersey"><span class="meta-text">${formatJerseyDetails(kid)}</span></td>
+      <td data-label="Status">
         <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
           ${kid.discontinued ? "Discontinued" : "Active"}
         </span>
       </td>
-      <td>
+      <td data-label="Student type">
         <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
           ${studentType}
         </span>
       </td>
-      <td>${formatDate(kid.joinDate)}</td>
-      <td>${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
-      <td>
+      <td data-label="Join date">${formatDate(kid.joinDate)}</td>
+      <td data-label="Latest renewal">${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
+      <td data-label="Fees paid">
         <span class="status-pill ${feesPending ? "status-unpaid" : "status-paid"}">
           ${feesPending ? "Not paid" : "Paid"}
         </span>
       </td>
-      <td>Rs ${Number(kid.amountPaid).toFixed(2)}</td>
-      <td><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
-      <td><span class="meta-text">Last updated by ${kid.updatedBy}</span></td>
+      <td data-label="Amount paid">Rs ${Number(kid.amountPaid).toFixed(2)}</td>
+      <td data-label="Next fee due"><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
+      <td data-label="Updated"><span class="meta-text">Last updated by ${kid.updatedBy}</span></td>
       ${
         canEdit
-          ? `<td>
+          ? `<td data-label="Actions">
             <div class="action-group">
               <button class="secondary-btn" data-action="edit" data-id="${kid.id}" type="button">Edit</button>
               <button class="secondary-btn" data-action="toggle-status" data-id="${kid.id}" type="button">
