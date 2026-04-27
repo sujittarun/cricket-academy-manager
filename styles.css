@@ -1573,18 +1573,38 @@ body.popup-open {
 }
 
 .receipt-popup {
-  max-width: 680px;
+  max-width: 720px;
 }
 
 .receipt-card {
-  border: 1px solid rgba(16, 48, 102, 0.1);
-  border-radius: 22px;
-  padding: 18px;
-  background: linear-gradient(180deg, #ffffff, #f7faff);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(16, 48, 102, 0.12);
+  border-radius: 28px;
+  padding: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+}
+
+.receipt-topline {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 8px;
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--gold));
+}
+
+.receipt-watermark {
+  position: absolute;
+  right: -12px;
+  bottom: 34px;
+  color: rgba(31, 95, 191, 0.055);
+  font-size: clamp(4rem, 16vw, 6rem);
+  font-weight: 950;
+  letter-spacing: -0.08em;
+  pointer-events: none;
 }
 
 .receipt-brand,
-.receipt-main-row,
 .receipt-actions {
   display: flex;
   align-items: center;
@@ -1593,42 +1613,96 @@ body.popup-open {
 }
 
 .receipt-brand {
-  padding-bottom: 14px;
+  position: relative;
+  padding-bottom: 18px;
   border-bottom: 1px solid rgba(16, 48, 102, 0.1);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
-.receipt-brand span {
+.receipt-logo-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.receipt-logo-lockup img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  border-radius: 22px;
+  padding: 8px;
+  background: linear-gradient(135deg, rgba(31, 95, 191, 0.12), rgba(255, 199, 46, 0.14));
+}
+
+.receipt-logo-lockup span {
+  display: block;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 800;
 }
 
-.receipt-brand strong,
-.receipt-main-row strong {
+.receipt-logo-lockup strong {
+  display: block;
+  margin-top: 3px;
   color: var(--ink);
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 3.4vw, 1.45rem);
 }
 
-.receipt-main-row {
+.receipt-logo-lockup small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.receipt-status {
+  flex: 0 0 auto;
+  border: 2px solid var(--success);
+  border-radius: 999px;
+  padding: 8px 18px;
+  color: var(--success);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  transform: rotate(-4deg);
+}
+
+.receipt-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 12px;
   margin-bottom: 14px;
 }
 
-.receipt-main-row > div,
-.receipt-detail-grid > div {
-  flex: 1;
-  border-radius: 16px;
-  padding: 12px;
-  background: rgba(31, 95, 191, 0.06);
+.receipt-hero > div {
+  border-radius: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(31, 95, 191, 0.09), rgba(255, 199, 46, 0.18));
+}
+
+.receipt-hero strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--primary);
+  font-size: clamp(1.05rem, 3.2vw, 1.45rem);
+  line-height: 1.1;
 }
 
 .receipt-detail-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
+}
+
+.receipt-detail-grid > div {
+  border: 1px solid rgba(16, 48, 102, 0.08);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .receipt-detail-grid dt {
@@ -1645,10 +1719,27 @@ body.popup-open {
   font-weight: 800;
 }
 
-.receipt-note {
-  margin: 14px 0 0;
+.receipt-footer {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(16, 48, 102, 0.2);
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.receipt-footer p {
+  margin: 0;
+}
+
+.receipt-footer strong {
+  color: var(--primary);
+  font-size: 1.05rem;
+  white-space: nowrap;
 }
 
 .receipt-actions {
@@ -2244,8 +2335,7 @@ body.popup-open {
   }
 
   .finance-export-panel,
-  .receipt-brand,
-  .receipt-main-row {
+  .receipt-brand {
     align-items: stretch;
     flex-direction: column;
   }

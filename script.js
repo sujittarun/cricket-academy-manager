@@ -395,21 +395,39 @@ const toCsv = (headers, rows) => [
   ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
 ].join("\n");
 
-const buildReceiptText = (receipt) => [
-  "Gen Alpha Cricket Academy - Admission Receipt",
-  `Reg No: ${receipt.regNo}`,
-  `Player: ${receipt.playerName}`,
-  `Parent/Guardian: ${receipt.guardianName}`,
-  `Contact: ${receipt.parentContact}`,
-  `Join Date: ${formatDate(receipt.joinDate)}`,
-  `Time Slot: ${receipt.timeSlot}`,
-  `Fee Status: ${receipt.feesPaid ? "Paid" : "Not paid"}`,
-  `Amount: ${rupees(receipt.amountPaid)}`,
-  receipt.paymentReference ? `Payment Ref: ${receipt.paymentReference}` : "",
-  `Jersey: ${receipt.jerseySize || "Not set"}${receipt.jerseyPairs ? ` (${receipt.jerseyPairs} pair${receipt.jerseyPairs === 1 ? "" : "s"})` : ""}`,
-  "",
-  "Thank you for choosing Gen Alpha Cricket Academy.",
-].filter(Boolean).join("\n");
+const receiptTypeLabel = (receipt) => receipt.receiptType === "renewal" ? "Renewal Fee Receipt" : "Joining Fee Receipt";
+
+const buildReceiptText = (receipt) => {
+  const lines = [
+    `*Gen Alpha Cricket Academy*`,
+    `*${receiptTypeLabel(receipt)}*`,
+    `Receipt No: ${receipt.receiptNo || receipt.regNo}`,
+    `Player: ${receipt.playerName}`,
+    `Reg No: ${receipt.regNo}`,
+    `Amount Paid: ${rupees(receipt.amountPaid)}`,
+    `Paid On: ${formatDate(receipt.paidOn || new Date().toISOString().split("T")[0])}`,
+  ];
+
+  if (receipt.receiptType === "renewal") {
+    lines.push(
+      `Plan: ${receipt.planTitle || "Renewal"}`,
+      `Cycle From: ${formatDate(receipt.cycleDate)}`,
+      `Covered: ${receipt.monthsCovered || 1} month${Number(receipt.monthsCovered || 1) === 1 ? "" : "s"}`,
+    );
+  } else {
+    lines.push(
+      `Parent/Guardian: ${receipt.guardianName}`,
+      `Contact: ${receipt.parentContact}`,
+      `Join Date: ${formatDate(receipt.joinDate)}`,
+      `Time Slot: ${receipt.timeSlot}`,
+      `Jersey: ${receipt.jerseySize || "Not set"}${receipt.jerseyPairs ? ` (${receipt.jerseyPairs} pair${receipt.jerseyPairs === 1 ? "" : "s"})` : ""}`,
+    );
+  }
+
+  if (receipt.paymentReference) lines.push(`Payment Ref: ${receipt.paymentReference}`);
+  lines.push("", "Thank you for choosing Gen Alpha Cricket Academy.");
+  return lines.filter(Boolean).join("\n");
+};
 
 const normalizeWhatsAppPhone = (phone) => {
   const digits = String(phone || "").replace(/\D/g, "");
@@ -426,11 +444,14 @@ const openReceiptWhatsApp = (receipt) => {
 };
 
 const buildReceiptFromKid = (kid, overrides = {}) => ({
+  receiptType: "joining",
   regNo: kid.regNo || "Saved",
+  receiptNo: `GACA-${kid.regNo || "NEW"}-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
   playerName: kid.name,
   guardianName: kid.fatherGuardianName || "Parent",
   parentContact: kid.parentContactNo || "",
   joinDate: kid.joinDate,
+  paidOn: new Date().toISOString().split("T")[0],
   timeSlot: kid.timeSlot || "Not set",
   feesPaid: true,
   amountPaid: Number(overrides.amountPaid ?? kid.amountPaid ?? 0),
@@ -439,34 +460,79 @@ const buildReceiptFromKid = (kid, overrides = {}) => ({
   jerseyPairs: Number(overrides.jerseyPairs ?? kid.jerseyPairs ?? 0),
 });
 
+const buildRenewalReceiptFromKid = (kid, { plan, planTitle, monthsCovered, amount, cycleDate }) => ({
+  receiptType: "renewal",
+  regNo: kid.regNo || "Saved",
+  receiptNo: `GACA-REN-${kid.regNo || "NEW"}-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
+  playerName: kid.name,
+  guardianName: kid.fatherGuardianName || "Parent",
+  parentContact: kid.parentContactNo || "",
+  paidOn: new Date().toISOString().split("T")[0],
+  timeSlot: kid.timeSlot || "Not set",
+  feesPaid: true,
+  amountPaid: Number(amount || 0),
+  paymentReference: "",
+  receiptPlan: plan,
+  planTitle,
+  monthsCovered,
+  cycleDate,
+});
+
 const renderReceipt = (receipt) => {
   if (!receiptContent || !receiptPopup) return;
+  const isRenewal = receipt.receiptType === "renewal";
+  const detailRows = isRenewal
+    ? [
+        ["Player", receipt.playerName],
+        ["Reg No", receipt.regNo],
+        ["Time Slot", receipt.timeSlot],
+        ["Plan", receipt.planTitle || "Renewal"],
+        ["Cycle From", formatDate(receipt.cycleDate)],
+        ["Covered", `${receipt.monthsCovered || 1} month${Number(receipt.monthsCovered || 1) === 1 ? "" : "s"}`],
+        ["Paid On", formatDate(receipt.paidOn)],
+        ["Payment Ref", receipt.paymentReference || "Not provided"],
+      ]
+    : [
+        ["Player", receipt.playerName],
+        ["Reg No", receipt.regNo],
+        ["Parent / Guardian", receipt.guardianName],
+        ["Contact", receipt.parentContact],
+        ["Join Date", formatDate(receipt.joinDate)],
+        ["Time Slot", receipt.timeSlot],
+        ["Paid On", formatDate(receipt.paidOn)],
+        ["Jersey", `${receipt.jerseySize || "Not set"}${receipt.jerseyPairs ? ` · ${receipt.jerseyPairs} pair${receipt.jerseyPairs === 1 ? "" : "s"}` : ""}`],
+      ];
   receiptContent.innerHTML = `
+    <div class="receipt-watermark">GACA</div>
+    <div class="receipt-topline"></div>
     <div class="receipt-brand">
-      <span>Gen Alpha Cricket Academy</span>
-      <strong>Admission Receipt</strong>
+      <div class="receipt-logo-lockup">
+        <img src="./assets/gen-alpha-icon-192.png" alt="Gen Alpha Cricket Academy logo" />
+        <div>
+          <span>Gen Alpha Cricket Academy</span>
+          <strong>${receiptTypeLabel(receipt)}</strong>
+          <small>Official academy receipt</small>
+        </div>
+      </div>
+      <div class="receipt-status">PAID</div>
     </div>
-    <div class="receipt-main-row">
+    <div class="receipt-hero">
       <div>
-        <span class="data-label">Reg No</span>
-        <strong>${escapeHtml(receipt.regNo)}</strong>
+        <span class="data-label">Receipt No</span>
+        <strong>${escapeHtml(receipt.receiptNo || receipt.regNo)}</strong>
       </div>
       <div>
-        <span class="data-label">Amount</span>
+        <span class="data-label">Amount Paid</span>
         <strong>${rupees(receipt.amountPaid)}</strong>
       </div>
     </div>
     <dl class="receipt-detail-grid">
-      <div><dt>Player</dt><dd>${escapeHtml(receipt.playerName)}</dd></div>
-      <div><dt>Parent / Guardian</dt><dd>${escapeHtml(receipt.guardianName)}</dd></div>
-      <div><dt>Contact</dt><dd>${escapeHtml(receipt.parentContact)}</dd></div>
-      <div><dt>Join Date</dt><dd>${formatDate(receipt.joinDate)}</dd></div>
-      <div><dt>Time Slot</dt><dd>${escapeHtml(receipt.timeSlot)}</dd></div>
-      <div><dt>Fee Status</dt><dd>${receipt.feesPaid ? "Paid" : "Not paid"}</dd></div>
-      <div><dt>Payment Ref</dt><dd>${escapeHtml(receipt.paymentReference || "Not provided")}</dd></div>
-      <div><dt>Jersey</dt><dd>${escapeHtml(receipt.jerseySize || "Not set")} ${receipt.jerseyPairs ? `· ${receipt.jerseyPairs} pair${receipt.jerseyPairs === 1 ? "" : "s"}` : ""}</dd></div>
+      ${detailRows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || "-")}</dd></div>`).join("")}
     </dl>
-    <p class="receipt-note">Please keep this confirmation for academy reference.</p>
+    <div class="receipt-footer">
+      <p>Fees once paid are recorded against the player profile. Please keep this confirmation for academy reference.</p>
+      <strong>Thank you</strong>
+    </div>
   `;
   receiptPopup.hidden = false;
   document.body.classList.add("popup-open");
@@ -489,19 +555,29 @@ const printReceipt = () => {
   printWindow.document.write(`
     <html>
       <head>
-        <title>Admission Receipt ${escapeHtml(latestAdmissionReceipt.regNo)}</title>
+        <title>${escapeHtml(receiptTypeLabel(latestAdmissionReceipt))} ${escapeHtml(latestAdmissionReceipt.regNo)}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 32px; color: #10264f; }
-          .receipt-card { border: 1px solid #d7deea; border-radius: 18px; padding: 24px; max-width: 680px; }
-          .receipt-brand { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e4e9f2; padding-bottom: 16px; margin-bottom: 18px; }
-          .receipt-brand span { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; font-weight: 700; color: #1f5fbf; }
-          .receipt-brand strong { font-size: 22px; }
-          .receipt-main-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-          .receipt-main-row > div, .receipt-detail-grid > div { background: #f6f8fc; border-radius: 14px; padding: 14px; }
-          .data-label, dt { display: block; font-size: 11px; color: #66748c; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
-          dd { margin: 0; font-weight: 700; }
-          .receipt-detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-          .receipt-note { margin-top: 18px; color: #66748c; }
+          body { min-height: 100vh; display: grid; place-items: start center; box-sizing: border-box; margin: 0; padding: 32px; background: #eef4fb; color: #10264f; font-family: Arial, sans-serif; }
+          .receipt-card { position: relative; overflow: hidden; width: 680px; box-sizing: border-box; border: 1px solid #d9e3f2; border-radius: 28px; padding: 28px; background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); box-shadow: 0 22px 60px rgba(16, 38, 79, 0.14); }
+          .receipt-topline { position: absolute; inset: 0 0 auto; height: 9px; background: linear-gradient(90deg, #0d2d66, #1f5fbf, #ffc72e); }
+          .receipt-watermark { position: absolute; right: -18px; bottom: 32px; font-size: 92px; font-weight: 900; color: rgba(31, 95, 191, 0.055); letter-spacing: -0.08em; }
+          .receipt-brand { position: relative; display: flex; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e9f5; }
+          .receipt-logo-lockup { display: flex; align-items: center; gap: 15px; }
+          .receipt-logo-lockup img { width: 74px; height: 74px; object-fit: contain; border-radius: 20px; background: #edf5ff; padding: 8px; }
+          .receipt-logo-lockup span { display: block; text-transform: uppercase; letter-spacing: .1em; font-size: 11px; font-weight: 800; color: #1f5fbf; }
+          .receipt-logo-lockup strong { display: block; margin-top: 4px; font-size: 24px; color: #10264f; }
+          .receipt-logo-lockup small { display: block; margin-top: 3px; color: #6a7890; font-weight: 700; }
+          .receipt-status { align-self: start; border: 2px solid #178553; border-radius: 999px; padding: 8px 18px; color: #178553; font-weight: 900; letter-spacing: .12em; transform: rotate(-4deg); }
+          .receipt-hero { position: relative; display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; margin: 20px 0; }
+          .receipt-hero > div { border-radius: 20px; padding: 18px; background: linear-gradient(135deg, #edf5ff, #fff8dc); }
+          .receipt-hero strong { display: block; margin-top: 5px; font-size: 24px; color: #0d2d66; }
+          .data-label, dt { display: block; font-size: 10px; color: #687892; text-transform: uppercase; font-weight: 900; letter-spacing: .08em; margin-bottom: 6px; }
+          dd { margin: 0; color: #10264f; font-weight: 800; }
+          .receipt-detail-grid { position: relative; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 0; }
+          .receipt-detail-grid > div { border: 1px solid #e1e9f5; background: #ffffff; border-radius: 16px; padding: 12px; }
+          .receipt-footer { position: relative; display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px dashed #bdc9dc; color: #687892; font-size: 12px; }
+          .receipt-footer strong { color: #0d2d66; font-size: 18px; }
+          @media print { body { display: block; padding: 0; background: #fff; } .receipt-card { width: 100%; box-shadow: none; page-break-inside: avoid; } }
         </style>
       </head>
       <body><section class="receipt-card">${receiptHtml}</section></body>
@@ -2281,6 +2357,14 @@ renewalForm?.addEventListener("submit", async (event) => {
   }
   closeRenewalPopup();
   formMessage.textContent = `${kid.name} renewal payment saved for ${formatDate(cycleDate)}.`;
+  latestAdmissionReceipt = buildRenewalReceiptFromKid(kid, {
+    plan: renewalPlan.value,
+    planTitle: plan.title,
+    monthsCovered: plan.months,
+    amount,
+    cycleDate,
+  });
+  renderReceipt(latestAdmissionReceipt);
   await loadKids();
 });
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
@@ -2504,11 +2588,14 @@ admissionForm.addEventListener("submit", async (event) => {
   showToast(`Admission saved for ${String(formData.get("applicantName") || "").trim()}`);
   if (baseAdmissionPayload.p_fees_paid) {
     latestAdmissionReceipt = {
+      receiptType: "joining",
       regNo,
+      receiptNo: `GACA-${regNo || "NEW"}-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
       playerName: baseAdmissionPayload.p_applicant_name,
       guardianName: baseAdmissionPayload.p_father_guardian_name,
       parentContact: baseAdmissionPayload.p_parent_contact_no,
       joinDate: baseAdmissionPayload.p_join_date,
+      paidOn: new Date().toISOString().split("T")[0],
       timeSlot: baseAdmissionPayload.p_time_slot,
       feesPaid: true,
       amountPaid: baseAdmissionPayload.p_amount_paid,
