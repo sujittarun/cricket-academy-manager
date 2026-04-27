@@ -113,6 +113,17 @@
           >
             Attendance
           </button>
+          <button
+            id="financeTabButton"
+            type="button"
+            class="view-tab"
+            data-view-target="finance"
+            role="tab"
+            aria-selected="false"
+            hidden
+          >
+            Finance
+          </button>
         </div>
       </section>
 
@@ -379,6 +390,56 @@
               <tbody id="attendanceTableBody"></tbody>
             </table>
           </div>
+        </section>
+      </section>
+
+      <section id="financeView" class="dashboard-view" hidden>
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Manager Finance</p>
+              <h2>Fees and expenses</h2>
+            </div>
+          </div>
+          <div id="financeLock" class="editor-lock">Login as manager to view finance details.</div>
+          <section class="stats-grid finance-stats" id="financeStats" hidden>
+            <article class="panel stat-card"><p class="section-kicker">This Month Fees</p><strong id="financeMonthFees" class="stat-value">Rs 0</strong></article>
+            <article class="panel stat-card"><p class="section-kicker">This Year Fees</p><strong id="financeYearFees" class="stat-value">Rs 0</strong></article>
+            <article class="panel stat-card"><p class="section-kicker">Overall Fees</p><strong id="financeTotalFees" class="stat-value">Rs 0</strong></article>
+            <article class="panel stat-card"><p class="section-kicker">Overall Expenses</p><strong id="financeTotalExpenses" class="stat-value">Rs 0</strong></article>
+          </section>
+          <form id="expenseForm" class="kid-form finance-expense-form" hidden>
+            <label>
+              Type of expense
+              <select id="expenseType" name="expenseType" required>
+                <option value="Coach Fees">Coach Fees</option>
+                <option value="Purchased accessories">Purchased accessories</option>
+                <option value="Transport">Transport</option>
+                <option value="Maid expense">Maid expense</option>
+                <option value="Ground maintenance">Ground maintenance</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label>
+              Amount
+              <input id="expenseAmount" name="expenseAmount" type="number" min="0" step="0.01" required />
+            </label>
+            <label>
+              Paid by
+              <select id="expensePaidBy" name="expensePaidBy" required>
+                <option value="Sandeep">Sandeep</option>
+                <option value="Srinivas">Srinivas</option>
+                <option value="Sujit">Sujit</option>
+              </select>
+            </label>
+            <label>
+              Comment
+              <input id="expenseComment" name="expenseComment" type="text" placeholder="Short note" />
+            </label>
+            <button class="primary-btn" type="submit">Add expense</button>
+            <p id="expenseMessage" class="form-message"></p>
+          </form>
+          <div id="financeRecent" class="finance-recent" hidden></div>
         </section>
       </section>
 
@@ -803,6 +864,42 @@
           </button>
         </div>
         <div id="playerDetailContent" class="player-detail-content"></div>
+      </section>
+    </div>
+
+    <div id="renewalPopup" class="player-popup-backdrop" hidden>
+      <section class="player-popup panel" role="dialog" aria-modal="true" aria-labelledby="renewalTitle">
+        <div class="payment-popup-header">
+          <div>
+            <p class="section-kicker">Renewal Payment</p>
+            <h3 id="renewalTitle">Record fee payment</h3>
+          </div>
+          <button id="closeRenewalButton" type="button" class="icon-button" aria-label="Close renewal popup">Close</button>
+        </div>
+        <form id="renewalForm" class="kid-form">
+          <input id="renewalStudentId" type="hidden" />
+          <label>
+            Plan
+            <select id="renewalPlan" name="renewalPlan">
+              <option value="monthly">Monthly - Rs 3,500</option>
+              <option value="quarterly">3 months - Rs 9,000</option>
+              <option value="halfyearly">6 months - Rs 20,000</option>
+              <option value="special">Special training - Rs 10,000</option>
+              <option value="custom">Custom amount</option>
+            </select>
+          </label>
+          <label>
+            Amount paid
+            <input id="renewalAmount" name="renewalAmount" type="number" min="0" step="0.01" required />
+          </label>
+          <label>
+            Comment
+            <input id="renewalComment" name="renewalComment" type="text" placeholder="Optional note" />
+          </label>
+          <p id="renewalCycleInfo" class="records-helper"></p>
+          <button class="primary-btn" type="submit">Save renewal payment</button>
+          <p id="renewalMessage" class="form-message"></p>
+        </form>
       </section>
     </div>
 

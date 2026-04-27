@@ -103,10 +103,30 @@ const playerDetailPopup = document.getElementById("playerDetailPopup");
 const playerDetailContent = document.getElementById("playerDetailContent");
 const playerDetailTitle = document.getElementById("playerDetailTitle");
 const closePlayerDetailButton = document.getElementById("closePlayerDetailButton");
+const renewalPopup = document.getElementById("renewalPopup");
+const renewalForm = document.getElementById("renewalForm");
+const closeRenewalButton = document.getElementById("closeRenewalButton");
+const renewalStudentId = document.getElementById("renewalStudentId");
+const renewalPlan = document.getElementById("renewalPlan");
+const renewalAmount = document.getElementById("renewalAmount");
+const renewalComment = document.getElementById("renewalComment");
+const renewalCycleInfo = document.getElementById("renewalCycleInfo");
+const renewalMessage = document.getElementById("renewalMessage");
 
 // Attendance
 const attendanceTabButton = document.getElementById("attendanceTabButton");
 const attendanceView = document.getElementById("attendanceView");
+const financeTabButton = document.getElementById("financeTabButton");
+const financeView = document.getElementById("financeView");
+const financeLock = document.getElementById("financeLock");
+const financeStats = document.getElementById("financeStats");
+const financeMonthFees = document.getElementById("financeMonthFees");
+const financeYearFees = document.getElementById("financeYearFees");
+const financeTotalFees = document.getElementById("financeTotalFees");
+const financeTotalExpenses = document.getElementById("financeTotalExpenses");
+const expenseForm = document.getElementById("expenseForm");
+const expenseMessage = document.getElementById("expenseMessage");
+const financeRecent = document.getElementById("financeRecent");
 const attendanceDate = document.getElementById("attendanceDate");
 const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
@@ -145,6 +165,13 @@ const ADMISSION_FEE_PLANS = {
   special: { title: "Special training", base: 10000 },
   custom: { title: "Custom amount", base: 0 },
 };
+const RENEWAL_PLANS = {
+  monthly: { title: "Monthly", amount: 3500, months: 1 },
+  quarterly: { title: "3 months", amount: 9000, months: 3 },
+  halfyearly: { title: "6 months", amount: 20000, months: 6 },
+  special: { title: "Special training", amount: 10000, months: 1 },
+  custom: { title: "Custom amount", amount: 0, months: 1 },
+};
 const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + index));
 
 const hasSupabaseConfig = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
@@ -182,6 +209,8 @@ let attendanceDateValue = new Date().toISOString().split("T")[0];
 let isFeesVerified = false;
 let realtimeStudentsChannel = null;
 let realtimeAttendanceChannel = null;
+let financePayments = [];
+let financeExpenses = [];
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -270,6 +299,21 @@ const getNextRenewalCycleDate = (kid) => {
   }
   return cycleDate;
 };
+
+const getDueCycleDate = (kid) => {
+  let cycleDate = getReferenceDate(kid);
+  while (getDaysSinceDate(cycleDate) >= 60) {
+    cycleDate = addDaysIso(cycleDate, 30);
+  }
+  return addDaysIso(cycleDate, 30);
+};
+
+const getRenewalAmountForPlan = () => {
+  const plan = RENEWAL_PLANS[renewalPlan?.value] || RENEWAL_PLANS.monthly;
+  return renewalPlan?.value === "custom" ? Number(renewalAmount?.value || 0) : plan.amount;
+};
+
+const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
 
 const getTrainingDuration = (kid) => {
   const days = Math.max(getDaysSinceDate(kid.joinDate), 0);
@@ -965,10 +1009,12 @@ const renderSummary = (alertKids) => {
 const updateActiveView = () => {
   const isRoster = activeView === "roster";
   const isAttendance = activeView === "attendance";
-  const isAdmission = !isRoster && !isAttendance;
+  const isFinance = activeView === "finance";
+  const isAdmission = !isRoster && !isAttendance && !isFinance;
   rosterView.hidden = !isRoster;
   admissionView.hidden = !isAdmission;
   if (attendanceView) attendanceView.hidden = !isAttendance;
+  if (financeView) financeView.hidden = !isFinance;
   rosterTabButton.classList.toggle("active", isRoster);
   rosterTabButton.setAttribute("aria-selected", String(isRoster));
   admissionTabButton.classList.toggle("active", isAdmission);
@@ -976,6 +1022,10 @@ const updateActiveView = () => {
   if (attendanceTabButton) {
     attendanceTabButton.classList.toggle("active", isAttendance);
     attendanceTabButton.setAttribute("aria-selected", String(isAttendance));
+  }
+  if (financeTabButton) {
+    financeTabButton.classList.toggle("active", isFinance);
+    financeTabButton.setAttribute("aria-selected", String(isFinance));
   }
 };
 
@@ -1028,6 +1078,9 @@ const updateAccessUI = () => {
 
   if (rosterTabButton) {
     rosterTabButton.hidden = !managerReady;
+  }
+  if (financeTabButton) {
+    financeTabButton.hidden = !managerReady;
   }
 
   if (managerReady && activeView === "admission") {
@@ -1169,7 +1222,7 @@ const renderKids = () => {
               </button>
               ${
                 canRenew
-                  ? `<button class="renew-btn" data-action="renew" data-id="${kid.id}" type="button">Mark fee paid</button>`
+                  ? `<button class="renew-btn" data-action="renew-open" data-id="${kid.id}" type="button">Mark fee paid</button>`
                   : `<span class="action-note">${
                       kid.discontinued
                         ? "Renewal paused"
@@ -1300,6 +1353,69 @@ const renderPlayerDetails = async (kid) => {
   `;
   playerDetailPopup.hidden = false;
   document.body.classList.add("popup-open");
+};
+
+const openRenewalPopup = (kid) => {
+  if (!kid || !renewalPopup) return;
+  const cycleDate = getDueCycleDate(kid);
+  renewalStudentId.value = kid.id;
+  renewalPlan.value = "monthly";
+  renewalAmount.value = String(RENEWAL_PLANS.monthly.amount);
+  renewalComment.value = "";
+  renewalCycleInfo.textContent = `This records payment for cycle starting ${formatDate(cycleDate)}. Paid late does not change the student's usual fee date.`;
+  renewalMessage.textContent = "";
+  renewalPopup.hidden = false;
+  document.body.classList.add("popup-open");
+};
+
+const closeRenewalPopup = () => {
+  if (!renewalPopup) return;
+  renewalPopup.hidden = true;
+  document.body.classList.remove("popup-open");
+};
+
+const loadFinance = async () => {
+  const managerReady = isBackendReady && isManagerLoggedIn;
+  if (financeLock) financeLock.hidden = managerReady;
+  if (financeStats) financeStats.hidden = !managerReady;
+  if (expenseForm) expenseForm.hidden = !managerReady;
+  if (financeRecent) financeRecent.hidden = !managerReady;
+  if (!managerReady) return;
+
+  const [paymentsResult, expensesResult] = await Promise.all([
+    supabaseClient.from("student_payments").select("*").order("paid_on", { ascending: false }),
+    supabaseClient.from("academy_expenses").select("*").order("expense_date", { ascending: false }),
+  ]);
+
+  financePayments = paymentsResult.data || [];
+  financeExpenses = expensesResult.data || [];
+
+  const now = new Date();
+  const monthKey = now.toISOString().slice(0, 7);
+  const yearKey = String(now.getFullYear());
+  const initialFees = kids
+    .filter((kid) => kid.feesPaid === "yes")
+    .map((kid) => ({ amount: kid.amountPaid, paid_on: kid.joinDate }));
+  const allFees = [...initialFees, ...financePayments];
+  const sum = (rows, dateKey = "") =>
+    rows
+      .filter((row) => !dateKey || String(row.paid_on || row.expense_date || "").startsWith(dateKey))
+      .reduce((total, row) => total + Number(row.amount || 0), 0);
+
+  financeMonthFees.textContent = rupees(sum(allFees, monthKey));
+  financeYearFees.textContent = rupees(sum(allFees, yearKey));
+  financeTotalFees.textContent = rupees(sum(allFees));
+  financeTotalExpenses.textContent = rupees(sum(financeExpenses));
+  financeRecent.innerHTML = `
+    <h3>Recent expenses</h3>
+    ${
+      financeExpenses.length
+        ? `<ol class="timeline-list">${financeExpenses.slice(0, 8).map((item) => `
+          <li><strong>${item.expense_type} - ${rupees(item.amount)}</strong><span>${formatDate(item.expense_date)} · Paid by ${item.paid_by}</span>${item.comment ? `<p>${item.comment}</p>` : ""}</li>
+        `).join("")}</ol>`
+        : `<p class="sub-copy">No expenses added yet.</p>`
+    }
+  `;
 };
 
 const initializeAuthListener = () => {
@@ -1522,7 +1638,7 @@ kidsTableBody.addEventListener("click", async (event) => {
     return;
   }
 
-  if (action === "renew") {
+  if (action === "renew-open") {
     const kidToRenew = kids.find((kid) => kid.id === id);
 
     if (!kidToRenew) {
@@ -1534,23 +1650,7 @@ kidsTableBody.addEventListener("click", async (event) => {
       return;
     }
 
-    const cycleDate = getNextRenewalCycleDate(kidToRenew);
-    const renewals = [...kidToRenew.renewals, cycleDate];
-    const { error } = await supabaseClient
-      .from("students")
-      .update({
-        renewals,
-        updated_by: getActiveManagerEmail(),
-      })
-      .eq("id", id);
-
-    if (error) {
-      formMessage.textContent = error.message;
-      return;
-    }
-
-    formMessage.textContent = `${kidToRenew.name} marked paid for cycle starting ${formatDate(cycleDate)}.`;
-    await loadKids();
+    openRenewalPopup(kidToRenew);
     return;
   }
 
@@ -1626,6 +1726,54 @@ admissionDocumentUpload?.addEventListener("change", (event) => {
     extractAdmissionDocument(file);
   }
 });
+renewalPlan?.addEventListener("change", () => {
+  const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
+  renewalAmount.value = renewalPlan.value === "custom" ? "" : String(plan.amount);
+});
+closeRenewalButton?.addEventListener("click", closeRenewalPopup);
+renewalPopup?.addEventListener("click", (event) => {
+  if (event.target === renewalPopup) closeRenewalPopup();
+});
+renewalForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const kid = kids.find((item) => item.id === renewalStudentId.value);
+  if (!kid) return;
+  const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
+  const amount = getRenewalAmountForPlan();
+  if (amount <= 0) {
+    renewalMessage.textContent = "Enter a valid renewal amount.";
+    return;
+  }
+  const cycleDate = getDueCycleDate(kid);
+  const renewals = [...kid.renewals, cycleDate];
+  const { error: updateError } = await supabaseClient
+    .from("students")
+    .update({ renewals, updated_by: getActiveManagerEmail() })
+    .eq("id", kid.id);
+  if (updateError) {
+    renewalMessage.textContent = updateError.message;
+    return;
+  }
+  const { error: paymentError } = await supabaseClient.from("student_payments").insert({
+    student_id: kid.id,
+    payment_type: "renewal",
+    plan_type: renewalPlan.value,
+    cycle_start_date: cycleDate,
+    months_covered: plan.months,
+    amount,
+    paid_on: new Date().toISOString().split("T")[0],
+    comment: renewalComment.value.trim(),
+    recorded_by: getActiveManagerEmail(),
+  });
+  if (paymentError) {
+    renewalMessage.textContent = `Renewal saved, but payment timeline failed: ${paymentError.message}`;
+    await loadKids();
+    return;
+  }
+  closeRenewalPopup();
+  formMessage.textContent = `${kid.name} renewal payment saved for ${formatDate(cycleDate)}.`;
+  await loadKids();
+});
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
 closePaymentPopupButton.addEventListener("click", closePaymentPopup);
 paymentPopup.addEventListener("click", (event) => {
@@ -1661,6 +1809,9 @@ window.addEventListener("keydown", (event) => {
     playerDetailPopup.hidden = true;
     document.body.classList.remove("popup-open");
   }
+  if (event.key === "Escape" && renewalPopup && !renewalPopup.hidden) {
+    closeRenewalPopup();
+  }
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
@@ -1671,6 +1822,11 @@ rosterTabButton.addEventListener("click", () => {
   activeView = "roster";
   updateActiveView();
   renderKids();
+});
+financeTabButton?.addEventListener("click", () => {
+  activeView = "finance";
+  updateActiveView();
+  loadFinance();
 });
 admissionTabButton.addEventListener("click", () => {
   activeView = "admission";
@@ -2060,6 +2216,26 @@ attendanceTabButton?.addEventListener("click", () => {
   updateActiveView();
   attendanceDate.value = attendanceDateValue;
   loadAttendance(attendanceDateValue);
+});
+
+expenseForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(expenseForm);
+  const payload = {
+    expense_type: String(formData.get("expenseType") || ""),
+    amount: Number(formData.get("expenseAmount") || 0),
+    comment: String(formData.get("expenseComment") || "").trim(),
+    paid_by: String(formData.get("expensePaidBy") || ""),
+    created_by: getActiveManagerEmail(),
+  };
+  const { error } = await supabaseClient.from("academy_expenses").insert(payload);
+  if (error) {
+    expenseMessage.textContent = error.message;
+    return;
+  }
+  expenseForm.reset();
+  expenseMessage.textContent = "Expense added.";
+  await loadFinance();
 });
 
 // ── Realtime Sync ────────────────────────────────────────────────────────────
