@@ -411,6 +411,34 @@ const buildReceiptText = (receipt) => [
   "Thank you for choosing Gen Alpha Cricket Academy.",
 ].filter(Boolean).join("\n");
 
+const normalizeWhatsAppPhone = (phone) => {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (digits.length === 10) return `91${digits}`;
+  if (digits.length === 12 && digits.startsWith("91")) return digits;
+  return digits;
+};
+
+const openReceiptWhatsApp = (receipt) => {
+  if (!receipt) return;
+  const phone = normalizeWhatsAppPhone(receipt.parentContact);
+  const target = phone ? `https://wa.me/${phone}` : "https://wa.me/";
+  window.open(`${target}?text=${encodeURIComponent(buildReceiptText(receipt))}`, "_blank", "noopener,noreferrer");
+};
+
+const buildReceiptFromKid = (kid, overrides = {}) => ({
+  regNo: kid.regNo || "Saved",
+  playerName: kid.name,
+  guardianName: kid.fatherGuardianName || "Parent",
+  parentContact: kid.parentContactNo || "",
+  joinDate: kid.joinDate,
+  timeSlot: kid.timeSlot || "Not set",
+  feesPaid: true,
+  amountPaid: Number(overrides.amountPaid ?? kid.amountPaid ?? 0),
+  paymentReference: overrides.paymentReference || kid.paymentReference || "",
+  jerseySize: overrides.jerseySize ?? kid.jerseySize ?? "",
+  jerseyPairs: Number(overrides.jerseyPairs ?? kid.jerseyPairs ?? 0),
+});
+
 const renderReceipt = (receipt) => {
   if (!receiptContent || !receiptPopup) return;
   receiptContent.innerHTML = `
@@ -2011,11 +2039,10 @@ kidForm.addEventListener("submit", async (event) => {
   }
 
   const wasEditing = Boolean(editingKidId);
+  const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
   let error = null;
 
   if (wasEditing) {
-    const currentKid = kids.find((kid) => kid.id === editingKidId);
-
     ({ error } = await supabaseClient
       .from("students")
       .update(
@@ -2044,6 +2071,15 @@ kidForm.addEventListener("submit", async (event) => {
   formMessage.textContent = wasEditing
     ? "Gen Alpha player record updated successfully."
     : "Gen Alpha player record saved successfully.";
+  if (wasEditing && currentKid && currentKid.feesPaid !== "yes" && payload.feesPaid === "yes") {
+    latestAdmissionReceipt = buildReceiptFromKid(currentKid, {
+      amountPaid: payload.amountPaid,
+      jerseySize: payload.jerseySize,
+      jerseyPairs: payload.jerseyPairs,
+    });
+    formMessage.textContent = `${currentKid.name} marked paid. Receipt is ready for WhatsApp.`;
+    renderReceipt(latestAdmissionReceipt);
+  }
   await loadKids();
 });
 
@@ -2277,10 +2313,7 @@ copyReceiptButton?.addEventListener("click", async () => {
   showToast("Receipt copied.");
 });
 shareReceiptButton?.addEventListener("click", () => {
-  if (!latestAdmissionReceipt) return;
-  const text = buildReceiptText(latestAdmissionReceipt);
-  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(url, "_blank", "noopener,noreferrer");
+  openReceiptWhatsApp(latestAdmissionReceipt);
 });
 printReceiptButton?.addEventListener("click", printReceipt);
 playerDetailPopup?.addEventListener("click", (event) => {
@@ -2465,24 +2498,28 @@ admissionForm.addEventListener("submit", async (event) => {
 
   const row = Array.isArray(data) ? data[0] : data;
   const regNo = row?.reg_no ?? admissionRegNo.textContent;
-  latestAdmissionReceipt = {
-    regNo,
-    playerName: baseAdmissionPayload.p_applicant_name,
-    guardianName: baseAdmissionPayload.p_father_guardian_name,
-    parentContact: baseAdmissionPayload.p_parent_contact_no,
-    joinDate: baseAdmissionPayload.p_join_date,
-    timeSlot: baseAdmissionPayload.p_time_slot,
-    feesPaid: baseAdmissionPayload.p_fees_paid,
-    amountPaid: baseAdmissionPayload.p_amount_paid,
-    paymentReference: baseAdmissionPayload.p_payment_reference,
-    jerseySize: baseAdmissionPayload.p_jersey_size,
-    jerseyPairs: baseAdmissionPayload.p_jersey_pairs,
-  };
   admissionMessage.textContent = `Admission submitted successfully. Reg No ${regNo}.`;
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
   closePaymentPopup();
   showToast(`Admission saved for ${String(formData.get("applicantName") || "").trim()}`);
-  renderReceipt(latestAdmissionReceipt);
+  if (baseAdmissionPayload.p_fees_paid) {
+    latestAdmissionReceipt = {
+      regNo,
+      playerName: baseAdmissionPayload.p_applicant_name,
+      guardianName: baseAdmissionPayload.p_father_guardian_name,
+      parentContact: baseAdmissionPayload.p_parent_contact_no,
+      joinDate: baseAdmissionPayload.p_join_date,
+      timeSlot: baseAdmissionPayload.p_time_slot,
+      feesPaid: true,
+      amountPaid: baseAdmissionPayload.p_amount_paid,
+      paymentReference: baseAdmissionPayload.p_payment_reference,
+      jerseySize: baseAdmissionPayload.p_jersey_size,
+      jerseyPairs: baseAdmissionPayload.p_jersey_pairs,
+    };
+    renderReceipt(latestAdmissionReceipt);
+  } else {
+    latestAdmissionReceipt = null;
+  }
   await resetAdmissionForm();
   await loadKids();
 });
