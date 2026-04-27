@@ -119,6 +119,10 @@ const attendanceView = document.getElementById("attendanceView");
 const financeTabButton = document.getElementById("financeTabButton");
 const financeView = document.getElementById("financeView");
 const financeLock = document.getElementById("financeLock");
+const financeExportPanel = document.getElementById("financeExportPanel");
+const financeExportMonth = document.getElementById("financeExportMonth");
+const exportCsvButton = document.getElementById("exportCsvButton");
+const exportPdfButton = document.getElementById("exportPdfButton");
 const financeStats = document.getElementById("financeStats");
 const financeMonthFees = document.getElementById("financeMonthFees");
 const financeYearFees = document.getElementById("financeYearFees");
@@ -161,6 +165,12 @@ const paymentVerifyFlow = document.getElementById("paymentVerifyFlow");
 const paymentVerifyForm = document.getElementById("paymentVerifyForm");
 const paymentUtrInput = document.getElementById("paymentUtrInput");
 const paymentHelpCopy = document.getElementById("paymentHelpCopy");
+const receiptPopup = document.getElementById("receiptPopup");
+const receiptContent = document.getElementById("receiptContent");
+const closeReceiptButton = document.getElementById("closeReceiptButton");
+const shareReceiptButton = document.getElementById("shareReceiptButton");
+const copyReceiptButton = document.getElementById("copyReceiptButton");
+const printReceiptButton = document.getElementById("printReceiptButton");
 
 const TIME_SLOTS = ["6AM", "7:30AM", "4PM", "5:30PM", "7PM"];
 const ADMISSION_MONTHS = [
@@ -234,6 +244,7 @@ let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let financePayments = [];
 let financeExpenses = [];
+let latestAdmissionReceipt = null;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -337,6 +348,141 @@ const getRenewalAmountForPlan = () => {
 };
 
 const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
+
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const localIsoDate = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+const currentMonthKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const monthRange = (monthKey) => {
+  const [year, month] = String(monthKey || currentMonthKey()).split("-").map(Number);
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 0);
+  return {
+    key: `${year}-${String(month).padStart(2, "0")}`,
+    start: localIsoDate(start),
+    end: localIsoDate(end),
+    label: start.toLocaleString("en-IN", { month: "long", year: "numeric" }),
+  };
+};
+
+const downloadTextFile = (filename, content, type = "text/csv;charset=utf-8") => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+const csvEscape = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const toCsv = (headers, rows) => [
+  headers.map(csvEscape).join(","),
+  ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
+].join("\n");
+
+const buildReceiptText = (receipt) => [
+  "Gen Alpha Cricket Academy - Admission Receipt",
+  `Reg No: ${receipt.regNo}`,
+  `Player: ${receipt.playerName}`,
+  `Parent/Guardian: ${receipt.guardianName}`,
+  `Contact: ${receipt.parentContact}`,
+  `Join Date: ${formatDate(receipt.joinDate)}`,
+  `Time Slot: ${receipt.timeSlot}`,
+  `Fee Status: ${receipt.feesPaid ? "Paid" : "Not paid"}`,
+  `Amount: ${rupees(receipt.amountPaid)}`,
+  receipt.paymentReference ? `Payment Ref: ${receipt.paymentReference}` : "",
+  `Jersey: ${receipt.jerseySize || "Not set"}${receipt.jerseyPairs ? ` (${receipt.jerseyPairs} pair${receipt.jerseyPairs === 1 ? "" : "s"})` : ""}`,
+  "",
+  "Thank you for choosing Gen Alpha Cricket Academy.",
+].filter(Boolean).join("\n");
+
+const renderReceipt = (receipt) => {
+  if (!receiptContent || !receiptPopup) return;
+  receiptContent.innerHTML = `
+    <div class="receipt-brand">
+      <span>Gen Alpha Cricket Academy</span>
+      <strong>Admission Receipt</strong>
+    </div>
+    <div class="receipt-main-row">
+      <div>
+        <span class="data-label">Reg No</span>
+        <strong>${escapeHtml(receipt.regNo)}</strong>
+      </div>
+      <div>
+        <span class="data-label">Amount</span>
+        <strong>${rupees(receipt.amountPaid)}</strong>
+      </div>
+    </div>
+    <dl class="receipt-detail-grid">
+      <div><dt>Player</dt><dd>${escapeHtml(receipt.playerName)}</dd></div>
+      <div><dt>Parent / Guardian</dt><dd>${escapeHtml(receipt.guardianName)}</dd></div>
+      <div><dt>Contact</dt><dd>${escapeHtml(receipt.parentContact)}</dd></div>
+      <div><dt>Join Date</dt><dd>${formatDate(receipt.joinDate)}</dd></div>
+      <div><dt>Time Slot</dt><dd>${escapeHtml(receipt.timeSlot)}</dd></div>
+      <div><dt>Fee Status</dt><dd>${receipt.feesPaid ? "Paid" : "Not paid"}</dd></div>
+      <div><dt>Payment Ref</dt><dd>${escapeHtml(receipt.paymentReference || "Not provided")}</dd></div>
+      <div><dt>Jersey</dt><dd>${escapeHtml(receipt.jerseySize || "Not set")} ${receipt.jerseyPairs ? `· ${receipt.jerseyPairs} pair${receipt.jerseyPairs === 1 ? "" : "s"}` : ""}</dd></div>
+    </dl>
+    <p class="receipt-note">Please keep this confirmation for academy reference.</p>
+  `;
+  receiptPopup.hidden = false;
+  document.body.classList.add("popup-open");
+};
+
+const closeReceiptPopup = () => {
+  if (!receiptPopup) return;
+  receiptPopup.hidden = true;
+  document.body.classList.remove("popup-open");
+};
+
+const printReceipt = () => {
+  if (!latestAdmissionReceipt) return;
+  const receiptHtml = receiptContent?.innerHTML || "";
+  const printWindow = window.open("", "_blank", "width=720,height=900");
+  if (!printWindow) {
+    showToast("Allow popups to print the receipt.");
+    return;
+  }
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Admission Receipt ${escapeHtml(latestAdmissionReceipt.regNo)}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 32px; color: #10264f; }
+          .receipt-card { border: 1px solid #d7deea; border-radius: 18px; padding: 24px; max-width: 680px; }
+          .receipt-brand { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e4e9f2; padding-bottom: 16px; margin-bottom: 18px; }
+          .receipt-brand span { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; font-weight: 700; color: #1f5fbf; }
+          .receipt-brand strong { font-size: 22px; }
+          .receipt-main-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+          .receipt-main-row > div, .receipt-detail-grid > div { background: #f6f8fc; border-radius: 14px; padding: 14px; }
+          .data-label, dt { display: block; font-size: 11px; color: #66748c; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
+          dd { margin: 0; font-weight: 700; }
+          .receipt-detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .receipt-note { margin-top: 18px; color: #66748c; }
+        </style>
+      </head>
+      <body><section class="receipt-card">${receiptHtml}</section></body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+};
 
 const getTrainingDuration = (kid) => {
   const days = Math.max(getDaysSinceDate(kid.joinDate), 0);
@@ -1402,6 +1548,7 @@ const loadFinance = async () => {
   if (financeLock) financeLock.hidden = managerReady;
   if (financeStats) financeStats.hidden = !managerReady;
   if (financeInsights) financeInsights.hidden = !managerReady;
+  if (financeExportPanel) financeExportPanel.hidden = !managerReady;
   if (expenseForm) expenseForm.hidden = !managerReady;
   if (financeRecent) financeRecent.hidden = !managerReady;
   if (!managerReady) return;
@@ -1582,6 +1729,165 @@ const queueFinanceRefresh = () => {
     financeReloadTimer = null;
     loadFinance();
   }, 120);
+};
+
+const loadMonthlyAttendanceRows = async (range) => {
+  const { data, error } = await supabaseClient
+    .from("attendance")
+    .select("student_id, attendance_date")
+    .gte("attendance_date", range.start)
+    .lte("attendance_date", range.end)
+    .order("attendance_date", { ascending: true });
+  if (error) throw error;
+  return data || [];
+};
+
+const buildMonthlyExportData = async () => {
+  if (!isBackendReady || !isManagerLoggedIn) {
+    throw new Error("Login as manager to export records.");
+  }
+  const range = monthRange(financeExportMonth?.value || currentMonthKey());
+  if (kids.length === 0) await loadKids();
+  await loadFinance();
+  const attendanceRows = await loadMonthlyAttendanceRows(range);
+  const studentLookup = new Map(kids.map((kid) => [kid.id, kid]));
+  const initialFees = kids
+    .filter((kid) => kid.feesPaid === "yes" && String(kid.joinDate || "").startsWith(range.key))
+    .map((kid) => ({
+      type: "Admission",
+      player: kid.name,
+      date: kid.joinDate,
+      amount: kid.amountPaid,
+      reference: kid.paymentReference || "",
+    }));
+  const renewalFees = financePayments
+    .filter((payment) => String(payment.paid_on || payment.paidOn || "").startsWith(range.key))
+    .map((payment) => ({
+      type: "Renewal",
+      player: studentLookup.get(payment.student_id || payment.studentId)?.name || payment.student_id || payment.studentId || "",
+      date: payment.paid_on || payment.paidOn || "",
+      amount: Number(payment.amount || 0),
+      reference: payment.id || "",
+    }));
+  const expenses = financeExpenses.filter((expense) => String(expense.expense_date || "").startsWith(range.key));
+  const attendanceByStudent = attendanceRows.reduce((map, row) => {
+    map.set(row.student_id, (map.get(row.student_id) || 0) + 1);
+    return map;
+  }, new Map());
+  return {
+    range,
+    attendanceRows,
+    studentRows: kids.map((kid) => ({
+      "Reg No": kid.regNo || "",
+      Name: kid.name,
+      Age: kid.age,
+      Slot: kid.timeSlot || "Not set",
+      Status: kid.discontinued ? "Discontinued" : "Active",
+      "Join Date": kid.joinDate,
+      "Fees Paid": kid.feesPaid === "yes" ? "Yes" : "No",
+      "Amount Paid": kid.amountPaid,
+      "Jersey Size": kid.jerseySize || "",
+      "Jersey Pairs": kid.jerseyPairs || 0,
+      "Parent": kid.fatherGuardianName || "",
+      "Parent Contact": kid.parentContactNo || "",
+      "Attendance Days": attendanceByStudent.get(kid.id) || 0,
+    })),
+    attendanceExportRows: attendanceRows.map((row) => {
+      const kid = studentLookup.get(row.student_id);
+      return {
+        Date: row.attendance_date,
+        Player: kid?.name || row.student_id,
+        Slot: kid?.timeSlot || "",
+        Status: "Present",
+      };
+    }),
+    paymentRows: [...initialFees, ...renewalFees].map((payment) => ({
+      Date: payment.date,
+      Type: payment.type,
+      Player: payment.player,
+      Amount: payment.amount,
+      Reference: payment.reference,
+    })),
+    expenseRows: expenses.map((expense) => ({
+      Date: expense.expense_date,
+      Type: expense.expense_type,
+      Amount: expense.amount,
+      "Paid By": expense.paid_by,
+      Comment: expense.comment || "",
+    })),
+  };
+};
+
+const exportMonthlyCsv = async () => {
+  try {
+    const data = await buildMonthlyExportData();
+    const prefix = `gen-alpha-${data.range.key}`;
+    downloadTextFile(`${prefix}-students.csv`, toCsv(Object.keys(data.studentRows[0] || { Name: "" }), data.studentRows));
+    downloadTextFile(`${prefix}-attendance.csv`, toCsv(["Date", "Player", "Slot", "Status"], data.attendanceExportRows));
+    downloadTextFile(`${prefix}-payments.csv`, toCsv(["Date", "Type", "Player", "Amount", "Reference"], data.paymentRows));
+    downloadTextFile(`${prefix}-expenses.csv`, toCsv(["Date", "Type", "Amount", "Paid By", "Comment"], data.expenseRows));
+    showToast(`Exported ${data.range.label} CSV files.`);
+  } catch (error) {
+    showToast(error.message || "Unable to export CSV.");
+  }
+};
+
+const printMonthlyReport = async () => {
+  try {
+    const data = await buildMonthlyExportData();
+    const feeTotal = data.paymentRows.reduce((sum, row) => sum + Number(row.Amount || 0), 0);
+    const expenseTotal = data.expenseRows.reduce((sum, row) => sum + Number(row.Amount || 0), 0);
+    const activeCount = kids.filter((kid) => !kid.discontinued).length;
+    const reportWindow = window.open("", "_blank", "width=980,height=900");
+    if (!reportWindow) {
+      showToast("Allow popups to print the monthly report.");
+      return;
+    }
+    const tableRows = (rows, columns) => rows.length
+      ? rows.map((row) => `<tr>${columns.map((col) => `<td>${escapeHtml(row[col])}</td>`).join("")}</tr>`).join("")
+      : `<tr><td colspan="${columns.length}">No records for this month.</td></tr>`;
+    reportWindow.document.write(`
+      <html>
+        <head>
+          <title>Gen Alpha Monthly Report ${escapeHtml(data.range.label)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 28px; color: #10264f; }
+            h1, h2 { margin: 0 0 10px; }
+            .muted { color: #66748c; }
+            .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+            .metric { border: 1px solid #dce3ef; border-radius: 14px; padding: 14px; background: #f7f9fd; }
+            .metric span { display: block; font-size: 11px; text-transform: uppercase; color: #66748c; font-weight: 700; }
+            .metric strong { font-size: 22px; }
+            table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 12px; }
+            th, td { border: 1px solid #dce3ef; padding: 8px; text-align: left; }
+            th { background: #102f66; color: white; }
+            @media print { body { margin: 14mm; } }
+          </style>
+        </head>
+        <body>
+          <h1>Gen Alpha Cricket Academy</h1>
+          <p class="muted">Monthly report for ${escapeHtml(data.range.label)}</p>
+          <section class="metrics">
+            <div class="metric"><span>Active players</span><strong>${activeCount}</strong></div>
+            <div class="metric"><span>Fees collected</span><strong>${rupees(feeTotal)}</strong></div>
+            <div class="metric"><span>Expenses</span><strong>${rupees(expenseTotal)}</strong></div>
+            <div class="metric"><span>Net</span><strong>${rupees(feeTotal - expenseTotal)}</strong></div>
+          </section>
+          <h2>Payments</h2>
+          <table><thead><tr>${["Date", "Type", "Player", "Amount", "Reference"].map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${tableRows(data.paymentRows, ["Date", "Type", "Player", "Amount", "Reference"])}</tbody></table>
+          <h2>Expenses</h2>
+          <table><thead><tr>${["Date", "Type", "Amount", "Paid By", "Comment"].map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${tableRows(data.expenseRows, ["Date", "Type", "Amount", "Paid By", "Comment"])}</tbody></table>
+          <h2>Attendance</h2>
+          <table><thead><tr>${["Date", "Player", "Slot", "Status"].map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${tableRows(data.attendanceExportRows, ["Date", "Player", "Slot", "Status"])}</tbody></table>
+        </body>
+      </html>
+    `);
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+  } catch (error) {
+    showToast(error.message || "Unable to print report.");
+  }
 };
 
 const initializeAuthListener = () => {
@@ -1961,6 +2267,22 @@ closePlayerDetailButton?.addEventListener("click", () => {
   playerDetailPopup.hidden = true;
   document.body.classList.remove("popup-open");
 });
+closeReceiptButton?.addEventListener("click", closeReceiptPopup);
+receiptPopup?.addEventListener("click", (event) => {
+  if (event.target === receiptPopup) closeReceiptPopup();
+});
+copyReceiptButton?.addEventListener("click", async () => {
+  if (!latestAdmissionReceipt) return;
+  await navigator.clipboard?.writeText(buildReceiptText(latestAdmissionReceipt));
+  showToast("Receipt copied.");
+});
+shareReceiptButton?.addEventListener("click", () => {
+  if (!latestAdmissionReceipt) return;
+  const text = buildReceiptText(latestAdmissionReceipt);
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+});
+printReceiptButton?.addEventListener("click", printReceipt);
 playerDetailPopup?.addEventListener("click", (event) => {
   if (event.target === playerDetailPopup) {
     playerDetailPopup.hidden = true;
@@ -1979,6 +2301,9 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && renewalPopup && !renewalPopup.hidden) {
     closeRenewalPopup();
   }
+  if (event.key === "Escape" && receiptPopup && !receiptPopup.hidden) {
+    closeReceiptPopup();
+  }
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
@@ -1995,6 +2320,8 @@ financeTabButton?.addEventListener("click", () => {
   updateActiveView();
   loadFinance();
 });
+exportCsvButton?.addEventListener("click", exportMonthlyCsv);
+exportPdfButton?.addEventListener("click", printMonthlyReport);
 admissionTabButton.addEventListener("click", () => {
   activeView = "admission";
   updateActiveView();
@@ -2137,10 +2464,25 @@ admissionForm.addEventListener("submit", async (event) => {
   }
 
   const row = Array.isArray(data) ? data[0] : data;
-  admissionMessage.textContent = `Admission submitted successfully. Reg No ${row?.reg_no ?? admissionRegNo.textContent}.`;
+  const regNo = row?.reg_no ?? admissionRegNo.textContent;
+  latestAdmissionReceipt = {
+    regNo,
+    playerName: baseAdmissionPayload.p_applicant_name,
+    guardianName: baseAdmissionPayload.p_father_guardian_name,
+    parentContact: baseAdmissionPayload.p_parent_contact_no,
+    joinDate: baseAdmissionPayload.p_join_date,
+    timeSlot: baseAdmissionPayload.p_time_slot,
+    feesPaid: baseAdmissionPayload.p_fees_paid,
+    amountPaid: baseAdmissionPayload.p_amount_paid,
+    paymentReference: baseAdmissionPayload.p_payment_reference,
+    jerseySize: baseAdmissionPayload.p_jersey_size,
+    jerseyPairs: baseAdmissionPayload.p_jersey_pairs,
+  };
+  admissionMessage.textContent = `Admission submitted successfully. Reg No ${regNo}.`;
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
   closePaymentPopup();
   showToast(`Admission saved for ${String(formData.get("applicantName") || "").trim()}`);
+  renderReceipt(latestAdmissionReceipt);
   await resetAdmissionForm();
   await loadKids();
 });
@@ -2151,6 +2493,7 @@ const initializeApp = async () => {
   populateAdmissionSelectors();
   setJoinDateLimit();
   admissionJoinDate.value = new Date().toISOString().split("T")[0];
+  if (financeExportMonth) financeExportMonth.value = currentMonthKey();
   admissionPaymentIntentId = buildPaymentIntentId();
   updateActiveView();
   updateAccessUI();

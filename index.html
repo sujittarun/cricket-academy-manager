@@ -402,6 +402,18 @@
             </div>
           </div>
           <div id="financeLock" class="editor-lock">Login as manager to view finance details.</div>
+          <section id="financeExportPanel" class="finance-export-panel" hidden>
+            <div>
+              <p class="section-kicker">Monthly Backup</p>
+              <h3>Export academy records</h3>
+              <p class="slot-helper">Download CSV files for Excel or print a monthly report as PDF.</p>
+            </div>
+            <div class="finance-export-actions">
+              <input id="financeExportMonth" type="month" aria-label="Export month" />
+              <button id="exportCsvButton" type="button" class="secondary-btn">Export CSV</button>
+              <button id="exportPdfButton" type="button" class="primary-btn">Print PDF</button>
+            </div>
+          </section>
           <section class="finance-stats" id="financeStats" hidden>
             <article class="finance-metric hero"><p>Month Fees</p><strong id="financeMonthFees">Rs 0</strong><span>fees collected</span></article>
             <article class="finance-metric hero expense"><p>Month Expense</p><strong id="financeMonthExpenses">Rs 0</strong><span>this month spend</span></article>
@@ -810,6 +822,26 @@
     </main>
 
     <div id="globalToast" class="global-toast" hidden aria-live="polite"></div>
+    <div id="receiptPopup" class="payment-popup-backdrop" hidden>
+      <section class="payment-popup receipt-popup" role="dialog" aria-modal="true" aria-labelledby="receiptPopupTitle">
+        <div class="payment-popup-header">
+          <div>
+            <p class="section-kicker">Admission Receipt</p>
+            <h3 id="receiptPopupTitle">Admission saved</h3>
+            <p class="payment-assist-copy">Share this confirmation with the parent on WhatsApp or print it as a PDF.</p>
+          </div>
+          <button id="closeReceiptButton" type="button" class="icon-button" aria-label="Close receipt popup">
+            Close
+          </button>
+        </div>
+        <div id="receiptContent" class="receipt-card"></div>
+        <div class="receipt-actions">
+          <button id="shareReceiptButton" type="button" class="primary-btn">Share on WhatsApp</button>
+          <button id="copyReceiptButton" type="button" class="secondary-btn">Copy text</button>
+          <button id="printReceiptButton" type="button" class="secondary-btn">Print / Save PDF</button>
+        </div>
+      </section>
+    </div>
     <div id="paymentPopup" class="payment-popup-backdrop" hidden>
       <section class="payment-popup" role="dialog" aria-modal="true" aria-labelledby="paymentPopupTitle">
         <div class="payment-popup-header">

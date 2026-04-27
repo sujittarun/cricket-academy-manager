@@ -935,6 +935,42 @@ body.popup-open {
   margin: 16px 0;
 }
 
+.finance-export-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid rgba(16, 48, 102, 0.12);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 199, 46, 0.16), rgba(31, 95, 191, 0.08));
+}
+
+.finance-export-panel h3 {
+  margin: 2px 0 4px;
+}
+
+.finance-export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.finance-export-actions input {
+  width: 160px;
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 48, 102, 0.16);
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.84);
+}
+
 .finance-recent {
   margin-top: 14px;
   padding: 14px;
@@ -1536,6 +1572,91 @@ body.popup-open {
   box-shadow: 0 28px 70px rgba(10, 24, 48, 0.22);
 }
 
+.receipt-popup {
+  max-width: 680px;
+}
+
+.receipt-card {
+  border: 1px solid rgba(16, 48, 102, 0.1);
+  border-radius: 22px;
+  padding: 18px;
+  background: linear-gradient(180deg, #ffffff, #f7faff);
+}
+
+.receipt-brand,
+.receipt-main-row,
+.receipt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.receipt-brand {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(16, 48, 102, 0.1);
+  margin-bottom: 14px;
+}
+
+.receipt-brand span {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.receipt-brand strong,
+.receipt-main-row strong {
+  color: var(--ink);
+  font-size: 1.25rem;
+}
+
+.receipt-main-row {
+  margin-bottom: 14px;
+}
+
+.receipt-main-row > div,
+.receipt-detail-grid > div {
+  flex: 1;
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(31, 95, 191, 0.06);
+}
+
+.receipt-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.receipt-detail-grid dt {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.receipt-detail-grid dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.receipt-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.receipt-actions {
+  margin-top: 14px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .payment-popup-header {
   display: flex;
   justify-content: space-between;
@@ -2120,6 +2241,27 @@ body.popup-open {
   .finance-chart-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .finance-export-panel,
+  .receipt-brand,
+  .receipt-main-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .finance-export-actions {
+    justify-content: stretch;
+  }
+
+  .finance-export-actions input,
+  .finance-export-actions button,
+  .receipt-actions button {
+    width: 100%;
+  }
+
+  .receipt-detail-grid {
+    grid-template-columns: 1fr;
   }
 
   .app-shell {
