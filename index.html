@@ -226,6 +226,26 @@
               </label>
 
               <label>
+                Father / guardian name
+                <input id="fatherGuardianName" name="fatherGuardianName" type="text" placeholder="Parent name" />
+              </label>
+
+              <label>
+                Mobile number
+                <input id="parentContactNo" name="parentContactNo" type="tel" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10 digit mobile" />
+              </label>
+
+              <label>
+                School
+                <input id="schoolCollege" name="schoolCollege" type="text" placeholder="School name" />
+              </label>
+
+              <label>
+                Grade
+                <input id="grade" name="grade" type="text" placeholder="Class / grade" />
+              </label>
+
+              <label>
                 Time slot
                 <select id="timeSlot" name="timeSlot" required>
                   <option value="">Select slot</option>
@@ -289,6 +309,11 @@
                   step="1"
                   placeholder="0"
                 />
+              </label>
+
+              <label class="form-span-full">
+                Address
+                <textarea id="address" name="address" rows="2" placeholder="Student address"></textarea>
               </label>
 
               <p id="formMessage" class="form-message" aria-live="polite"></p>
@@ -495,6 +520,7 @@
                     <th style="cursor: pointer;" id="sortExpenseDate">Date ↕</th>
                     <th style="cursor: pointer;" id="sortExpensePaidBy">Paid By ↕</th>
                     <th>Comment</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="financeExpensesTableBody">

@@ -272,6 +272,9 @@ const normalizeKid = (kid) => {
     fatherGuardianName: kid.father_guardian_name || "",
     parentContactNo: kid.parent_contact_no || "",
     alternateContactNo: kid.alternate_contact_no || "",
+    schoolCollege: kid.school_college || "",
+    grade: kid.grade || "",
+    address: kid.address || "",
   };
 };
 
@@ -288,6 +291,12 @@ const toDatabasePayload = ({
   addedBy,
   updatedBy,
   discontinued,
+  fatherGuardianName = "",
+  parentContactNo = "",
+  alternateContactNo = "",
+  schoolCollege = "",
+  grade = "",
+  address = "",
 }) => ({
   name,
   age,
@@ -301,6 +310,12 @@ const toDatabasePayload = ({
   added_by: addedBy,
   updated_by: updatedBy,
   discontinued: Boolean(discontinued),
+  father_guardian_name: fatherGuardianName,
+  parent_contact_no: parentContactNo,
+  alternate_contact_no: alternateContactNo,
+  school_college: schoolCollege,
+  grade,
+  address,
 });
 
 const setJoinDateLimit = () => {
@@ -1305,7 +1320,7 @@ const updateActiveView = () => {
 const updateAccessUI = () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   const canEdit = managerReady && isEditMode;
-  const formControls = kidForm.querySelectorAll("input, select, button");
+  const formControls = kidForm.querySelectorAll("input, select, textarea, button");
   viewSwitcher.hidden = false;
 
   if (!hasSupabaseConfig) {
@@ -1608,6 +1623,13 @@ const renderPlayerDetails = async (kid) => {
         }
       </p>
       ${kid.alternateContactNo ? `<p>Alternate: <a class="call-link" href="tel:${kid.alternateContactNo}">${kid.alternateContactNo}</a></p>` : ""}
+      ${
+        kid.schoolCollege || kid.grade || kid.address
+          ? `<p class="meta-text">${[kid.schoolCollege, kid.grade ? `Grade ${kid.grade}` : "", kid.address]
+              .filter(Boolean)
+              .join(" • ")}</p>`
+          : ""
+      }
     </div>
     <div class="player-detail-section">
       <h4>Timeline</h4>
@@ -1781,9 +1803,12 @@ const loadFinance = async () => {
               <td data-label="Date">${formatDate(item.expense_date)}</td>
               <td data-label="Paid by">${item.paid_by}</td>
               <td data-label="Comment" class="meta-text finance-comment">${item.comment || "-"}</td>
+              <td data-label="Action">
+                <button class="danger-btn expense-delete-btn" data-expense-delete="${item.id}" type="button">Delete</button>
+              </td>
             </tr>
           `).join("")
-        : `<tr><td colspan="5" class="sub-copy" style="text-align: center; padding: 20px;">No expenses found.</td></tr>`;
+        : `<tr><td colspan="6" class="sub-copy" style="text-align: center; padding: 20px;">No expenses found.</td></tr>`;
     }
     
     // Update header visual state
@@ -2099,9 +2124,12 @@ kidForm.addEventListener("submit", async (event) => {
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
     discontinued: false,
-    fatherGuardianName: "",
-    parentContactNo: "",
+    fatherGuardianName: String(formData.get("fatherGuardianName") || "").trim(),
+    parentContactNo: String(formData.get("parentContactNo") || "").replace(/\D/g, "").slice(0, 10),
     alternateContactNo: "",
+    schoolCollege: String(formData.get("schoolCollege") || "").trim(),
+    grade: String(formData.get("grade") || "").trim(),
+    address: String(formData.get("address") || "").trim(),
   };
 
   if (!payload.name || !payload.joinDate || !payload.timeSlot) {
@@ -2111,6 +2139,11 @@ kidForm.addEventListener("submit", async (event) => {
 
   if (new Date(payload.joinDate) > new Date()) {
     formMessage.textContent = "Join date cannot be in the future.";
+    return;
+  }
+
+  if (payload.parentContactNo && payload.parentContactNo.length !== 10) {
+    formMessage.textContent = "Mobile number should be 10 digits.";
     return;
   }
 
@@ -2128,9 +2161,12 @@ kidForm.addEventListener("submit", async (event) => {
           addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
           updatedBy: getActiveManagerEmail(),
           discontinued: currentKid ? currentKid.discontinued : false,
-          fatherGuardianName: currentKid ? currentKid.fatherGuardianName : "",
-          parentContactNo: currentKid ? currentKid.parentContactNo : "",
+          fatherGuardianName: payload.fatherGuardianName,
+          parentContactNo: payload.parentContactNo,
           alternateContactNo: currentKid ? currentKid.alternateContactNo : "",
+          schoolCollege: payload.schoolCollege,
+          grade: payload.grade,
+          address: payload.address,
         })
       )
       .eq("id", editingKidId));
@@ -2188,6 +2224,11 @@ kidsTableBody.addEventListener("click", async (event) => {
     editingKidId = kidToEdit.id;
     document.getElementById("name").value = kidToEdit.name;
     document.getElementById("age").value = String(kidToEdit.age);
+    document.getElementById("fatherGuardianName").value = kidToEdit.fatherGuardianName || "";
+    document.getElementById("parentContactNo").value = kidToEdit.parentContactNo || "";
+    document.getElementById("schoolCollege").value = kidToEdit.schoolCollege || "";
+    document.getElementById("grade").value = kidToEdit.grade || "";
+    document.getElementById("address").value = kidToEdit.address || "";
     document.getElementById("timeSlot").value = kidToEdit.timeSlot;
     joinDateInput.value = kidToEdit.joinDate;
     feesPaidSelect.value = kidToEdit.feesPaid;
@@ -2870,6 +2911,29 @@ expenseForm?.addEventListener("submit", async (event) => {
   expenseForm.reset();
   expenseMessage.textContent = "Expense added.";
   await loadFinance();
+});
+
+financeExpensesTableBody?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-expense-delete]");
+  if (!button) return;
+
+  const expenseId = button.dataset.expenseDelete;
+  if (!expenseId || !isManagerLoggedIn) return;
+
+  button.disabled = true;
+  button.textContent = "Deleting...";
+  const { error } = await supabaseClient.from("academy_expenses").delete().eq("id", expenseId);
+
+  if (error) {
+    expenseMessage.textContent = error.message;
+    button.disabled = false;
+    button.textContent = "Delete";
+    return;
+  }
+
+  financeExpenses = financeExpenses.filter((expense) => expense.id !== expenseId);
+  expenseMessage.textContent = "Expense deleted.";
+  renderFinance();
 });
 
 // ── Realtime Sync ────────────────────────────────────────────────────────────

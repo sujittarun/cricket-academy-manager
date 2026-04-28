@@ -386,6 +386,7 @@ body.popup-open {
 .login-form input,
 .kid-form input,
 .kid-form select,
+.kid-form textarea,
 .admission-form input,
 .admission-form select,
 .admission-form textarea,
@@ -402,11 +403,22 @@ body.popup-open {
 .login-form input,
 .kid-form input,
 .kid-form select,
+.kid-form textarea,
 .admission-form input,
 .admission-form select,
 .admission-form textarea {
   padding: 0 14px;
   background: #ffffff;
+}
+
+.kid-form textarea {
+  min-height: 82px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.form-span-full {
+  grid-column: 1 / -1;
 }
 
 .admission-form textarea {
@@ -417,6 +429,7 @@ body.popup-open {
 
 .kid-form input:disabled,
 .kid-form select:disabled,
+.kid-form textarea:disabled,
 .admission-form input:disabled,
 .admission-form select:disabled {
   cursor: not-allowed;
@@ -1000,6 +1013,13 @@ body.popup-open {
 .finance-expenses-table {
   width: 100%;
   min-width: 760px;
+}
+
+.expense-delete-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
 }
 
 .finance-comment {
