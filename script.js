@@ -1681,7 +1681,7 @@ const renderKids = () => {
       </td>
       <td data-label="Amount paid">Rs ${Number(kid.amountPaid).toFixed(2)}</td>
       <td data-label="Next fee due"><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
-      <td data-label="Updated"><span class="meta-text">Last updated by ${kid.updatedBy}</span></td>
+      <td data-label="Last Updated"><span class="meta-text">${kid.updatedBy}</span></td>
       ${
         canEdit
           ? `<td data-label="Actions">
