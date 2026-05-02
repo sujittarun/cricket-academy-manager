@@ -1693,11 +1693,11 @@ const renderKids = () => {
               ${
                 canRenew
                   ? `<button class="renew-btn" data-action="renew-open" data-id="${kid.id}" type="button">Mark fee paid</button>`
+                  : feesPending
+                    ? ""
                   : `<span class="action-note">${
                       kid.discontinued
                         ? "Renewal paused"
-                        : feesPending
-                          ? "Join fee pending"
                         : daysUntilDue <= 0
                           ? "Due now"
                           : `${daysUntilDue} day${daysUntilDue === 1 ? "" : "s"} left`
