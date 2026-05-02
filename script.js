@@ -297,26 +297,44 @@ const toDatabasePayload = ({
   schoolCollege = "",
   grade = "",
   address = "",
-}) => ({
-  name,
-  age,
-  time_slot: timeSlot,
-  join_date: joinDate,
-  fees_paid: feesPaid === "yes",
-  amount_paid: Number(amountPaid),
-  jersey_size: jerseySize || null,
-  jersey_pairs: Number(jerseyPairs) || 0,
-  renewals,
-  added_by: addedBy,
-  updated_by: updatedBy,
-  discontinued: Boolean(discontinued),
-  father_guardian_name: fatherGuardianName,
-  parent_contact_no: parentContactNo,
-  alternate_contact_no: alternateContactNo,
-  school_college: schoolCollege,
-  grade,
-  address,
-});
+}, options = {}) => {
+  const databasePayload = {
+    name,
+    age,
+    time_slot: timeSlot,
+    join_date: joinDate,
+    fees_paid: feesPaid === "yes",
+    amount_paid: Number(amountPaid),
+    jersey_size: jerseySize || null,
+    jersey_pairs: Number(jerseyPairs) || 0,
+    renewals,
+    added_by: addedBy,
+    updated_by: updatedBy,
+    discontinued: Boolean(discontinued),
+  };
+
+  if (options.includeProfileFields !== false) {
+    Object.assign(databasePayload, {
+      father_guardian_name: fatherGuardianName,
+      parent_contact_no: parentContactNo,
+      alternate_contact_no: alternateContactNo,
+      school_college: schoolCollege,
+      grade,
+      address,
+    });
+  }
+
+  return databasePayload;
+};
+
+const isMissingStudentProfileColumnError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("schema cache") &&
+    ["father_guardian_name", "parent_contact_no", "alternate_contact_no", "school_college", "grade", "address"]
+      .some((column) => message.includes(column))
+  );
+};
 
 const setJoinDateLimit = () => {
   joinDateInput.max = new Date().toISOString().split("T")[0];
@@ -2150,28 +2168,43 @@ kidForm.addEventListener("submit", async (event) => {
   const wasEditing = Boolean(editingKidId);
   const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
   let error = null;
+  let savedWithoutProfileFields = false;
+  const databasePayload = toDatabasePayload({
+    ...payload,
+    renewals: currentKid ? currentKid.renewals : [],
+    addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
+    updatedBy: getActiveManagerEmail(),
+    discontinued: currentKid ? currentKid.discontinued : false,
+    alternateContactNo: currentKid ? currentKid.alternateContactNo : "",
+  });
 
   if (wasEditing) {
     ({ error } = await supabaseClient
       .from("students")
-      .update(
-        toDatabasePayload({
-          ...payload,
-          renewals: currentKid ? currentKid.renewals : [],
-          addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
-          updatedBy: getActiveManagerEmail(),
-          discontinued: currentKid ? currentKid.discontinued : false,
-          fatherGuardianName: payload.fatherGuardianName,
-          parentContactNo: payload.parentContactNo,
-          alternateContactNo: currentKid ? currentKid.alternateContactNo : "",
-          schoolCollege: payload.schoolCollege,
-          grade: payload.grade,
-          address: payload.address,
-        })
-      )
+      .update(databasePayload)
       .eq("id", editingKidId));
   } else {
-    ({ error } = await supabaseClient.from("students").insert(toDatabasePayload(payload)));
+    ({ error } = await supabaseClient.from("students").insert(databasePayload));
+  }
+
+  if (error && isMissingStudentProfileColumnError(error)) {
+    savedWithoutProfileFields = true;
+    const fallbackPayload = toDatabasePayload(
+      {
+        ...payload,
+        renewals: currentKid ? currentKid.renewals : [],
+        addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
+        updatedBy: getActiveManagerEmail(),
+        discontinued: currentKid ? currentKid.discontinued : false,
+      },
+      { includeProfileFields: false }
+    );
+
+    if (wasEditing) {
+      ({ error } = await supabaseClient.from("students").update(fallbackPayload).eq("id", editingKidId));
+    } else {
+      ({ error } = await supabaseClient.from("students").insert(fallbackPayload));
+    }
   }
 
   if (error) {
@@ -2181,8 +2214,12 @@ kidForm.addEventListener("submit", async (event) => {
 
   resetFormState();
   formMessage.textContent = wasEditing
-    ? "Gen Alpha player record updated successfully."
-    : "Gen Alpha player record saved successfully.";
+    ? savedWithoutProfileFields
+      ? "Player updated, but parent/school fields need the latest Supabase SQL migration."
+      : "Gen Alpha player record updated successfully."
+    : savedWithoutProfileFields
+      ? "Player saved, but parent/school fields need the latest Supabase SQL migration."
+      : "Gen Alpha player record saved successfully.";
   if (wasEditing && currentKid && currentKid.feesPaid !== "yes" && payload.feesPaid === "yes") {
     latestAdmissionReceipt = buildReceiptFromKid(currentKid, {
       amountPaid: payload.amountPaid,
