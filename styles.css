@@ -863,6 +863,103 @@ body.popup-open {
   margin: 14px 0 18px;
 }
 
+.student-movement-panel {
+  margin: 0 0 18px;
+  overflow: hidden;
+}
+
+.student-movement-panel .panel-heading {
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.student-movement-chart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.movement-month {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid rgba(26, 79, 157, 0.1);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.72));
+}
+
+.movement-month-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.movement-month-head strong {
+  color: var(--accent-dark);
+  font-size: 0.92rem;
+}
+
+.movement-month-head span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.movement-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 7px;
+  height: 96px;
+  margin: 12px 0 10px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.movement-bar {
+  width: 18px;
+  border-radius: 999px 999px 6px 6px;
+}
+
+.movement-bar.continuing,
+.movement-dot.continuing {
+  background: var(--accent-blue);
+}
+
+.movement-bar.joined,
+.movement-dot.joined {
+  background: var(--success);
+}
+
+.movement-bar.discontinued,
+.movement-dot.discontinued {
+  background: var(--danger);
+}
+
+.movement-counts {
+  display: grid;
+  gap: 5px;
+}
+
+.movement-counts span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.movement-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 99px;
+}
+
 .finance-metric {
   min-width: 0;
   padding: 16px;
@@ -1029,18 +1126,11 @@ body.popup-open {
 
 .finance-insights {
   display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: 1fr;
   gap: 14px;
   margin: 0 0 18px;
 }
 
-.finance-mini-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.finance-mini-card,
 .finance-chart-card {
   border: 1px solid rgba(15, 34, 64, 0.08);
   border-radius: 18px;
@@ -1048,47 +1138,17 @@ body.popup-open {
   box-shadow: 0 10px 22px rgba(11, 52, 112, 0.06);
 }
 
-.finance-mini-card {
-  min-width: 0;
-  padding: 13px;
-}
-
-.finance-mini-card p {
-  overflow: hidden;
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.finance-mini-card strong {
-  display: block;
-  overflow: hidden;
+.tenure-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 4px 9px;
+  border-radius: 999px;
   color: var(--accent-dark);
-  font-size: clamp(1rem, 1.6vw, 1.35rem);
-  line-height: 1;
-  text-overflow: ellipsis;
+  background: rgba(244, 191, 42, 0.2);
+  font-weight: 900;
   white-space: nowrap;
-}
-
-.finance-mini-card.positive strong {
-  color: var(--success);
-}
-
-.finance-mini-card.negative strong,
-.finance-mini-card.warning strong {
-  color: var(--danger);
-}
-
-.finance-mini-card.split {
-  grid-column: span 2;
-  background:
-    linear-gradient(90deg, rgba(29, 122, 86, 0.09), rgba(199, 45, 45, 0.08)),
-    rgba(255, 255, 255, 0.78);
 }
 
 .finance-chart-card {
@@ -2211,6 +2271,10 @@ body.popup-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .student-movement-chart {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .finance-metric.hero,
   .finance-metric.quiet {
     grid-column: span 1;
@@ -2332,6 +2396,22 @@ body.popup-open {
     gap: 10px;
   }
 
+  .student-movement-chart {
+    grid-template-columns: 1fr;
+  }
+
+  .movement-month {
+    display: grid;
+    grid-template-columns: minmax(92px, 0.7fr) minmax(116px, 1fr) minmax(130px, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+
+  .movement-bars {
+    height: 74px;
+    margin: 0;
+  }
+
   .finance-net-timeline {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2339,14 +2419,6 @@ body.popup-open {
   .finance-metric {
     padding: 13px;
     border-radius: 16px;
-  }
-
-  .finance-mini-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .finance-mini-card.split {
-    grid-column: 1 / -1;
   }
 
   .finance-chart-head {

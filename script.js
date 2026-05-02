@@ -35,6 +35,7 @@ const joinedCount = document.getElementById("joinedCount");
 const activeCount = document.getElementById("activeCount");
 const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
+const studentMovementChart = document.getElementById("studentMovementChart");
 const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
 const rosterView = document.getElementById("rosterView");
@@ -131,10 +132,6 @@ const financeTotalExpenses = document.getElementById("financeTotalExpenses");
 const financeInsights = document.getElementById("financeInsights");
 const financeMonthExpenses = document.getElementById("financeMonthExpenses");
 const financeMonthNet = document.getElementById("financeMonthNet");
-const financeStudentMix = document.getElementById("financeStudentMix");
-const financeOneMonthChurn = document.getElementById("financeOneMonthChurn");
-const financeSixMonthStudents = document.getElementById("financeSixMonthStudents");
-const financeChurnRate = document.getElementById("financeChurnRate");
 const financeMiniChart = document.getElementById("financeMiniChart");
 const financeNetTimeline = document.getElementById("financeNetTimeline");
 const expenseForm = document.getElementById("expenseForm");
@@ -629,10 +626,63 @@ const getTrainingDuration = (kid) => {
   return `${months} month${months === 1 ? "" : "s"}, ${remainingDays} day${remainingDays === 1 ? "" : "s"}`;
 };
 
+const getTenureBadge = (kid) => {
+  const days = Math.max(getDaysSinceDate(kid.joinDate), 0);
+  const months = Math.floor(days / 30);
+  if (months <= 0) return `${days}d`;
+  return `${months}m`;
+};
+
 const getDaysSinceDate = (dateValue) => {
   const targetDate = new Date(`${dateValue}T00:00:00`);
   const msPerDay = 1000 * 60 * 60 * 24;
   return Math.floor((new Date() - targetDate) / msPerDay);
+};
+
+const parseIsoDate = (value) => (value ? new Date(`${value}T00:00:00`) : null);
+
+const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+
+const endOfMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+
+const monthKeyFromDate = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+const monthLabelFromDate = (date) =>
+  date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+
+const buildStudentMovement = (students, monthCount = 6) => {
+  const now = new Date();
+  return Array.from({ length: monthCount }, (_, index) => {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - (monthCount - 1 - index), 1);
+    const monthStart = startOfMonth(monthDate);
+    const monthEnd = endOfMonth(monthDate);
+    const previousMonthEnd = new Date(monthStart.getTime() - 1);
+
+    const joined = students.filter((kid) => {
+      const joinDate = parseIsoDate(kid.joinDate);
+      return joinDate && joinDate >= monthStart && joinDate <= monthEnd;
+    }).length;
+
+    const continuing = students.filter((kid) => {
+      const joinDate = parseIsoDate(kid.joinDate);
+      const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+      return joinDate && joinDate <= previousMonthEnd && (!discontinuedAt || discontinuedAt >= monthStart);
+    }).length;
+
+    const discontinued = students.filter((kid) => {
+      const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+      return discontinuedAt && discontinuedAt >= monthStart && discontinuedAt <= monthEnd;
+    }).length;
+
+    return {
+      key: monthKeyFromDate(monthDate),
+      label: monthLabelFromDate(monthDate),
+      joined,
+      continuing,
+      discontinued,
+    };
+  });
 };
 
 const getStudentType = (kid) => (kid.renewals.length > 0 ? "Returning" : "New");
@@ -653,6 +703,31 @@ const updateStats = () => {
   activeCount.textContent = String(activeKids.length);
   paidCount.textContent = String(activeKids.filter((kid) => kid.feesPaid === "yes").length);
   returningCount.textContent = String(activeKids.filter((kid) => kid.renewals.length > 0).length);
+};
+
+const renderStudentMovement = () => {
+  if (!studentMovementChart) return;
+  const movement = buildStudentMovement(kids, 6);
+  const maxValue = Math.max(1, ...movement.flatMap((month) => [month.joined, month.continuing, month.discontinued]));
+
+  studentMovementChart.innerHTML = movement.map((month) => `
+    <article class="movement-month">
+      <div class="movement-month-head">
+        <strong>${month.label}</strong>
+        <span>${month.continuing + month.joined - month.discontinued} active trend</span>
+      </div>
+      <div class="movement-bars" aria-label="${month.label} student movement">
+        <span class="movement-bar continuing" style="height:${Math.max(8, Math.round((month.continuing / maxValue) * 82))}px" title="Continuing: ${month.continuing}"></span>
+        <span class="movement-bar joined" style="height:${Math.max(8, Math.round((month.joined / maxValue) * 82))}px" title="Joined: ${month.joined}"></span>
+        <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 82))}px" title="Discontinued: ${month.discontinued}"></span>
+      </div>
+      <div class="movement-counts">
+        <span><i class="movement-dot continuing"></i>${month.continuing} continuing</span>
+        <span><i class="movement-dot joined"></i>${month.joined} joined</span>
+        <span><i class="movement-dot discontinued"></i>${month.discontinued} left</span>
+      </div>
+    </article>
+  `).join("");
 };
 
 const renderSlotFilters = () => {
@@ -1431,6 +1506,7 @@ const updateAccessUI = () => {
 const renderKids = () => {
   kidsTableBody.innerHTML = "";
   updateStats();
+  renderStudentMovement();
   renderSlotFilters();
 
   const canEdit = isBackendReady && isManagerLoggedIn && isEditMode;
@@ -1508,6 +1584,7 @@ const renderKids = () => {
           ${studentType}
         </span>
       </td>
+      <td data-label="Tenure"><span class="tenure-pill">${getTenureBadge(kid)}</span></td>
       <td data-label="Join date">${formatDate(kid.joinDate)}</td>
       <td data-label="Latest renewal">${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
       <td data-label="Fees paid">
@@ -1727,21 +1804,12 @@ const loadFinance = async () => {
 
   const monthExpenses = sum(financeExpenses, monthKey);
   const monthFees = sum(allFees, monthKey);
-  const activeStudents = kids.filter((kid) => !kid.discontinued).length;
-  const discontinuedStudents = kids.filter((kid) => kid.discontinued).length;
-  const oneMonthDropouts = kids.filter((kid) => kid.discontinued && kid.renewals.length === 0).length;
-  const sixMonthActiveStudents = kids.filter((kid) => !kid.discontinued && getDaysSinceDate(kid.joinDate) >= 180).length;
-  const churnRate = kids.length > 0 ? Math.round((discontinuedStudents / kids.length) * 100) : 0;
   if (financeMonthExpenses) financeMonthExpenses.textContent = rupees(monthExpenses);
   if (financeMonthNet) {
     financeMonthNet.textContent = rupees(monthFees - monthExpenses);
     financeMonthNet.parentElement?.classList.toggle("negative", monthFees - monthExpenses < 0);
     financeMonthNet.parentElement?.classList.toggle("positive", monthFees - monthExpenses >= 0);
   }
-  if (financeStudentMix) financeStudentMix.textContent = `${activeStudents} active / ${discontinuedStudents} left`;
-  if (financeOneMonthChurn) financeOneMonthChurn.textContent = String(oneMonthDropouts);
-  if (financeSixMonthStudents) financeSixMonthStudents.textContent = String(sixMonthActiveStudents);
-  if (financeChurnRate) financeChurnRate.textContent = `${churnRate}%`;
 
   if (financeMiniChart) {
     const monthBuckets = Array.from({ length: 6 }, (_, index) => {

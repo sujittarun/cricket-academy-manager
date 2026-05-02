@@ -201,6 +201,17 @@
           </article>
         </section>
 
+        <section class="panel student-movement-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Student Movement</p>
+              <h2>Month-on-month academy view</h2>
+            </div>
+            <p class="slot-helper">Joined, continuing from previous month, and discontinued trends.</p>
+          </div>
+          <div id="studentMovementChart" class="student-movement-chart"></div>
+        </section>
+
         <section class="content-grid">
           <section id="formPanel" class="panel form-panel" hidden>
             <div class="panel-heading">
@@ -358,6 +369,7 @@
                     <th>Jersey</th>
                     <th>Status</th>
                     <th>Student type</th>
+                    <th>Tenure</th>
                     <th>Join date</th>
                     <th>Latest renewal</th>
                     <th>Fees paid</th>
@@ -449,12 +461,6 @@
             <article class="finance-metric quiet expense"><p>Expenses</p><strong id="financeTotalExpenses">Rs 0</strong><span>overall spend</span></article>
           </section>
           <section id="financeInsights" class="finance-insights" hidden>
-            <div class="finance-mini-metrics">
-              <article class="finance-mini-card split"><p>Students</p><strong id="financeStudentMix">0 active / 0 left</strong></article>
-              <article class="finance-mini-card warning"><p>1-Month Dropouts</p><strong id="financeOneMonthChurn">0</strong></article>
-              <article class="finance-mini-card positive"><p>6+ Month Active</p><strong id="financeSixMonthStudents">0</strong></article>
-              <article class="finance-mini-card"><p>Churn Rate</p><strong id="financeChurnRate">0%</strong></article>
-            </div>
             <div class="finance-chart-card">
               <div class="finance-chart-head">
                 <div>
