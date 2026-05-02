@@ -35,6 +35,11 @@ body {
   padding: 40px 0 56px;
 }
 
+/* When roster is visible, allow the shell to breathe wider */
+.app-shell:has(#rosterView:not([hidden])) {
+  width: min(1400px, calc(100% - 24px));
+}
+
 .masthead {
   padding: 24px;
   margin-bottom: 24px;
@@ -309,6 +314,21 @@ body.popup-open {
   grid-template-columns: 1fr;
 }
 
+/* Centre the edit form panel and cap its width for readability */
+.content-grid > .form-panel {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* Centre the records panel and give it full breathing room */
+.content-grid > .records-panel {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .panel-heading {
   margin-bottom: 14px;
 }
@@ -362,7 +382,7 @@ body.popup-open {
 }
 
 .kid-form {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .login-form label,
@@ -2814,8 +2834,9 @@ body.popup-open {
 }
 
 /* Roster width rescue layer.
-   Revert by removing this block only; the original table structure above stays unchanged. */
-@media (max-width: 1400px) {
+   Converts the wide table into stacked cards on smaller screens.
+   Breakpoint raised to 1600px so 13" laptops get the compact layout. */
+@media (max-width: 1600px) {
   #rosterView .table-wrap {
     overflow: visible;
     margin: 0;

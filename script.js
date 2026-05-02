@@ -1860,9 +1860,15 @@ const loadFinance = async () => {
   if (financeLock) financeLock.hidden = managerReady;
   if (financeStats) financeStats.hidden = !managerReady;
   if (financeInsights) financeInsights.hidden = !managerReady;
-  if (financeExportPanel) financeExportPanel.hidden = !managerReady;
+  if (financeExportPanel) financeExportPanel.hidden = true; // Export panel hidden for now
   if (financeRangePanel) financeRangePanel.hidden = !managerReady;
-  if (expenseForm) expenseForm.hidden = !managerReady;
+  if (expenseForm) {
+    expenseForm.hidden = !managerReady;
+    const expenseDateInput = document.getElementById("expenseDate");
+    if (expenseDateInput && !expenseDateInput.value) {
+      expenseDateInput.value = new Date().toISOString().slice(0, 10);
+    }
+  }
   if (financeRecent) financeRecent.hidden = !managerReady;
   if (!managerReady) return;
 
@@ -3113,6 +3119,7 @@ attendanceTabButton?.addEventListener("click", () => {
 expenseForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(expenseForm);
+  const expenseDateValue = String(formData.get("expenseDate") || "").trim();
   const payload = {
     expense_type: String(formData.get("expenseType") || ""),
     amount: Number(formData.get("expenseAmount") || 0),
@@ -3120,12 +3127,18 @@ expenseForm?.addEventListener("submit", async (event) => {
     paid_by: String(formData.get("expensePaidBy") || ""),
     created_by: getActiveManagerEmail(),
   };
+  if (expenseDateValue) {
+    payload.expense_date = expenseDateValue;
+  }
   const { error } = await supabaseClient.from("academy_expenses").insert(payload);
   if (error) {
     expenseMessage.textContent = error.message;
     return;
   }
   expenseForm.reset();
+  // Reset expense date to today after successful save
+  const expenseDateInput = document.getElementById("expenseDate");
+  if (expenseDateInput) expenseDateInput.value = new Date().toISOString().slice(0, 10);
   expenseMessage.textContent = "Expense added.";
   await loadFinance();
 });
