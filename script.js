@@ -124,6 +124,7 @@ const financeExportPanel = document.getElementById("financeExportPanel");
 const financeExportMonth = document.getElementById("financeExportMonth");
 const financeRangePanel = document.getElementById("financeRangePanel");
 const financeRangeTitle = document.getElementById("financeRangeTitle");
+const financeRangePeriod = document.getElementById("financeRangePeriod");
 const financeRangeFilters = document.getElementById("financeRangeFilters");
 const exportCsvButton = document.getElementById("exportCsvButton");
 const exportPdfButton = document.getElementById("exportPdfButton");
@@ -150,6 +151,9 @@ const sortExpensePaidBy = document.getElementById("sortExpensePaidBy");
 let expenseSortKey = "date";
 let expenseSortOrder = "desc";
 let expenseSearchQuery = "";
+let rosterSortKey = "joinDate";
+let rosterSortOrder = "desc";
+let rosterSearchQuery = "";
 
 const attendanceDate = document.getElementById("attendanceDate");
 const attendanceEditorLock = document.getElementById("attendanceEditorLock");
@@ -159,6 +163,7 @@ const attendanceTotalCount = document.getElementById("attendanceTotalCount");
 const attendanceEmptyState = document.getElementById("attendanceEmptyState");
 const attendanceGridContainer = document.getElementById("attendanceGridContainer");
 const attendanceTableBody = document.getElementById("attendanceTableBody");
+const playerSearchInput = document.getElementById("playerSearchInput");
 
 // Payment verify
 const paymentVerifyFlow = document.getElementById("paymentVerifyFlow");
@@ -379,6 +384,38 @@ const maxIsoDate = (first, second) => {
 const getStudentPayments = (kid) =>
   financePayments.filter((payment) => (payment.student_id || payment.studentId) === kid.id);
 
+const getPaymentPlanLabel = (planType, monthsCovered) => {
+  const plan = RENEWAL_PLANS[planType] || ADMISSION_FEE_PLANS[planType];
+  if (plan?.title) return plan.title;
+  const months = Number(monthsCovered || 1);
+  return months > 1 ? `${months} months` : "Monthly";
+};
+
+const getPlayerPaymentRows = (kid) => {
+  const rows = [];
+  if (kid.feesPaid === "yes" && Number(kid.amountPaid || 0) > 0) {
+    const months = getInitialCoverageMonths(kid);
+    rows.push({
+      date: kid.joinDate,
+      title: "Joining payment",
+      plan: months > 1 ? `${months} months + admission` : "Monthly + admission",
+      months,
+      amount: Number(kid.amountPaid || 0),
+    });
+  }
+  getStudentPayments(kid).forEach((payment) => {
+    const months = Number(payment.months_covered || payment.monthsCovered || 1);
+    rows.push({
+      date: payment.paid_on || payment.paidOn,
+      title: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Joining payment" : "Renewal payment",
+      plan: getPaymentPlanLabel(payment.plan_type || payment.planType, months),
+      months,
+      amount: Number(payment.amount || 0),
+    });
+  });
+  return rows.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+};
+
 const getPaidThroughDate = (kid) => {
   let paidThrough = kid.feesPaid === "yes"
     ? addMonthsIso(kid.joinDate, getInitialCoverageMonths(kid))
@@ -454,14 +491,17 @@ const monthRange = (monthKey) => {
 };
 
 const FINANCE_RANGE_OPTIONS = {
-  week: { label: "Last 1 week", days: 7 },
-  month: { label: "Last 1 month", days: 30 },
-  "2months": { label: "Last 2 months", days: 60 },
-  "3months": { label: "Last 3 months", days: 90 },
-  "6months": { label: "Last 6 months", days: 180 },
-  year: { label: "Last 1 year", days: 365 },
-  overall: { label: "Overall", days: null },
+  week: { label: "This week", months: 0, type: "week" },
+  month: { label: "This month", months: 1 },
+  "2months": { label: "2 months", months: 2 },
+  "3months": { label: "3 months", months: 3 },
+  "6months": { label: "6 months", months: 6 },
+  year: { label: "This year", months: 0, type: "year" },
+  overall: { label: "Overall", months: null },
 };
+
+const formatRangePeriod = (start, end) =>
+  start && end ? `${formatDate(localIsoDate(start))} to ${formatDate(localIsoDate(end))}` : "All recorded finance data";
 
 const financeRangeFromMode = () => {
   if (financeRangeMode === "month-picker") {
@@ -469,26 +509,40 @@ const financeRangeFromMode = () => {
     return {
       ...range,
       label: range.label,
+      period: formatRangePeriod(new Date(`${range.start}T00:00:00`), new Date(`${range.end}T00:00:00`)),
       startDate: new Date(`${range.start}T00:00:00`),
       endDate: new Date(`${range.end}T23:59:59`),
     };
   }
 
   const option = FINANCE_RANGE_OPTIONS[financeRangeMode] || FINANCE_RANGE_OPTIONS.month;
-  if (option.days == null) {
-    return { key: "overall", label: option.label, start: "", end: "", startDate: null, endDate: null };
+  if (option.months == null) {
+    return { key: "overall", label: option.label, period: "All recorded finance data", start: "", end: "", startDate: null, endDate: null };
   }
 
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(endDate.getDate() - (option.days - 1));
+  const today = new Date();
+  let startDate;
+  let endDate;
+  if (option.type === "week") {
+    const day = today.getDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
+    endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6);
+  } else if (option.type === "year") {
+    startDate = new Date(today.getFullYear(), 0, 1);
+    endDate = new Date(today.getFullYear(), 11, 31);
+  } else {
+    startDate = new Date(today.getFullYear(), today.getMonth() - (option.months - 1), 1);
+    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  }
   return {
     key: financeRangeMode,
     label: option.label,
+    period: formatRangePeriod(startDate, endDate),
     start: localIsoDate(startDate),
     end: localIsoDate(endDate),
-    startDate,
-    endDate,
+    startDate: new Date(`${localIsoDate(startDate)}T00:00:00`),
+    endDate: new Date(`${localIsoDate(endDate)}T23:59:59`),
   };
 };
 
@@ -783,12 +837,55 @@ const isActiveKid = (kid) => !kid.discontinued;
 const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
 const isRenewalPending = (kid) =>
   isActiveKid(kid) && kid.feesPaid === "yes" && getDaysSinceDate(getPaidThroughDate(kid)) >= 0;
-const getFilteredKids = () =>
-  !activeSlotFilter
+const getRosterSortValue = (kid, key) => {
+  const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
+  const values = {
+    name: kid.name,
+    age: kid.age,
+    timeSlot: kid.timeSlot || "Not set",
+    jersey: formatJerseyDetails(kid),
+    status: kid.discontinued ? "Discontinued" : "Active",
+    studentType: getStudentType(kid),
+    tenure: getDaysSinceDate(kid.joinDate),
+    joinDate: kid.joinDate,
+    latestRenewal,
+    feesPaid: kid.feesPaid === "yes" ? 1 : 0,
+    amountPaid: Number(kid.amountPaid || 0),
+    nextDue: getPaidThroughDate(kid),
+    updatedBy: kid.updatedBy || "",
+  };
+  return values[key] ?? values.name;
+};
+
+const compareRosterValues = (first, second) => {
+  if (typeof first === "number" && typeof second === "number") return first - second;
+  return String(first ?? "").localeCompare(String(second ?? ""), "en-IN", { numeric: true, sensitivity: "base" });
+};
+
+const updateRosterSortHeaders = () => {
+  kidsTable?.querySelectorAll("[data-roster-sort]").forEach((button) => {
+    const active = button.dataset.rosterSort === rosterSortKey;
+    button.classList.toggle("active", active);
+    button.textContent = `${button.dataset.sortLabel}${active ? (rosterSortOrder === "asc" ? " ↑" : " ↓") : ""}`;
+    button.setAttribute("aria-sort", active ? (rosterSortOrder === "asc" ? "ascending" : "descending") : "none");
+  });
+};
+
+const getFilteredKids = () => {
+  const slotFiltered = !activeSlotFilter
     ? kids
     : activeSlotFilter === "not-set"
       ? kids.filter((kid) => isActiveKid(kid) && !kid.timeSlot)
       : kids.filter((kid) => isActiveKid(kid) && kid.timeSlot === activeSlotFilter);
+  const search = rosterSearchQuery.trim().toLowerCase();
+  const searchFiltered = search
+    ? slotFiltered.filter((kid) => kid.name.toLowerCase().includes(search))
+    : slotFiltered;
+  return [...searchFiltered].sort((a, b) => {
+    const result = compareRosterValues(getRosterSortValue(a, rosterSortKey), getRosterSortValue(b, rosterSortKey));
+    return rosterSortOrder === "asc" ? result : -result;
+  });
+};
 
 const updateStats = () => {
   const activeKids = kids.filter(isActiveKid);
@@ -1598,6 +1695,7 @@ const updateAccessUI = () => {
 
 const renderKids = () => {
   kidsTableBody.innerHTML = "";
+  updateRosterSortHeaders();
   updateStats();
   renderStudentMovement();
   renderSlotFilters();
@@ -1781,6 +1879,9 @@ const loadPlayerTimeline = async (studentId) => {
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
   const timeline = await loadPlayerTimeline(kid.id);
+  const paymentRows = getPlayerPaymentRows(kid);
+  const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
 
   playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `
@@ -1807,6 +1908,32 @@ const renderPlayerDetails = async (kid) => {
               .filter(Boolean)
               .join(" • ")}</p>`
           : ""
+      }
+    </div>
+    <div class="player-detail-section payment-history-section">
+      <div class="payment-history-summary">
+        <div>
+          <span>Total paid</span>
+          <strong>${rupees(totalPaid)}</strong>
+        </div>
+        <div>
+          <span>Months paid</span>
+          <strong>${totalMonths}</strong>
+        </div>
+      </div>
+      <h4>Payment details</h4>
+      ${
+        paymentRows.length > 0
+          ? `<div class="payment-history-list">${paymentRows.map((payment) => `
+              <div class="payment-history-row">
+                <div>
+                  <strong>${payment.title}</strong>
+                  <span>${formatDate(payment.date)} · ${payment.plan} · ${payment.months} month${payment.months === 1 ? "" : "s"}</span>
+                </div>
+                <b>${rupees(payment.amount)}</b>
+              </div>
+            `).join("")}</div>`
+          : `<p class="sub-copy">No paid fee records yet.</p>`
       }
     </div>
     <div class="player-detail-section">
@@ -1892,6 +2019,7 @@ const loadFinance = async () => {
   const rangeNet = rangeFees - rangeExpenses;
 
   if (financeRangeTitle) financeRangeTitle.textContent = selectedRange.label;
+  if (financeRangePeriod) financeRangePeriod.textContent = selectedRange.period || "";
   if (financeFeesLabel) financeFeesLabel.textContent = `${selectedRange.label} Fees`;
   if (financeExpensesLabel) financeExpensesLabel.textContent = `${selectedRange.label} Expense`;
   if (financeNetLabel) financeNetLabel.textContent = `${selectedRange.label} Net`;
@@ -2686,6 +2814,23 @@ document.addEventListener("visibilitychange", () => {
 rosterTabButton.addEventListener("click", () => {
   activeView = "roster";
   updateActiveView();
+  renderKids();
+});
+playerSearchInput?.addEventListener("input", (event) => {
+  rosterSearchQuery = event.target.value || "";
+  renderKids();
+});
+kidsTable?.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const button = event.target.closest("[data-roster-sort]");
+  if (!button) return;
+  const nextSort = button.dataset.rosterSort || "name";
+  if (rosterSortKey === nextSort) {
+    rosterSortOrder = rosterSortOrder === "asc" ? "desc" : "asc";
+  } else {
+    rosterSortKey = nextSort;
+    rosterSortOrder = ["name", "timeSlot", "status", "studentType", "updatedBy"].includes(nextSort) ? "asc" : "desc";
+  }
   renderKids();
 });
 financeTabButton?.addEventListener("click", () => {

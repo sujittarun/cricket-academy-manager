@@ -352,7 +352,10 @@
                 <p class="section-kicker">Time Slots</p>
                 <p class="slot-helper">Tap a slot to see the current active batch size.</p>
               </div>
-              <div id="slotFilters" class="slot-filters" aria-label="Time slot filters"></div>
+              <div class="roster-tools">
+                <input id="playerSearchInput" class="search-input roster-search" type="search" placeholder="Search student by name..." aria-label="Search student by name" />
+                <div id="slotFilters" class="slot-filters" aria-label="Time slot filters"></div>
+              </div>
             </div>
 
             <div id="emptyState" class="empty-state">
@@ -363,19 +366,19 @@
               <table id="kidsTable" class="kids-table" hidden>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Age</th>
-                    <th>Time slot</th>
-                    <th>Jersey</th>
-                    <th>Status</th>
-                    <th>Student type</th>
-                    <th>Tenure</th>
-                    <th>Join date</th>
-                    <th>Latest renewal</th>
-                    <th>Fees paid</th>
-                    <th>Amount paid</th>
-                    <th>Next fee due</th>
-                    <th>Last Updated</th>
+                    <th><button class="sort-header" type="button" data-roster-sort="name" data-sort-label="Name">Name</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="age" data-sort-label="Age">Age</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="timeSlot" data-sort-label="Time slot">Time slot</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="jersey" data-sort-label="Jersey">Jersey</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="status" data-sort-label="Status">Status</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="studentType" data-sort-label="Student type">Student type</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="tenure" data-sort-label="Tenure">Tenure</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="joinDate" data-sort-label="Join date">Join date</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="latestRenewal" data-sort-label="Latest renewal">Latest renewal</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="feesPaid" data-sort-label="Fees paid">Fees paid</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="amountPaid" data-sort-label="Amount paid">Amount paid</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="nextDue" data-sort-label="Next fee due">Next fee due</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="updatedBy" data-sort-label="Last Updated">Last Updated</button></th>
                     <th id="actionHeader">Action</th>
                   </tr>
                 </thead>
@@ -456,6 +459,7 @@
             <div>
               <p class="section-kicker">Finance Range</p>
               <h3 id="financeRangeTitle">This month</h3>
+              <p id="financeRangePeriod" class="slot-helper">Current calendar month</p>
             </div>
             <div id="financeRangeFilters" class="finance-range-filters" aria-label="Finance date range filters">
               <button type="button" data-finance-range="week">1 week</button>

@@ -599,6 +599,23 @@ body.popup-open {
   letter-spacing: 0.025em;
 }
 
+.sort-header {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort-header.active {
+  color: var(--accent-dark);
+}
+
 #rosterView .kids-table td strong,
 #rosterView .player-link,
 #rosterView .meta-text {
@@ -690,6 +707,23 @@ body.popup-open {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.roster-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.roster-search {
+  min-height: 38px;
+  width: min(260px, 100%);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .slot-chip {
@@ -996,6 +1030,52 @@ body.popup-open {
   color: var(--ink);
 }
 
+.payment-history-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.payment-history-summary div,
+.payment-history-row {
+  border-radius: 14px;
+  background: rgba(26, 79, 157, 0.06);
+  padding: 10px;
+}
+
+.payment-history-summary span,
+.payment-history-row span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.payment-history-summary strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--accent-dark);
+  font-size: 1.05rem;
+}
+
+.payment-history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.payment-history-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.payment-history-row strong,
+.payment-history-row b {
+  color: var(--ink);
+}
+
 .call-link {
   color: var(--accent-dark);
   font-weight: 900;
@@ -1092,7 +1172,7 @@ body.popup-open {
 
 .movement-bar.continuing,
 .movement-dot.continuing {
-  background: var(--accent-blue);
+  background: var(--accent);
 }
 
 .movement-bar.joined,
@@ -1246,6 +1326,11 @@ body.popup-open {
   color: var(--accent-dark);
 }
 
+#financeRangePeriod {
+  margin-top: 4px;
+  font-size: 0.76rem;
+}
+
 .finance-range-filters {
   display: flex;
   flex-wrap: wrap;
@@ -1269,7 +1354,7 @@ body.popup-open {
 .finance-range-filters button.active {
   border-color: rgba(21, 81, 173, 0.24);
   color: white;
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-dark));
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   box-shadow: 0 8px 18px rgba(21, 81, 173, 0.18);
 }
 
