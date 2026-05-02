@@ -37,7 +37,7 @@ body {
 
 /* When roster is visible, allow the shell to breathe wider */
 .app-shell:has(#rosterView:not([hidden])) {
-  width: min(1400px, calc(100% - 24px));
+  width: min(1360px, calc(100% - 12px));
 }
 
 .masthead {
@@ -316,7 +316,7 @@ body.popup-open {
 
 /* Centre the edit form panel and cap its width for readability */
 .content-grid > .form-panel {
-  max-width: 680px;
+  max-width: 760px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -324,7 +324,8 @@ body.popup-open {
 
 /* Centre the records panel and give it full breathing room */
 .content-grid > .records-panel {
-  max-width: 100%;
+  width: 100%;
+  max-width: 1340px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -514,6 +515,97 @@ body.popup-open {
 .records-panel {
   min-height: 100%;
 }
+
+#financeExportPanel {
+  display: none !important;
+}
+
+#rosterView .table-wrap {
+  overflow: visible;
+  width: 100%;
+}
+
+#rosterView .kids-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+#rosterView .kids-table th,
+#rosterView .kids-table td {
+  padding: 7px 6px;
+  font-size: clamp(0.66rem, 0.58vw, 0.78rem);
+  line-height: 1.12;
+}
+
+#rosterView .kids-table th {
+  font-size: clamp(0.58rem, 0.52vw, 0.68rem);
+  letter-spacing: 0.025em;
+}
+
+#rosterView .kids-table td strong,
+#rosterView .player-link,
+#rosterView .meta-text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#rosterView .status-pill,
+#rosterView .alert-pill,
+#rosterView .type-pill,
+#rosterView .state-pill,
+#rosterView .slot-pill,
+#rosterView .tenure-pill {
+  padding: 4px 6px;
+  font-size: clamp(0.58rem, 0.52vw, 0.68rem);
+}
+
+#rosterView .action-group {
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  white-space: normal;
+}
+
+#rosterView .action-group .secondary-btn,
+#rosterView .action-group .danger-btn,
+#rosterView .action-group .renew-btn {
+  min-height: 28px;
+  padding: 0 6px;
+  border-radius: 9px;
+  font-size: clamp(0.58rem, 0.52vw, 0.68rem);
+}
+
+#rosterView .kids-table th:nth-child(1),
+#rosterView .kids-table td:nth-child(1) { width: 12%; }
+#rosterView .kids-table th:nth-child(2),
+#rosterView .kids-table td:nth-child(2) { width: 4%; }
+#rosterView .kids-table th:nth-child(3),
+#rosterView .kids-table td:nth-child(3) { width: 6%; }
+#rosterView .kids-table th:nth-child(4),
+#rosterView .kids-table td:nth-child(4) { width: 6%; }
+#rosterView .kids-table th:nth-child(5),
+#rosterView .kids-table td:nth-child(5) { width: 7%; }
+#rosterView .kids-table th:nth-child(6),
+#rosterView .kids-table td:nth-child(6) { width: 7%; }
+#rosterView .kids-table th:nth-child(7),
+#rosterView .kids-table td:nth-child(7) { width: 5%; }
+#rosterView .kids-table th:nth-child(8),
+#rosterView .kids-table td:nth-child(8) { width: 7%; }
+#rosterView .kids-table th:nth-child(9),
+#rosterView .kids-table td:nth-child(9) { width: 8%; }
+#rosterView .kids-table th:nth-child(10),
+#rosterView .kids-table td:nth-child(10) { width: 6%; }
+#rosterView .kids-table th:nth-child(11),
+#rosterView .kids-table td:nth-child(11) { width: 7%; }
+#rosterView .kids-table th:nth-child(12),
+#rosterView .kids-table td:nth-child(12) { width: 8%; }
+#rosterView .kids-table th:nth-child(13),
+#rosterView .kids-table td:nth-child(13) { width: 7%; }
+#rosterView .kids-table th:nth-child(14),
+#rosterView .kids-table td:nth-child(14) { width: 10%; }
 
 .slot-toolbar {
   display: flex;
@@ -2833,10 +2925,9 @@ body.popup-open {
   }
 }
 
-/* Roster width rescue layer.
-   Converts the wide table into stacked cards on smaller screens.
-   Breakpoint raised to 1600px so 13" laptops get the compact layout. */
-@media (max-width: 1600px) {
+/* Roster mobile rescue layer.
+   Keep laptops as a real table; only phones get stacked cards. */
+@media (max-width: 720px) {
   #rosterView .table-wrap {
     overflow: visible;
     margin: 0;
