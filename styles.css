@@ -314,9 +314,9 @@ body.popup-open {
   grid-template-columns: 1fr;
 }
 
-/* Centre the edit form panel and cap its width for readability */
+/* Keep the edit form aligned with the roster width, but make the fields compact. */
 .content-grid > .form-panel {
-  max-width: 760px;
+  max-width: 1340px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -514,6 +514,62 @@ body.popup-open {
 
 .records-panel {
   min-height: 100%;
+}
+
+#formPanel {
+  padding: 16px;
+}
+
+#formPanel .panel-heading {
+  margin-bottom: 10px;
+}
+
+#formPanel .kid-form {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+#formPanel .kid-form label {
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+#formPanel .kid-form input,
+#formPanel .kid-form select,
+#formPanel .kid-form textarea,
+#formPanel .primary-btn,
+#formPanel .secondary-btn {
+  min-height: 36px;
+  border-radius: 10px;
+  font-size: 0.84rem;
+}
+
+#formPanel .kid-form input,
+#formPanel .kid-form select,
+#formPanel .kid-form textarea {
+  padding: 0 10px;
+}
+
+#formPanel .kid-form textarea {
+  min-height: 42px;
+  padding: 9px 10px;
+}
+
+#formPanel .form-span-full {
+  grid-column: span 2;
+}
+
+#formPanel .form-message {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+#formPanel .primary-btn,
+#formPanel .secondary-btn {
+  padding: 0 12px;
 }
 
 #financeExportPanel {
@@ -2453,6 +2509,14 @@ body.popup-open {
     grid-template-columns: 1fr;
   }
 
+  #formPanel .kid-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #formPanel .form-span-full {
+    grid-column: 1 / -1;
+  }
+
   .admission-heading,
   .admission-banner,
   .admission-ai-upload {
@@ -2551,6 +2615,10 @@ body.popup-open {
 
   .form-message {
     align-self: start;
+  }
+
+  #formPanel .kid-form {
+    grid-template-columns: 1fr;
   }
 
   .stats-grid {
