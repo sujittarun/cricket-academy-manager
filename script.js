@@ -351,29 +351,71 @@ const formatDate = (value) =>
       })
     : "Not renewed";
 
-const addDaysIso = (dateValue, days) => {
+const addMonthsIso = (dateValue, months) => {
   const date = new Date(`${dateValue}T00:00:00`);
-  date.setDate(date.getDate() + days);
+  const originalDay = date.getDate();
+  date.setDate(1);
+  date.setMonth(date.getMonth() + months);
+  const daysInTargetMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  date.setDate(Math.min(originalDay, daysInTargetMonth));
   return date.toISOString().split("T")[0];
 };
 
-const getReferenceDate = (kid) =>
-  kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : kid.joinDate;
+const getInitialCoverageMonths = (kid) => {
+  if (kid.feesPaid !== "yes" || Number(kid.amountPaid || 0) <= 0) return 0;
+  const amount = Number(kid.amountPaid || 0);
+  const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
+  if (withoutAdmissionFee >= 20000 || Math.round(amount) === 20000) return 6;
+  if ((withoutAdmissionFee >= 9000 && withoutAdmissionFee < 10000) || Math.round(amount) === 9000) return 3;
+  return 1;
+};
+
+const maxIsoDate = (first, second) => {
+  if (!first) return second;
+  if (!second) return first;
+  return new Date(`${second}T00:00:00`) > new Date(`${first}T00:00:00`) ? second : first;
+};
+
+const getStudentPayments = (kid) =>
+  financePayments.filter((payment) => (payment.student_id || payment.studentId) === kid.id);
+
+const getPaidThroughDate = (kid) => {
+  let paidThrough = kid.feesPaid === "yes"
+    ? addMonthsIso(kid.joinDate, getInitialCoverageMonths(kid))
+    : kid.joinDate;
+
+  kid.renewals.forEach((renewalDate) => {
+    paidThrough = maxIsoDate(paidThrough, addMonthsIso(renewalDate, 1));
+  });
+
+  getStudentPayments(kid).forEach((payment) => {
+    const cycleStart = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on || payment.paidOn;
+    const monthsCovered = Math.max(Number(payment.months_covered || payment.monthsCovered || 1), 1);
+    if (cycleStart) {
+      paidThrough = maxIsoDate(paidThrough, addMonthsIso(cycleStart, monthsCovered));
+    }
+  });
+
+  return paidThrough;
+};
 
 const getNextRenewalCycleDate = (kid) => {
-  let cycleDate = getReferenceDate(kid);
-  while (getDaysSinceDate(cycleDate) >= 30) {
-    cycleDate = addDaysIso(cycleDate, 30);
-  }
-  return cycleDate;
+  return getPaidThroughDate(kid);
 };
 
 const getDueCycleDate = (kid) => {
-  let cycleDate = getReferenceDate(kid);
-  while (getDaysSinceDate(cycleDate) >= 60) {
-    cycleDate = addDaysIso(cycleDate, 30);
-  }
-  return addDaysIso(cycleDate, 30);
+  return getPaidThroughDate(kid);
+};
+
+const getRenewalStatusLabel = (kid) => {
+  if (kid.discontinued) return "Tracking paused";
+  if (kid.feesPaid !== "yes") return "Join fee pending";
+  const daysPastDue = getDaysSinceDate(getPaidThroughDate(kid));
+  if (daysPastDue > 1) return `${daysPastDue} days overdue`;
+  if (daysPastDue === 1) return "1 day overdue";
+  if (daysPastDue === 0) return "Due today";
+  if (daysPastDue === -1) return "1 day left";
+  return `${Math.abs(daysPastDue)} days left`;
 };
 
 const getRenewalAmountForPlan = () => {
@@ -740,7 +782,7 @@ const getStudentType = (kid) => (kid.renewals.length > 0 ? "Returning" : "New");
 const isActiveKid = (kid) => !kid.discontinued;
 const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
 const isRenewalPending = (kid) =>
-  isActiveKid(kid) && getDaysSinceDate(getReferenceDate(kid)) >= 30;
+  isActiveKid(kid) && kid.feesPaid === "yes" && getDaysSinceDate(getPaidThroughDate(kid)) >= 0;
 const getFilteredKids = () =>
   !activeSlotFilter
     ? kids
@@ -1602,21 +1644,15 @@ const renderKids = () => {
   });
 
   visibleKids.forEach((kid) => {
-    const referenceDate = getReferenceDate(kid);
-    const daysSinceCycle = getDaysSinceDate(referenceDate);
     const renewalPending = isRenewalPending(kid);
     const feesPending = isFeesPending(kid);
     const needsAttention = feesPending || renewalPending;
     const canRenew = renewalPending && isActiveKid(kid);
     const studentType = getStudentType(kid);
     const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
-    const renewalStatus = kid.discontinued
-      ? "Tracking paused"
-      : renewalPending
-        ? `${daysSinceCycle} days passed, renewal pending`
-        : kid.renewals.length > 0
-          ? `${30 - daysSinceCycle} days left`
-          : `${30 - daysSinceCycle} days left`;
+    const renewalStatus = getRenewalStatusLabel(kid);
+    const dueDate = getPaidThroughDate(kid);
+    const daysUntilDue = -getDaysSinceDate(dueDate);
 
     const row = document.createElement("tr");
     row.className = needsAttention ? "alert-row" : "";
@@ -1660,7 +1696,11 @@ const renderKids = () => {
                   : `<span class="action-note">${
                       kid.discontinued
                         ? "Renewal paused"
-                        : `${30 - daysSinceCycle} day${30 - daysSinceCycle === 1 ? "" : "s"} left`
+                        : feesPending
+                          ? "Join fee pending"
+                        : daysUntilDue <= 0
+                          ? "Due now"
+                          : `${daysUntilDue} day${daysUntilDue === 1 ? "" : "s"} left`
                     }</span>`
               }
               <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">Delete</button>
@@ -1755,7 +1795,7 @@ const renderPlayerDetails = async (kid) => {
     <div class="player-profile-grid">
       <div class="profile-stat"><span>Training duration</span><strong>${getTrainingDuration(kid)}</strong></div>
       <div class="profile-stat"><span>Joined</span><strong>${formatDate(kid.joinDate)}</strong></div>
-      <div class="profile-stat"><span>Next fee due</span><strong>${kid.discontinued ? "Paused" : formatDate(addDaysIso(getReferenceDate(kid), 30))}</strong></div>
+      <div class="profile-stat"><span>Next fee due</span><strong>${kid.discontinued ? "Paused" : formatDate(getPaidThroughDate(kid))}</strong></div>
       <div class="profile-stat"><span>Amount paid</span><strong>Rs ${Number(kid.amountPaid).toFixed(2)}</strong></div>
     </div>
     <div class="player-detail-section">
@@ -1835,6 +1875,7 @@ const loadFinance = async () => {
 
   financePayments = paymentsResult.data || [];
   financeExpenses = expensesResult.data || [];
+  if (activeView === "roster") renderKids();
 
   const now = new Date();
   const localMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -2231,6 +2272,7 @@ loginForm.addEventListener("submit", async (event) => {
   activeView = "roster";
   await refreshSession();
   await loadKids();
+  await loadFinance();
 });
 
 const handleLogout = async () => {
@@ -2446,7 +2488,7 @@ kidsTableBody.addEventListener("click", async (event) => {
       return;
     }
 
-    if (getDaysSinceDate(getReferenceDate(kidToRenew)) < 30) {
+    if (!isRenewalPending(kidToRenew)) {
       formMessage.textContent = "This student is not due for renewal yet.";
       return;
     }
