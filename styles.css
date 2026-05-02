@@ -1061,6 +1061,50 @@ body.popup-open {
   margin: 2px 0 4px;
 }
 
+.finance-range-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid rgba(16, 48, 102, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.finance-range-panel h3 {
+  margin: 2px 0 0;
+  color: var(--accent-dark);
+}
+
+.finance-range-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.finance-range-filters button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(16, 48, 102, 0.12);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.82);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.finance-range-filters button.active {
+  border-color: rgba(21, 81, 173, 0.24);
+  color: white;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-dark));
+  box-shadow: 0 8px 18px rgba(21, 81, 173, 0.18);
+}
+
 .finance-export-actions {
   display: flex;
   align-items: center;
@@ -2269,6 +2313,15 @@ body.popup-open {
 
   .finance-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .finance-range-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .finance-range-filters {
+    justify-content: flex-start;
   }
 
   .student-movement-chart {

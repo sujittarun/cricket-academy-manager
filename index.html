@@ -452,13 +452,25 @@
               <button id="exportPdfButton" type="button" class="primary-btn">Print PDF</button>
             </div>
           </section>
+          <section id="financeRangePanel" class="finance-range-panel" hidden>
+            <div>
+              <p class="section-kicker">Finance Range</p>
+              <h3 id="financeRangeTitle">This month</h3>
+            </div>
+            <div id="financeRangeFilters" class="finance-range-filters" aria-label="Finance date range filters">
+              <button type="button" data-finance-range="week">1 week</button>
+              <button type="button" data-finance-range="month">1 month</button>
+              <button type="button" data-finance-range="2months">2 months</button>
+              <button type="button" data-finance-range="3months">3 months</button>
+              <button type="button" data-finance-range="6months">6 months</button>
+              <button type="button" data-finance-range="year">1 year</button>
+              <button type="button" data-finance-range="overall">Overall</button>
+            </div>
+          </section>
           <section class="finance-stats" id="financeStats" hidden>
-            <article class="finance-metric hero"><p>Month Fees</p><strong id="financeMonthFees">Rs 0</strong><span>fees collected</span></article>
-            <article class="finance-metric hero expense"><p>Month Expense</p><strong id="financeMonthExpenses">Rs 0</strong><span>this month spend</span></article>
-            <article class="finance-metric hero net"><p>Month Net</p><strong id="financeMonthNet">Rs 0</strong><span>fees minus expense</span></article>
-            <article class="finance-metric quiet"><p>This Year</p><strong id="financeYearFees">Rs 0</strong><span>fees</span></article>
-            <article class="finance-metric quiet"><p>Overall Fees</p><strong id="financeTotalFees">Rs 0</strong><span>all payments</span></article>
-            <article class="finance-metric quiet expense"><p>Expenses</p><strong id="financeTotalExpenses">Rs 0</strong><span>overall spend</span></article>
+            <article class="finance-metric hero"><p id="financeFeesLabel">Range Fees</p><strong id="financeMonthFees">Rs 0</strong><span>fees collected</span></article>
+            <article class="finance-metric hero expense"><p id="financeExpensesLabel">Range Expense</p><strong id="financeMonthExpenses">Rs 0</strong><span>expenses recorded</span></article>
+            <article class="finance-metric hero net"><p id="financeNetLabel">Range Net</p><strong id="financeMonthNet">Rs 0</strong><span>fees minus expense</span></article>
           </section>
           <section id="financeInsights" class="finance-insights" hidden>
             <div class="finance-chart-card">

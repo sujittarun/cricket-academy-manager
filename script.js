@@ -122,13 +122,16 @@ const financeView = document.getElementById("financeView");
 const financeLock = document.getElementById("financeLock");
 const financeExportPanel = document.getElementById("financeExportPanel");
 const financeExportMonth = document.getElementById("financeExportMonth");
+const financeRangePanel = document.getElementById("financeRangePanel");
+const financeRangeTitle = document.getElementById("financeRangeTitle");
+const financeRangeFilters = document.getElementById("financeRangeFilters");
 const exportCsvButton = document.getElementById("exportCsvButton");
 const exportPdfButton = document.getElementById("exportPdfButton");
 const financeStats = document.getElementById("financeStats");
 const financeMonthFees = document.getElementById("financeMonthFees");
-const financeYearFees = document.getElementById("financeYearFees");
-const financeTotalFees = document.getElementById("financeTotalFees");
-const financeTotalExpenses = document.getElementById("financeTotalExpenses");
+const financeFeesLabel = document.getElementById("financeFeesLabel");
+const financeExpensesLabel = document.getElementById("financeExpensesLabel");
+const financeNetLabel = document.getElementById("financeNetLabel");
 const financeInsights = document.getElementById("financeInsights");
 const financeMonthExpenses = document.getElementById("financeMonthExpenses");
 const financeMonthNet = document.getElementById("financeMonthNet");
@@ -241,6 +244,7 @@ let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let financePayments = [];
 let financeExpenses = [];
+let financeRangeMode = "month-picker";
 let latestAdmissionReceipt = null;
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
@@ -405,6 +409,53 @@ const monthRange = (monthKey) => {
     end: localIsoDate(end),
     label: start.toLocaleString("en-IN", { month: "long", year: "numeric" }),
   };
+};
+
+const FINANCE_RANGE_OPTIONS = {
+  week: { label: "Last 1 week", days: 7 },
+  month: { label: "Last 1 month", days: 30 },
+  "2months": { label: "Last 2 months", days: 60 },
+  "3months": { label: "Last 3 months", days: 90 },
+  "6months": { label: "Last 6 months", days: 180 },
+  year: { label: "Last 1 year", days: 365 },
+  overall: { label: "Overall", days: null },
+};
+
+const financeRangeFromMode = () => {
+  if (financeRangeMode === "month-picker") {
+    const range = monthRange(financeExportMonth?.value || currentMonthKey());
+    return {
+      ...range,
+      label: range.label,
+      startDate: new Date(`${range.start}T00:00:00`),
+      endDate: new Date(`${range.end}T23:59:59`),
+    };
+  }
+
+  const option = FINANCE_RANGE_OPTIONS[financeRangeMode] || FINANCE_RANGE_OPTIONS.month;
+  if (option.days == null) {
+    return { key: "overall", label: option.label, start: "", end: "", startDate: null, endDate: null };
+  }
+
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - (option.days - 1));
+  return {
+    key: financeRangeMode,
+    label: option.label,
+    start: localIsoDate(startDate),
+    end: localIsoDate(endDate),
+    startDate,
+    endDate,
+  };
+};
+
+const isRowInFinanceRange = (row, range) => {
+  if (!range.startDate || !range.endDate) return true;
+  const rawDate = String(row.paid_on || row.paidOn || row.expense_date || row.expenseDate || "");
+  if (!rawDate) return false;
+  const rowDate = new Date(`${rawDate.slice(0, 10)}T12:00:00`);
+  return rowDate >= range.startDate && rowDate <= range.endDate;
 };
 
 const downloadTextFile = (filename, content, type = "text/csv;charset=utf-8") => {
@@ -1770,6 +1821,7 @@ const loadFinance = async () => {
   if (financeStats) financeStats.hidden = !managerReady;
   if (financeInsights) financeInsights.hidden = !managerReady;
   if (financeExportPanel) financeExportPanel.hidden = !managerReady;
+  if (financeRangePanel) financeRangePanel.hidden = !managerReady;
   if (expenseForm) expenseForm.hidden = !managerReady;
   if (financeRecent) financeRecent.hidden = !managerReady;
   if (!managerReady) return;
@@ -1786,8 +1838,7 @@ const loadFinance = async () => {
 
   const now = new Date();
   const localMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-  const monthKey = localMonthKey(now);
-  const yearKey = String(now.getFullYear());
+  const selectedRange = financeRangeFromMode();
   const initialFees = kids
     .filter((kid) => kid.feesPaid === "yes")
     .map((kid) => ({ amount: kid.amountPaid, paid_on: kid.joinDate }));
@@ -1797,18 +1848,25 @@ const loadFinance = async () => {
       .filter((row) => !dateKey || String(row.paid_on || row.expense_date || "").startsWith(dateKey))
       .reduce((total, row) => total + Number(row.amount || 0), 0);
 
-  financeMonthFees.textContent = rupees(sum(allFees, monthKey));
-  financeYearFees.textContent = rupees(sum(allFees, yearKey));
-  financeTotalFees.textContent = rupees(sum(allFees));
-  financeTotalExpenses.textContent = rupees(sum(financeExpenses));
+  const rangeFees = allFees.filter((row) => isRowInFinanceRange(row, selectedRange)).reduce((total, row) => total + Number(row.amount || 0), 0);
+  const rangeExpenses = financeExpenses.filter((row) => isRowInFinanceRange(row, selectedRange)).reduce((total, row) => total + Number(row.amount || 0), 0);
+  const rangeNet = rangeFees - rangeExpenses;
 
-  const monthExpenses = sum(financeExpenses, monthKey);
-  const monthFees = sum(allFees, monthKey);
-  if (financeMonthExpenses) financeMonthExpenses.textContent = rupees(monthExpenses);
+  if (financeRangeTitle) financeRangeTitle.textContent = selectedRange.label;
+  if (financeFeesLabel) financeFeesLabel.textContent = `${selectedRange.label} Fees`;
+  if (financeExpensesLabel) financeExpensesLabel.textContent = `${selectedRange.label} Expense`;
+  if (financeNetLabel) financeNetLabel.textContent = `${selectedRange.label} Net`;
+  if (financeMonthFees) financeMonthFees.textContent = rupees(rangeFees);
+  if (financeMonthExpenses) financeMonthExpenses.textContent = rupees(rangeExpenses);
   if (financeMonthNet) {
-    financeMonthNet.textContent = rupees(monthFees - monthExpenses);
-    financeMonthNet.parentElement?.classList.toggle("negative", monthFees - monthExpenses < 0);
-    financeMonthNet.parentElement?.classList.toggle("positive", monthFees - monthExpenses >= 0);
+    financeMonthNet.textContent = rupees(rangeNet);
+    financeMonthNet.parentElement?.classList.toggle("negative", rangeNet < 0);
+    financeMonthNet.parentElement?.classList.toggle("positive", rangeNet >= 0);
+  }
+  if (financeRangeFilters) {
+    financeRangeFilters.querySelectorAll("[data-finance-range]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.financeRange === financeRangeMode);
+    });
   }
 
   if (financeMiniChart) {
@@ -1945,6 +2003,18 @@ const queueFinanceRefresh = () => {
     loadFinance();
   }, 120);
 };
+
+financeRangeFilters?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-finance-range]");
+  if (!button) return;
+  financeRangeMode = button.dataset.financeRange || "month";
+  loadFinance();
+});
+
+financeExportMonth?.addEventListener("change", () => {
+  financeRangeMode = "month-picker";
+  loadFinance();
+});
 
 const loadMonthlyAttendanceRows = async (range) => {
   const { data, error } = await supabaseClient
