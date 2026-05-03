@@ -169,12 +169,18 @@ let rosterJerseyFilter = "all";
 let rosterTypeFilter = "all";
 let rosterFeePaidFilter = "all";
 let rosterFeeDueFilter = "all";
+let rosterMovementFilter = null;
+let attendanceSearchQuery = "";
+let attendanceSlotFilter = "";
 
 const attendanceDate = document.getElementById("attendanceDate");
 const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
 const attendancePresentCount = document.getElementById("attendancePresentCount");
 const attendanceTotalCount = document.getElementById("attendanceTotalCount");
+const attendanceFilterBar = document.getElementById("attendanceFilterBar");
+const attendanceSearchInput = document.getElementById("attendanceSearchInput");
+const attendanceSlotFilters = document.getElementById("attendanceSlotFilters");
 const attendanceEmptyState = document.getElementById("attendanceEmptyState");
 const attendanceGridContainer = document.getElementById("attendanceGridContainer");
 const attendanceTableBody = document.getElementById("attendanceTableBody");
@@ -300,6 +306,7 @@ const normalizeKid = (kid) => {
     addedBy: kid.added_by || "Unknown",
     updatedBy: kid.updated_by || kid.added_by || "Unknown",
     discontinued: Boolean(kid.discontinued),
+    discontinuedAt: kid.discontinued_at || "",
     paymentMethod: kid.payment_method || "",
     paymentUpiId: kid.payment_upi_id || "",
     paymentReference: kid.payment_reference || "",
@@ -977,6 +984,72 @@ const buildStudentMovement = (students, monthCount = 6) => {
   });
 };
 
+const getMovementMonthRange = (monthKey) => {
+  const [year, month] = String(monthKey || "").split("-").map(Number);
+  if (!year || !month) return null;
+  const monthDate = new Date(year, month - 1, 1);
+  return {
+    start: startOfMonth(monthDate),
+    end: endOfMonth(monthDate),
+    previousEnd: new Date(startOfMonth(monthDate).getTime() - 1),
+    label: monthLabelFromDate(monthDate),
+  };
+};
+
+const matchesMovementFilter = (kid) => {
+  if (!rosterMovementFilter) return true;
+  const range = getMovementMonthRange(rosterMovementFilter.monthKey);
+  if (!range) return true;
+  const joinDate = parseIsoDate(kid.joinDate);
+  const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+  if (rosterMovementFilter.type === "joined") {
+    return joinDate && joinDate >= range.start && joinDate <= range.end;
+  }
+  if (rosterMovementFilter.type === "left") {
+    return discontinuedAt && discontinuedAt >= range.start && discontinuedAt <= range.end;
+  }
+  return joinDate && joinDate <= range.previousEnd && (!discontinuedAt || discontinuedAt >= range.start);
+};
+
+const movementFilterLabel = () => {
+  if (!rosterMovementFilter) return "";
+  const range = getMovementMonthRange(rosterMovementFilter.monthKey);
+  if (!range) return "";
+  const labels = {
+    continuing: "Continuing",
+    joined: "Joined",
+    left: "Left",
+  };
+  return `${labels[rosterMovementFilter.type] || "Movement"} · ${range.label}`;
+};
+
+const resetRosterDetailFilters = () => {
+  activeSlotFilter = "";
+  rosterSearchQuery = "";
+  rosterStatusFilter = "all";
+  rosterJerseyFilter = "all";
+  rosterTypeFilter = "all";
+  rosterFeePaidFilter = "all";
+  rosterFeeDueFilter = "all";
+  if (playerSearchInput) playerSearchInput.value = "";
+  if (rosterStatusFilterInput) rosterStatusFilterInput.value = "all";
+  if (rosterJerseyFilterInput) rosterJerseyFilterInput.value = "all";
+  if (rosterTypeFilterInput) rosterTypeFilterInput.value = "all";
+  if (rosterFeePaidFilterInput) rosterFeePaidFilterInput.value = "all";
+  if (rosterFeeDueFilterInput) rosterFeeDueFilterInput.value = "all";
+};
+
+const applyRosterMovementFilter = (monthKey, type) => {
+  rosterMovementFilter = { monthKey, type };
+  resetRosterDetailFilters();
+  rosterSortKey = type === "joined" ? "joinDate" : "name";
+  rosterSortOrder = type === "joined" ? "desc" : "asc";
+  activeView = "roster";
+  updateActiveView();
+  renderKids();
+  document.querySelector(".records-panel")?.scrollIntoView({ block: "start", behavior: "smooth" });
+};
+
 const getStudentType = (kid) => (kid.renewals.length > 0 ? "Returning" : "New");
 const isActiveKid = (kid) => !kid.discontinued;
 const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
@@ -996,6 +1069,7 @@ const matchesRosterFilters = (kid) => {
   if (rosterFeePaidFilter === "not-paid" && kid.feesPaid === "yes") return false;
   if (rosterFeeDueFilter === "joining-pending" && !isFeesPending(kid)) return false;
   if (rosterFeeDueFilter === "overdue" && !isRenewalOverdue(kid)) return false;
+  if (!matchesMovementFilter(kid)) return false;
 
   return true;
 };
@@ -1004,7 +1078,8 @@ const hasRosterDetailFilters = () =>
   rosterJerseyFilter !== "all" ||
   rosterTypeFilter !== "all" ||
   rosterFeePaidFilter !== "all" ||
-  rosterFeeDueFilter !== "all";
+  rosterFeeDueFilter !== "all" ||
+  Boolean(rosterMovementFilter);
 const getRosterSortValue = (kid, key) => {
   const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
   const values = {
@@ -1081,12 +1156,32 @@ const renderStudentMovement = () => {
         <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 82))}px" title="Discontinued: ${month.discontinued}"></span>
       </div>
       <div class="movement-counts">
-        <span><i class="movement-dot continuing"></i>${month.continuing} continuing</span>
-        <span><i class="movement-dot joined"></i>${month.joined} joined</span>
-        <span><i class="movement-dot discontinued"></i>${month.discontinued} left</span>
+        <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}"><i class="movement-dot continuing"></i>${month.continuing} continuing</button>
+        <button type="button" data-movement-filter="joined" data-movement-month="${month.key}"><i class="movement-dot joined"></i>${month.joined} joined</button>
+        <button type="button" data-movement-filter="left" data-movement-month="${month.key}"><i class="movement-dot discontinued"></i>${month.discontinued} left</button>
       </div>
     </article>
   `).join("");
+};
+
+const renderRosterHelper = () => {
+  const canEdit = isBackendReady && isManagerLoggedIn && isEditMode;
+  const managerReady = isBackendReady && isManagerLoggedIn;
+  const movementLabel = movementFilterLabel();
+
+  if (movementLabel) {
+    recordsHelper.innerHTML = `
+      <span>Roster filtered by <strong>${movementLabel}</strong>.</span>
+      <button type="button" class="inline-clear-btn" data-clear-movement-filter>Clear</button>
+    `;
+    return;
+  }
+
+  recordsHelper.textContent = canEdit
+    ? "Edit mode is on. Use the table below to update, renew, or discontinue players."
+    : managerReady
+      ? "Roster view is open. Click Edit when you want to add players or change records."
+      : "Manager roster access is available only after login.";
 };
 
 const renderSlotFilters = () => {
@@ -1129,6 +1224,59 @@ const renderSlotFilters = () => {
       `
     )
     .join("");
+};
+
+const renderAttendanceFilters = (activePlayers) => {
+  if (!attendanceSlotFilters) return;
+  const notSetCount = activePlayers.filter((kid) => !kid.timeSlot).length;
+  const filters = [
+    { value: "all", label: "All", count: activePlayers.length },
+    ...TIME_SLOTS.map((slot) => ({
+      value: slot,
+      label: slot,
+      count: activePlayers.filter((kid) => kid.timeSlot === slot).length,
+    })),
+  ];
+
+  if (notSetCount > 0) {
+    filters.push({ value: "not-set", label: "Not set", count: notSetCount });
+  } else if (attendanceSlotFilter === "not-set") {
+    attendanceSlotFilter = "";
+  }
+
+  attendanceSlotFilters.innerHTML = filters
+    .map(
+      (filter) => `
+        <button
+          type="button"
+          class="slot-chip ${
+            (filter.value === "all" && !attendanceSlotFilter) || filter.value === attendanceSlotFilter
+              ? "active"
+              : ""
+          }"
+          data-attendance-slot-filter="${filter.value}"
+        >
+          <span>${filter.label}</span>
+          <strong>${filter.count}</strong>
+        </button>
+      `
+    )
+    .join("");
+};
+
+const getFilteredAttendancePlayers = (activePlayers) => {
+  const slotFiltered = !attendanceSlotFilter
+    ? activePlayers
+    : attendanceSlotFilter === "not-set"
+      ? activePlayers.filter((kid) => !kid.timeSlot)
+      : activePlayers.filter((kid) => kid.timeSlot === attendanceSlotFilter);
+  const search = attendanceSearchQuery.trim().toLowerCase();
+  if (!search) return slotFiltered;
+  return slotFiltered.filter((kid) =>
+    kid.name.toLowerCase().includes(search) ||
+    String(kid.age || "").includes(search) ||
+    String(kid.timeSlot || "").toLowerCase().includes(search)
+  );
 };
 
 const showToast = (message) => {
@@ -1845,11 +1993,7 @@ const updateAccessUI = () => {
   }
 
   formPanel.hidden = !canEdit;
-  recordsHelper.textContent = canEdit
-    ? "Edit mode is on. Use the table below to update, renew, or discontinue players."
-    : managerReady
-      ? "Roster view is open. Click Edit when you want to add players or change records."
-      : "Manager roster access is available only after login.";
+  renderRosterHelper();
   actionHeader.hidden = !canEdit;
 
   formMessage.textContent = !hasSupabaseConfig
@@ -1877,6 +2021,7 @@ const renderKids = () => {
   updateStats();
   renderStudentMovement();
   renderSlotFilters();
+  renderRosterHelper();
 
   const canEdit = isBackendReady && isManagerLoggedIn && isEditMode;
   const visibleKids = getFilteredKids();
@@ -3047,6 +3192,19 @@ playerSearchInput?.addEventListener("input", (event) => {
   rosterSearchQuery = event.target.value || "";
   renderKids();
 });
+recordsHelper?.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  if (!event.target.closest("[data-clear-movement-filter]")) return;
+  rosterMovementFilter = null;
+  renderKids();
+});
+studentMovementChart?.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const target = event.target.closest("[data-movement-filter]");
+  if (!(target instanceof HTMLButtonElement)) return;
+  if (!target.dataset.movementMonth || !target.dataset.movementFilter) return;
+  applyRosterMovementFilter(target.dataset.movementMonth, target.dataset.movementFilter);
+});
 alertSummary?.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) return;
   const target = event.target.closest("[data-alert-player-id]");
@@ -3111,9 +3269,25 @@ slotFilters.addEventListener("click", (event) => {
   }
 
   const nextFilter = target.dataset.slotFilter || "";
+  rosterMovementFilter = null;
   activeSlotFilter =
     nextFilter === "all" || nextFilter === activeSlotFilter ? "" : nextFilter;
   renderKids();
+});
+
+attendanceSearchInput?.addEventListener("input", (event) => {
+  attendanceSearchQuery = event.target.value || "";
+  renderAttendance(todayAttendanceIds);
+});
+
+attendanceSlotFilters?.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const target = event.target.closest("[data-attendance-slot-filter]");
+  if (!(target instanceof HTMLButtonElement)) return;
+  const nextFilter = target.dataset.attendanceSlotFilter || "";
+  attendanceSlotFilter =
+    nextFilter === "all" || nextFilter === attendanceSlotFilter ? "" : nextFilter;
+  renderAttendance(todayAttendanceIds);
 });
 
 admissionForm.addEventListener("submit", async (event) => {
@@ -3383,34 +3557,44 @@ const renderAttendance = (attendedIds) => {
 
   if (!managerReady) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = true;
     if (attendanceGridContainer) attendanceGridContainer.hidden = true;
     return;
   }
 
   const activePlayers = kids.filter((k) => !k.discontinued);
+  renderAttendanceFilters(activePlayers);
+  const visiblePlayers = getFilteredAttendancePlayers(activePlayers);
 
-  if (attendanceTotalCount) attendanceTotalCount.textContent = String(activePlayers.length);
+  if (attendanceTotalCount) attendanceTotalCount.textContent = String(visiblePlayers.length);
   if (attendancePresentCount)
     attendancePresentCount.textContent = String(
-      activePlayers.filter((k) => attendedIds.has(k.id)).length
+      visiblePlayers.filter((k) => attendedIds.has(k.id)).length
     );
 
   if (activePlayers.length === 0) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = false;
     if (attendanceGridContainer) attendanceGridContainer.hidden = true;
     return;
   }
 
   if (attendanceSummaryBar) attendanceSummaryBar.hidden = false;
-  if (attendanceEmptyState) attendanceEmptyState.hidden = true;
-  if (attendanceGridContainer) attendanceGridContainer.hidden = false;
+  if (attendanceFilterBar) attendanceFilterBar.hidden = false;
+  if (attendanceEmptyState) {
+    attendanceEmptyState.hidden = visiblePlayers.length > 0;
+    attendanceEmptyState.textContent = visiblePlayers.length > 0
+      ? "No active players found to mark attendance."
+      : "No players match the current attendance filters.";
+  }
+  if (attendanceGridContainer) attendanceGridContainer.hidden = visiblePlayers.length === 0;
 
   const isToday = attendanceDateValue === getTodayIso();
   const canMark = managerReady && isToday;
 
-  attendanceTableBody.innerHTML = activePlayers
+  attendanceTableBody.innerHTML = visiblePlayers
     .map((kid) => {
       const isPresent = attendedIds.has(kid.id);
       const rowClass = isPresent ? "active-row" : "";
@@ -3464,7 +3648,7 @@ attendanceTableBody?.addEventListener("change", async (event) => {
   }
 
   // Update summary counts
-  const activePlayers = kids.filter((k) => !k.discontinued);
+  const activePlayers = getFilteredAttendancePlayers(kids.filter((k) => !k.discontinued));
   if (attendancePresentCount)
     attendancePresentCount.textContent = String(
       activePlayers.filter((k) => todayAttendanceIds.has(k.id)).length

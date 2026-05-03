@@ -1261,15 +1261,43 @@ body.popup-open {
   gap: 5px;
 }
 
-.movement-counts span {
+.movement-counts button {
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 0;
+  padding: 0;
+  border: 0;
   color: var(--muted);
+  background: transparent;
+  font: inherit;
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.15;
+  text-align: left;
+  cursor: pointer;
+}
+
+.movement-counts button:hover,
+.movement-counts button:focus-visible {
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
+.inline-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px solid rgba(21, 81, 173, 0.18);
+  border-radius: 999px;
+  color: var(--accent-dark);
+  background: rgba(21, 81, 173, 0.08);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .movement-dot {
@@ -1389,40 +1417,41 @@ body.popup-open {
 }
 
 .finance-range-panel {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(260px, 1.8fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  gap: 10px 12px;
   margin: 0 0 14px;
-  padding: 14px;
+  padding: 10px 12px;
   border: 1px solid rgba(16, 48, 102, 0.1);
-  border-radius: 20px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.72);
 }
 
 .finance-range-panel h3 {
   margin: 2px 0 0;
   color: var(--accent-dark);
+  font-size: 0.98rem;
 }
 
 #financeRangePeriod {
-  margin-top: 4px;
-  font-size: 0.76rem;
+  margin-top: 2px;
+  font-size: 0.7rem;
 }
 
 .finance-range-filters {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .finance-custom-range {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
-  width: 100%;
+  gap: 6px;
+  width: auto;
   color: var(--muted);
   font-size: 0.72rem;
 }
@@ -1452,26 +1481,26 @@ body.popup-open {
 }
 
 .finance-custom-range input {
-  min-height: 34px;
-  padding: 0 10px;
+  min-height: 30px;
+  padding: 0 8px;
   border: 1px solid rgba(16, 48, 102, 0.12);
   border-radius: 999px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.86);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 800;
 }
 
 .finance-range-filters button {
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 30px;
+  padding: 0 10px;
   border: 1px solid rgba(16, 48, 102, 0.12);
   border-radius: 999px;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.82);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 900;
   cursor: pointer;
 }
@@ -2577,6 +2606,34 @@ body.popup-open {
   line-height: 1.3;
 }
 
+.attendance-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 14px;
+  padding: 10px;
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 16px;
+  background: rgba(26, 79, 157, 0.035);
+}
+
+.attendance-search {
+  width: 100%;
+  min-height: 36px;
+  font-size: 0.86rem;
+}
+
+.slot-filters.compact {
+  gap: 6px;
+}
+
+.slot-filters.compact .slot-chip {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 0.72rem;
+}
+
 .attendance-table {
   min-width: 640px;
 }
@@ -2765,11 +2822,15 @@ body.popup-open {
   }
 
   .finance-range-panel {
+    grid-template-columns: 1fr;
     align-items: flex-start;
-    flex-direction: column;
   }
 
   .finance-range-filters {
+    justify-content: flex-start;
+  }
+
+  .finance-custom-range {
     justify-content: flex-start;
   }
 
@@ -3131,6 +3192,10 @@ body.popup-open {
     margin-bottom: 12px;
     padding: 10px 12px;
     border-radius: 12px;
+  }
+
+  .attendance-filter-bar {
+    grid-template-columns: 1fr;
   }
 
   .attendance-grid-container {
