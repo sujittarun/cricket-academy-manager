@@ -157,6 +157,11 @@ let expenseSearchQuery = "";
 let rosterSortKey = "joinDate";
 let rosterSortOrder = "desc";
 let rosterSearchQuery = "";
+let rosterStatusFilter = "all";
+let rosterJerseyFilter = "all";
+let rosterTypeFilter = "all";
+let rosterFeePaidFilter = "all";
+let rosterFeeDueFilter = "all";
 
 const attendanceDate = document.getElementById("attendanceDate");
 const attendanceEditorLock = document.getElementById("attendanceEditorLock");
@@ -167,6 +172,11 @@ const attendanceEmptyState = document.getElementById("attendanceEmptyState");
 const attendanceGridContainer = document.getElementById("attendanceGridContainer");
 const attendanceTableBody = document.getElementById("attendanceTableBody");
 const playerSearchInput = document.getElementById("playerSearchInput");
+const rosterStatusFilterInput = document.getElementById("rosterStatusFilter");
+const rosterJerseyFilterInput = document.getElementById("rosterJerseyFilter");
+const rosterTypeFilterInput = document.getElementById("rosterTypeFilter");
+const rosterFeePaidFilterInput = document.getElementById("rosterFeePaidFilter");
+const rosterFeeDueFilterInput = document.getElementById("rosterFeeDueFilter");
 
 // Payment verify
 const paymentVerifyFlow = document.getElementById("paymentVerifyFlow");
@@ -850,6 +860,29 @@ const isActiveKid = (kid) => !kid.discontinued;
 const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
 const isRenewalPending = (kid) =>
   isActiveKid(kid) && kid.feesPaid === "yes" && getDaysSinceDate(getPaidThroughDate(kid)) >= 0;
+const isRenewalOverdue = (kid) =>
+  isActiveKid(kid) && kid.feesPaid === "yes" && getDaysSinceDate(getPaidThroughDate(kid)) > 0;
+const matchesRosterFilters = (kid) => {
+  const jerseySize = String(kid.jerseySize || "").trim();
+
+  if (rosterStatusFilter === "active" && !isActiveKid(kid)) return false;
+  if (rosterStatusFilter === "discontinued" && isActiveKid(kid)) return false;
+  if (rosterJerseyFilter === "not-set" && jerseySize) return false;
+  if (rosterJerseyFilter !== "all" && rosterJerseyFilter !== "not-set" && jerseySize !== rosterJerseyFilter) return false;
+  if (rosterTypeFilter !== "all" && getStudentType(kid).toLowerCase() !== rosterTypeFilter) return false;
+  if (rosterFeePaidFilter === "paid" && kid.feesPaid !== "yes") return false;
+  if (rosterFeePaidFilter === "not-paid" && kid.feesPaid === "yes") return false;
+  if (rosterFeeDueFilter === "joining-pending" && !isFeesPending(kid)) return false;
+  if (rosterFeeDueFilter === "overdue" && !isRenewalOverdue(kid)) return false;
+
+  return true;
+};
+const hasRosterDetailFilters = () =>
+  rosterStatusFilter !== "all" ||
+  rosterJerseyFilter !== "all" ||
+  rosterTypeFilter !== "all" ||
+  rosterFeePaidFilter !== "all" ||
+  rosterFeeDueFilter !== "all";
 const getRosterSortValue = (kid, key) => {
   const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
   const values = {
@@ -894,7 +927,8 @@ const getFilteredKids = () => {
   const searchFiltered = search
     ? slotFiltered.filter((kid) => kid.name.toLowerCase().includes(search))
     : slotFiltered;
-  return [...searchFiltered].sort((a, b) => {
+  const filtered = searchFiltered.filter(matchesRosterFilters);
+  return [...filtered].sort((a, b) => {
     const result = compareRosterValues(getRosterSortValue(a, rosterSortKey), getRosterSortValue(b, rosterSortKey));
     return rosterSortOrder === "asc" ? result : -result;
   });
@@ -1734,7 +1768,9 @@ const renderKids = () => {
     emptyState.hidden = false;
     kidsTable.hidden = true;
     emptyState.textContent =
-      !activeSlotFilter
+      hasRosterDetailFilters() || rosterSearchQuery.trim()
+        ? "No registered players match the current filters."
+        : !activeSlotFilter
         ? "No registered players match the current view."
         : activeSlotFilter === "not-set"
           ? "No active kids are currently missing a time slot."
@@ -2848,6 +2884,26 @@ rosterTabButton.addEventListener("click", () => {
 });
 playerSearchInput?.addEventListener("input", (event) => {
   rosterSearchQuery = event.target.value || "";
+  renderKids();
+});
+rosterStatusFilterInput?.addEventListener("change", (event) => {
+  rosterStatusFilter = event.target.value || "all";
+  renderKids();
+});
+rosterJerseyFilterInput?.addEventListener("change", (event) => {
+  rosterJerseyFilter = event.target.value || "all";
+  renderKids();
+});
+rosterTypeFilterInput?.addEventListener("change", (event) => {
+  rosterTypeFilter = event.target.value || "all";
+  renderKids();
+});
+rosterFeePaidFilterInput?.addEventListener("change", (event) => {
+  rosterFeePaidFilter = event.target.value || "all";
+  renderKids();
+});
+rosterFeeDueFilterInput?.addEventListener("change", (event) => {
+  rosterFeeDueFilter = event.target.value || "all";
   renderKids();
 });
 kidsTable?.addEventListener("click", (event) => {

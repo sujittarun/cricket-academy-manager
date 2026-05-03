@@ -355,6 +355,56 @@
               <div class="roster-tools">
                 <input id="playerSearchInput" class="search-input roster-search" type="search" placeholder="Search student by name..." aria-label="Search student by name" />
                 <div id="slotFilters" class="slot-filters" aria-label="Time slot filters"></div>
+                <div class="roster-filter-row" aria-label="Roster filters">
+                  <label class="roster-filter">
+                    <span>Status</span>
+                    <select id="rosterStatusFilter">
+                      <option value="all">All</option>
+                      <option value="active">Active</option>
+                      <option value="discontinued">Discontinued</option>
+                    </select>
+                  </label>
+                  <label class="roster-filter">
+                    <span>Jersey</span>
+                    <select id="rosterJerseyFilter">
+                      <option value="all">All</option>
+                      <option value="not-set">Not set</option>
+                      <option value="22">22</option>
+                      <option value="24">24</option>
+                      <option value="26">26</option>
+                      <option value="28">28</option>
+                      <option value="30">30</option>
+                      <option value="32">32</option>
+                      <option value="34">34</option>
+                      <option value="36">36</option>
+                      <option value="38">38</option>
+                    </select>
+                  </label>
+                  <label class="roster-filter">
+                    <span>Type</span>
+                    <select id="rosterTypeFilter">
+                      <option value="all">All</option>
+                      <option value="new">New</option>
+                      <option value="returning">Returning</option>
+                    </select>
+                  </label>
+                  <label class="roster-filter">
+                    <span>Fee paid</span>
+                    <select id="rosterFeePaidFilter">
+                      <option value="all">All</option>
+                      <option value="paid">Paid</option>
+                      <option value="not-paid">Not paid</option>
+                    </select>
+                  </label>
+                  <label class="roster-filter">
+                    <span>Fee due</span>
+                    <select id="rosterFeeDueFilter">
+                      <option value="all">All</option>
+                      <option value="joining-pending">Joining pending</option>
+                      <option value="overdue">Overdue</option>
+                    </select>
+                  </label>
+                </div>
               </div>
             </div>
 
