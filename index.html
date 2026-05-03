@@ -518,10 +518,9 @@
               <button type="button" data-finance-range="3months">3 months</button>
               <button type="button" data-finance-range="6months">6 months</button>
               <button type="button" data-finance-range="year">1 year</button>
-              <button type="button" data-finance-range="custom">Custom</button>
               <button type="button" data-finance-range="overall">Overall</button>
             </div>
-            <div id="financeCustomRange" class="finance-custom-range" hidden>
+            <div id="financeCustomRange" class="finance-custom-range">
               <label>From <input id="financeCustomStart" type="date" /></label>
               <label>To <input id="financeCustomEnd" type="date" /></label>
             </div>
@@ -547,41 +546,6 @@
               <div id="financeNetTimeline" class="finance-net-timeline"></div>
             </div>
           </section>
-          <form id="expenseForm" class="kid-form finance-expense-form" hidden>
-            <label>
-              Type of expense
-              <select id="expenseType" name="expenseType" required>
-                <option value="Coach Fees">Coach Fees</option>
-                <option value="Purchased accessories">Purchased accessories</option>
-                <option value="Transport">Transport</option>
-                <option value="Maid expense">Maid expense</option>
-                <option value="Ground maintenance">Ground maintenance</option>
-                <option value="Other">Other</option>
-              </select>
-            </label>
-            <label>
-              Expense date
-              <input id="expenseDate" name="expenseDate" type="date" required />
-            </label>
-            <label>
-              Amount
-              <input id="expenseAmount" name="expenseAmount" type="number" min="0" step="0.01" required />
-            </label>
-            <label>
-              Paid by
-              <select id="expensePaidBy" name="expensePaidBy" required>
-                <option value="Sandeep">Sandeep</option>
-                <option value="Srinivas">Srinivas</option>
-                <option value="Sujit">Sujit</option>
-              </select>
-            </label>
-            <label>
-              Comment
-              <input id="expenseComment" name="expenseComment" type="text" placeholder="Short note" />
-            </label>
-            <button class="primary-btn" type="submit">Add expense</button>
-            <p id="expenseMessage" class="form-message"></p>
-          </form>
           <div id="financeRecent" class="finance-recent" hidden>
             <div class="slot-toolbar finance-toolbar">
               <div class="slot-toolbar-copy">
@@ -589,6 +553,7 @@
                 <p class="slot-helper">Sort and filter expenses</p>
               </div>
               <div class="slot-filters">
+                <button id="openExpensePopupButton" type="button" class="primary-btn">Add expense</button>
                 <input type="text" id="expenseSearch" class="search-input finance-search" placeholder="Search by name or type..." />
               </div>
             </div>
@@ -1089,6 +1054,66 @@
           <button class="primary-btn" type="submit">Save renewal payment</button>
           <p id="renewalMessage" class="form-message"></p>
         </form>
+      </section>
+    </div>
+
+    <div id="expensePopup" class="player-popup-backdrop" hidden>
+      <section class="player-popup panel" role="dialog" aria-modal="true" aria-labelledby="expensePopupTitle">
+        <div class="payment-popup-header">
+          <div>
+            <p class="section-kicker">Finance</p>
+            <h3 id="expensePopupTitle">Add expense</h3>
+          </div>
+          <button id="closeExpensePopupButton" type="button" class="icon-button" aria-label="Close expense popup">Close</button>
+        </div>
+        <form id="expenseForm" class="kid-form finance-expense-form">
+          <label>
+            Type of expense
+            <select id="expenseType" name="expenseType" required>
+              <option value="Coach Fees">Coach Fees</option>
+              <option value="Purchased accessories">Purchased accessories</option>
+              <option value="Transport">Transport</option>
+              <option value="Maid expense">Maid expense</option>
+              <option value="Ground maintenance">Ground maintenance</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>
+            Expense date
+            <input id="expenseDate" name="expenseDate" type="date" required />
+          </label>
+          <label>
+            Amount
+            <input id="expenseAmount" name="expenseAmount" type="number" min="0" step="0.01" required />
+          </label>
+          <label>
+            Paid by
+            <select id="expensePaidBy" name="expensePaidBy" required>
+              <option value="Sandeep">Sandeep</option>
+              <option value="Srinivas">Srinivas</option>
+              <option value="Sujit">Sujit</option>
+            </select>
+          </label>
+          <label>
+            Comment
+            <input id="expenseComment" name="expenseComment" type="text" placeholder="Short note" />
+          </label>
+          <button class="primary-btn" type="submit">Save expense</button>
+          <p id="expenseMessage" class="form-message"></p>
+        </form>
+      </section>
+    </div>
+
+    <div id="financeMonthPopup" class="player-popup-backdrop" hidden>
+      <section class="player-popup panel finance-month-popup" role="dialog" aria-modal="true" aria-labelledby="financeMonthPopupTitle">
+        <div class="payment-popup-header">
+          <div>
+            <p class="section-kicker">Month details</p>
+            <h3 id="financeMonthPopupTitle">Finance month</h3>
+          </div>
+          <button id="closeFinanceMonthPopupButton" type="button" class="icon-button" aria-label="Close month details">Close</button>
+        </div>
+        <div id="financeMonthPopupContent" class="finance-month-detail"></div>
       </section>
     </div>
 

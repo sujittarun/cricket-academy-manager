@@ -1013,9 +1013,12 @@ body.popup-open {
 }
 
 .alert-name-group {
-  display: grid;
+  display: inline-grid;
   gap: 6px;
   margin-top: 8px;
+  margin-right: 20px;
+  min-width: min(220px, 45%);
+  vertical-align: top;
 }
 
 .alert-name-group strong {
@@ -1028,7 +1031,8 @@ body.popup-open {
 .alert-player-link {
   width: fit-content;
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 500;
   text-decoration-color: rgba(255, 255, 255, 0.64);
 }
 
@@ -1357,7 +1361,15 @@ body.popup-open {
 }
 
 .finance-expense-form {
-  margin: 16px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.finance-expense-form .primary-btn,
+.finance-expense-form .form-message {
+  grid-column: 1 / -1;
 }
 
 .finance-export-panel {
@@ -1411,6 +1423,23 @@ body.popup-open {
   justify-content: flex-end;
   gap: 8px;
   width: 100%;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.finance-custom-range label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.finance-custom-range input {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid rgba(15, 34, 64, 0.12);
+  border-radius: 10px;
+  font-size: 0.74rem;
 }
 
 .finance-custom-range label {
@@ -1605,6 +1634,11 @@ body.popup-open {
 }
 
 .finance-chart-month {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   display: grid;
   gap: 7px;
   justify-items: center;
@@ -1661,6 +1695,72 @@ body.popup-open {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
   margin-top: 10px;
+}
+
+.finance-month-popup {
+  max-width: min(980px, calc(100vw - 28px));
+}
+
+.finance-month-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.finance-month-summary span {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(26, 79, 157, 0.08);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.finance-month-summary strong {
+  color: var(--ink);
+}
+
+.finance-month-summary .positive strong {
+  color: var(--success);
+}
+
+.finance-month-summary .negative strong {
+  color: var(--danger);
+}
+
+.finance-month-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.finance-month-columns h4 {
+  margin: 0 0 8px;
+  color: var(--accent-dark);
+}
+
+.mini-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.mini-detail-table th,
+.mini-detail-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.mini-detail-table th {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
 }
 
 .finance-net-chip {
@@ -3182,6 +3282,19 @@ body.popup-open {
 /* Roster mobile rescue layer.
    Keep laptops as a real table; only phones get stacked cards. */
 @media (max-width: 720px) {
+  .finance-month-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-expense-form {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-name-group {
+    min-width: 100%;
+    margin-right: 0;
+  }
+
   #rosterView .table-wrap {
     overflow: visible;
     margin: 0;

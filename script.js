@@ -143,6 +143,13 @@ const financeMiniChart = document.getElementById("financeMiniChart");
 const financeNetTimeline = document.getElementById("financeNetTimeline");
 const expenseForm = document.getElementById("expenseForm");
 const expenseMessage = document.getElementById("expenseMessage");
+const openExpensePopupButton = document.getElementById("openExpensePopupButton");
+const expensePopup = document.getElementById("expensePopup");
+const closeExpensePopupButton = document.getElementById("closeExpensePopupButton");
+const financeMonthPopup = document.getElementById("financeMonthPopup");
+const financeMonthPopupTitle = document.getElementById("financeMonthPopupTitle");
+const financeMonthPopupContent = document.getElementById("financeMonthPopupContent");
+const closeFinanceMonthPopupButton = document.getElementById("closeFinanceMonthPopupButton");
 const financeRecent = document.getElementById("financeRecent");
 const expenseSearch = document.getElementById("expenseSearch");
 const financeExpensesTableBody = document.getElementById("financeExpensesTableBody");
@@ -540,7 +547,6 @@ const FINANCE_RANGE_OPTIONS = {
   "3months": { label: "3 months", months: 3 },
   "6months": { label: "6 months", months: 6 },
   year: { label: "This year", months: 0, type: "year" },
-  custom: { label: "Custom range", months: 0, type: "custom" },
   overall: { label: "Overall", months: null },
 };
 
@@ -559,6 +565,24 @@ const financeRangeFromMode = () => {
     };
   }
 
+  if (financeRangeMode === "custom") {
+    const month = monthRange(currentMonthKey());
+    let startDate = new Date(`${financeCustomStart?.value || month.start}T00:00:00`);
+    let endDate = new Date(`${financeCustomEnd?.value || month.end}T00:00:00`);
+    if (endDate < startDate) {
+      [startDate, endDate] = [endDate, startDate];
+    }
+    return {
+      key: "custom",
+      label: "Date range",
+      period: formatRangePeriod(startDate, endDate),
+      start: localIsoDate(startDate),
+      end: localIsoDate(endDate),
+      startDate: new Date(`${localIsoDate(startDate)}T00:00:00`),
+      endDate: new Date(`${localIsoDate(endDate)}T23:59:59`),
+    };
+  }
+
   const option = FINANCE_RANGE_OPTIONS[financeRangeMode] || FINANCE_RANGE_OPTIONS.month;
   if (option.months == null) {
     return { key: "overall", label: option.label, period: "All recorded finance data", start: "", end: "", startDate: null, endDate: null };
@@ -567,16 +591,7 @@ const financeRangeFromMode = () => {
   const today = new Date();
   let startDate;
   let endDate;
-  if (option.type === "custom") {
-    const month = monthRange(currentMonthKey());
-    const startValue = financeCustomStart?.value || month.start;
-    const endValue = financeCustomEnd?.value || month.end;
-    startDate = new Date(`${startValue}T00:00:00`);
-    endDate = new Date(`${endValue}T00:00:00`);
-    if (endDate < startDate) {
-      [startDate, endDate] = [endDate, startDate];
-    }
-  } else if (option.type === "week") {
+  if (option.type === "week") {
     const day = today.getDay();
     const mondayOffset = day === 0 ? -6 : 1 - day;
     startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
@@ -605,6 +620,83 @@ const isRowInFinanceRange = (row, range) => {
   if (!rawDate) return false;
   const rowDate = new Date(`${rawDate.slice(0, 10)}T12:00:00`);
   return rowDate >= range.startDate && rowDate <= range.endDate;
+};
+
+const buildFinanceRevenueRows = () => {
+  const initialFees = kids
+    .filter((kid) => kid.feesPaid === "yes")
+    .map((kid) => ({
+      date: kid.joinDate,
+      name: kid.name,
+      type: "Joining",
+      amount: Number(kid.amountPaid || 0),
+    }));
+  const renewalFees = financePayments.map((payment) => {
+    const student = kids.find((kid) => kid.id === (payment.student_id || payment.studentId));
+    return {
+      date: payment.paid_on || payment.paidOn,
+      name: student?.name || "Unknown player",
+      type: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Joining" : "Renewal",
+      amount: Number(payment.amount || 0),
+    };
+  });
+  return [...initialFees, ...renewalFees];
+};
+
+const renderFinanceMonthPopup = (monthKey) => {
+  if (!financeMonthPopup || !financeMonthPopupContent || !financeMonthPopupTitle) return;
+  const range = monthRange(monthKey);
+  const revenueRows = buildFinanceRevenueRows().filter((row) => String(row.date || "").startsWith(monthKey));
+  const expenseRows = financeExpenses.filter((row) => String(row.expense_date || "").startsWith(monthKey));
+  const revenueTotal = revenueRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const expenseTotal = expenseRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const renderRevenueRows = () => revenueRows.length
+    ? revenueRows.map((row) => `
+        <tr>
+          <td>${row.name}</td>
+          <td>${row.type}</td>
+          <td>${formatDate(row.date)}</td>
+          <td>${rupees(row.amount)}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="4" class="sub-copy">No revenue recorded.</td></tr>`;
+  const renderExpenseRows = () => expenseRows.length
+    ? expenseRows.map((row) => `
+        <tr>
+          <td>${row.expense_type || "-"}</td>
+          <td>${row.paid_by || "-"}</td>
+          <td>${formatDate(row.expense_date)}</td>
+          <td>${rupees(row.amount)}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="4" class="sub-copy">No expenses recorded.</td></tr>`;
+
+  financeMonthPopupTitle.textContent = range.label;
+  financeMonthPopupContent.innerHTML = `
+    <div class="finance-month-summary">
+      <span>Revenue <strong>${rupees(revenueTotal)}</strong></span>
+      <span>Expenses <strong>${rupees(expenseTotal)}</strong></span>
+      <span class="${revenueTotal - expenseTotal < 0 ? "negative" : "positive"}">Net <strong>${rupees(revenueTotal - expenseTotal)}</strong></span>
+    </div>
+    <div class="finance-month-columns">
+      <section>
+        <h4>Revenue</h4>
+        <table class="mini-detail-table">
+          <thead><tr><th>Student</th><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
+          <tbody>${renderRevenueRows()}</tbody>
+        </table>
+      </section>
+      <section>
+        <h4>Expenses</h4>
+        <table class="mini-detail-table">
+          <thead><tr><th>Type</th><th>Paid by</th><th>Date</th><th>Amount</th></tr></thead>
+          <tbody>${renderExpenseRows()}</tbody>
+        </table>
+      </section>
+    </div>
+  `;
+  financeMonthPopup.hidden = false;
+  document.body.classList.add("popup-open");
 };
 
 const downloadTextFile = (filename, content, type = "text/csv;charset=utf-8") => {
@@ -2072,12 +2164,9 @@ const loadFinance = async () => {
   if (financeInsights) financeInsights.hidden = !managerReady;
   if (financeExportPanel) financeExportPanel.hidden = true; // Export panel hidden for now
   if (financeRangePanel) financeRangePanel.hidden = !managerReady;
-  if (expenseForm) {
-    expenseForm.hidden = !managerReady;
-    const expenseDateInput = document.getElementById("expenseDate");
-    if (expenseDateInput && !expenseDateInput.value) {
-      expenseDateInput.value = new Date().toISOString().slice(0, 10);
-    }
+  const expenseDateInput = document.getElementById("expenseDate");
+  if (expenseDateInput && !expenseDateInput.value) {
+    expenseDateInput.value = toLocalIsoDate();
   }
   if (financeRecent) financeRecent.hidden = !managerReady;
   if (!managerReady) return;
@@ -2126,7 +2215,6 @@ const loadFinance = async () => {
       button.classList.toggle("active", button.dataset.financeRange === financeRangeMode);
     });
   }
-  if (financeCustomRange) financeCustomRange.hidden = financeRangeMode !== "custom";
 
   if (financeMiniChart) {
     const monthBuckets = Array.from({ length: 6 }, (_, index) => {
@@ -2135,6 +2223,7 @@ const loadFinance = async () => {
       return {
         key,
         label: date.toLocaleString("en-IN", { month: "short" }),
+        fullLabel: date.toLocaleString("en-IN", { month: "long", year: "numeric" }),
         fees: sum(allFees, key),
         expenses: sum(financeExpenses, key),
       };
@@ -2144,13 +2233,13 @@ const loadFinance = async () => {
       const feeHeight = Math.max(6, Math.round((month.fees / maxChartValue) * 76));
       const expenseHeight = Math.max(6, Math.round((month.expenses / maxChartValue) * 76));
       return `
-        <div class="finance-chart-month" data-tooltip="${month.label}: Fees ${rupees(month.fees)} | Expenses ${rupees(month.expenses)} | Net ${rupees(month.fees - month.expenses)}">
+        <button class="finance-chart-month" type="button" data-finance-month="${month.key}" data-tooltip="${month.fullLabel}: Fees ${rupees(month.fees)} | Expenses ${rupees(month.expenses)} | Net ${rupees(month.fees - month.expenses)}">
           <div class="finance-bars">
             <span class="fee-bar" style="height:${feeHeight}px"></span>
             <span class="expense-bar" style="height:${expenseHeight}px"></span>
           </div>
           <strong>${month.label}</strong>
-        </div>
+        </button>
       `;
     }).join("");
     if (financeNetTimeline) {
@@ -2267,11 +2356,6 @@ financeRangeFilters?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-finance-range]");
   if (!button) return;
   financeRangeMode = button.dataset.financeRange || "month";
-  if (financeRangeMode === "custom" && financeCustomStart && financeCustomEnd && (!financeCustomStart.value || !financeCustomEnd.value)) {
-    const range = monthRange(currentMonthKey());
-    financeCustomStart.value = range.start;
-    financeCustomEnd.value = range.end;
-  }
   loadFinance();
 });
 
@@ -2286,6 +2370,41 @@ financeCustomStart?.addEventListener("change", () => {
 financeCustomEnd?.addEventListener("change", () => {
   financeRangeMode = "custom";
   loadFinance();
+});
+
+financeMiniChart?.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-finance-month]");
+  if (!target) return;
+  renderFinanceMonthPopup(target.dataset.financeMonth);
+});
+
+openExpensePopupButton?.addEventListener("click", () => {
+  const expenseDateInput = document.getElementById("expenseDate");
+  if (expenseDateInput && !expenseDateInput.value) expenseDateInput.value = toLocalIsoDate();
+  if (expenseMessage) expenseMessage.textContent = "";
+  expensePopup.hidden = false;
+  document.body.classList.add("popup-open");
+});
+
+const closeExpensePopup = () => {
+  if (!expensePopup) return;
+  expensePopup.hidden = true;
+  document.body.classList.remove("popup-open");
+};
+
+const closeFinanceMonthPopup = () => {
+  if (!financeMonthPopup) return;
+  financeMonthPopup.hidden = true;
+  document.body.classList.remove("popup-open");
+};
+
+closeExpensePopupButton?.addEventListener("click", closeExpensePopup);
+expensePopup?.addEventListener("click", (event) => {
+  if (event.target === expensePopup) closeExpensePopup();
+});
+closeFinanceMonthPopupButton?.addEventListener("click", closeFinanceMonthPopup);
+financeMonthPopup?.addEventListener("click", (event) => {
+  if (event.target === financeMonthPopup) closeFinanceMonthPopup();
 });
 
 const loadMonthlyAttendanceRows = async (range) => {
@@ -3413,9 +3532,10 @@ expenseForm?.addEventListener("submit", async (event) => {
   expenseForm.reset();
   // Reset expense date to today after successful save
   const expenseDateInput = document.getElementById("expenseDate");
-  if (expenseDateInput) expenseDateInput.value = new Date().toISOString().slice(0, 10);
+  if (expenseDateInput) expenseDateInput.value = toLocalIsoDate();
   expenseMessage.textContent = "Expense added.";
   await loadFinance();
+  closeExpensePopup();
 });
 
 financeExpensesTableBody?.addEventListener("click", async (event) => {
@@ -3438,7 +3558,7 @@ financeExpensesTableBody?.addEventListener("click", async (event) => {
 
   financeExpenses = financeExpenses.filter((expense) => expense.id !== expenseId);
   expenseMessage.textContent = "Expense deleted.";
-  renderFinance();
+  loadFinance();
 });
 
 // ── Realtime Sync ────────────────────────────────────────────────────────────
