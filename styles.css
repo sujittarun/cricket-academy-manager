@@ -1338,6 +1338,35 @@ body.popup-open {
   gap: 8px;
 }
 
+.finance-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.finance-custom-range label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.finance-custom-range input {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(16, 48, 102, 0.12);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.86);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .finance-range-filters button {
   min-height: 34px;
   padding: 0 12px;

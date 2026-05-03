@@ -126,6 +126,9 @@ const financeRangePanel = document.getElementById("financeRangePanel");
 const financeRangeTitle = document.getElementById("financeRangeTitle");
 const financeRangePeriod = document.getElementById("financeRangePeriod");
 const financeRangeFilters = document.getElementById("financeRangeFilters");
+const financeCustomRange = document.getElementById("financeCustomRange");
+const financeCustomStart = document.getElementById("financeCustomStart");
+const financeCustomEnd = document.getElementById("financeCustomEnd");
 const exportCsvButton = document.getElementById("exportCsvButton");
 const exportPdfButton = document.getElementById("exportPdfButton");
 const financeStats = document.getElementById("financeStats");
@@ -497,6 +500,7 @@ const FINANCE_RANGE_OPTIONS = {
   "3months": { label: "3 months", months: 3 },
   "6months": { label: "6 months", months: 6 },
   year: { label: "This year", months: 0, type: "year" },
+  custom: { label: "Custom range", months: 0, type: "custom" },
   overall: { label: "Overall", months: null },
 };
 
@@ -523,7 +527,16 @@ const financeRangeFromMode = () => {
   const today = new Date();
   let startDate;
   let endDate;
-  if (option.type === "week") {
+  if (option.type === "custom") {
+    const month = monthRange(currentMonthKey());
+    const startValue = financeCustomStart?.value || month.start;
+    const endValue = financeCustomEnd?.value || month.end;
+    startDate = new Date(`${startValue}T00:00:00`);
+    endDate = new Date(`${endValue}T00:00:00`);
+    if (endDate < startDate) {
+      [startDate, endDate] = [endDate, startDate];
+    }
+  } else if (option.type === "week") {
     const day = today.getDay();
     const mondayOffset = day === 0 ? -6 : 1 - day;
     startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
@@ -1857,6 +1870,9 @@ const loadKids = async () => {
 
   kids = data.map(normalizeKid);
   renderKids();
+  if (isManagerLoggedIn) {
+    queueFinanceRefresh();
+  }
 };
 
 const loadPlayerTimeline = async (studentId) => {
@@ -2035,6 +2051,7 @@ const loadFinance = async () => {
       button.classList.toggle("active", button.dataset.financeRange === financeRangeMode);
     });
   }
+  if (financeCustomRange) financeCustomRange.hidden = financeRangeMode !== "custom";
 
   if (financeMiniChart) {
     const monthBuckets = Array.from({ length: 6 }, (_, index) => {
@@ -2175,11 +2192,24 @@ financeRangeFilters?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-finance-range]");
   if (!button) return;
   financeRangeMode = button.dataset.financeRange || "month";
+  if (financeRangeMode === "custom" && financeCustomStart && financeCustomEnd && (!financeCustomStart.value || !financeCustomEnd.value)) {
+    const range = monthRange(currentMonthKey());
+    financeCustomStart.value = range.start;
+    financeCustomEnd.value = range.end;
+  }
   loadFinance();
 });
 
 financeExportMonth?.addEventListener("change", () => {
   financeRangeMode = "month-picker";
+  loadFinance();
+});
+financeCustomStart?.addEventListener("change", () => {
+  financeRangeMode = "custom";
+  loadFinance();
+});
+financeCustomEnd?.addEventListener("change", () => {
+  financeRangeMode = "custom";
   loadFinance();
 });
 
@@ -3083,6 +3113,9 @@ const initializeApp = async () => {
   await loadAdmissionRegNo();
   await refreshSession();
   await loadKids();
+  if (isManagerLoggedIn) {
+    await loadFinance();
+  }
   initRealtimeSync();
 };
 
