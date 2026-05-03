@@ -129,6 +129,13 @@ const financeRangeFilters = document.getElementById("financeRangeFilters");
 const financeCustomRange = document.getElementById("financeCustomRange");
 const financeCustomStart = document.getElementById("financeCustomStart");
 const financeCustomEnd = document.getElementById("financeCustomEnd");
+const reminderSafetyPanel = document.getElementById("reminderSafetyPanel");
+const dryRunToggle = document.getElementById("dryRunToggle");
+const whatsappReminderToggle = document.getElementById("whatsappReminderToggle");
+const paymentLinkToggle = document.getElementById("paymentLinkToggle");
+const managerPhoneInput = document.getElementById("managerPhoneInput");
+const saveReminderSettingsButton = document.getElementById("saveReminderSettingsButton");
+const reminderSettingsMessage = document.getElementById("reminderSettingsMessage");
 const exportCsvButton = document.getElementById("exportCsvButton");
 const exportPdfButton = document.getElementById("exportPdfButton");
 const financeStats = document.getElementById("financeStats");
@@ -233,6 +240,19 @@ const RENEWAL_PLANS = {
   special: { title: "Special training", amount: 10000, months: 1 },
   custom: { title: "Custom amount", amount: 0, months: 1 },
 };
+const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "need_help"];
+const REMINDER_PLAN_LABELS = {
+  monthly: "1 Month",
+  quarterly: "3 Months",
+  halfyearly: "6 Months",
+  need_help: "Need Help",
+};
+const DEFAULT_REMINDER_SETTINGS = {
+  whatsappRemindersEnabled: false,
+  paymentLinksEnabled: false,
+  dryRunMode: true,
+  managerPhone: "9059962499",
+};
 const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + index));
 
 const hasSupabaseConfig = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
@@ -286,6 +306,7 @@ let financePayments = [];
 let financeExpenses = [];
 let financeRangeMode = "month-picker";
 let latestAdmissionReceipt = null;
+let reminderSettings = { ...DEFAULT_REMINDER_SETTINGS };
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
@@ -510,6 +531,126 @@ const getRenewalStatusLabel = (kid) => {
   if (daysPastDue === 0) return "Due today";
   if (daysPastDue === -1) return "1 day left";
   return `${Math.abs(daysPastDue)} days left`;
+};
+
+const getReminderState = (kid) => {
+  const isJoiningFee = isFeesPending(kid);
+  const dueDate = isJoiningFee ? kid.joinDate : getPaidThroughDate(kid);
+  const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
+  return {
+    isDue: isJoiningFee || isRenewalPending(kid),
+    isJoiningFee,
+    dueDate,
+    overdueDays,
+    isCritical: overdueDays > 10,
+    reminderType: isJoiningFee ? "joining_fee" : "renewal",
+  };
+};
+
+const parseSettingBoolean = (value, fallback) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.toLowerCase() === "true";
+  return fallback;
+};
+
+const parseSettingText = (value, fallback) => {
+  if (typeof value === "string") return value;
+  return fallback;
+};
+
+const loadReminderSettings = async () => {
+  reminderSettings = { ...DEFAULT_REMINDER_SETTINGS };
+  if (!isBackendReady || !isManagerLoggedIn) return reminderSettings;
+
+  const { data, error } = await supabaseClient
+    .from("system_settings")
+    .select("setting_key, setting_value")
+    .in("setting_key", [
+      "whatsapp_reminders_enabled",
+      "payment_links_enabled",
+      "dry_run_mode",
+      "academy_manager_phone",
+    ]);
+
+  if (error) {
+    return reminderSettings;
+  }
+
+  const byKey = Object.fromEntries((data || []).map((row) => [row.setting_key, row.setting_value]));
+  reminderSettings = {
+    whatsappRemindersEnabled: parseSettingBoolean(
+      byKey.whatsapp_reminders_enabled,
+      DEFAULT_REMINDER_SETTINGS.whatsappRemindersEnabled
+    ),
+    paymentLinksEnabled: parseSettingBoolean(
+      byKey.payment_links_enabled,
+      DEFAULT_REMINDER_SETTINGS.paymentLinksEnabled
+    ),
+    dryRunMode: parseSettingBoolean(byKey.dry_run_mode, DEFAULT_REMINDER_SETTINGS.dryRunMode),
+    managerPhone: parseSettingText(byKey.academy_manager_phone, DEFAULT_REMINDER_SETTINGS.managerPhone),
+  };
+  return reminderSettings;
+};
+
+const buildReminderPreview = (kid, reminderState) => {
+  const planChoices = REMINDER_PLAN_OPTIONS.map((option) => REMINDER_PLAN_LABELS[option]).join(" / ");
+  const dueText = reminderState.isJoiningFee
+    ? `joining fee from ${formatDate(reminderState.dueDate)}`
+    : `renewal due ${formatDate(reminderState.dueDate)}`;
+  return `Gen Alpha Cricket Academy reminder for ${kid.name}: ${dueText}. Parent can choose ${planChoices}. Manager help: ${reminderSettings.managerPhone}.`;
+};
+
+const syncReminderSettingsPanel = () => {
+  if (!reminderSafetyPanel) return;
+  const managerReady = isBackendReady && isManagerLoggedIn;
+  reminderSafetyPanel.hidden = !managerReady;
+  if (!managerReady) return;
+  if (dryRunToggle) dryRunToggle.checked = reminderSettings.dryRunMode;
+  if (whatsappReminderToggle) whatsappReminderToggle.checked = reminderSettings.whatsappRemindersEnabled;
+  if (paymentLinkToggle) paymentLinkToggle.checked = reminderSettings.paymentLinksEnabled;
+  if (managerPhoneInput) managerPhoneInput.value = reminderSettings.managerPhone;
+  if (reminderSettingsMessage) {
+    reminderSettingsMessage.textContent = reminderSettings.dryRunMode
+      ? "Safe: external sending is disabled."
+      : "Live mode requires Meta/Razorpay backend wiring.";
+  }
+};
+
+const saveReminderSettings = async () => {
+  if (!isBackendReady || !isManagerLoggedIn) return;
+  const nextSettings = {
+    whatsappRemindersEnabled: Boolean(whatsappReminderToggle?.checked),
+    paymentLinksEnabled: Boolean(paymentLinkToggle?.checked),
+    dryRunMode: Boolean(dryRunToggle?.checked),
+    managerPhone: String(managerPhoneInput?.value || DEFAULT_REMINDER_SETTINGS.managerPhone).replace(/\D/g, "").slice(-10),
+  };
+  const rows = [
+    ["whatsapp_reminders_enabled", nextSettings.whatsappRemindersEnabled],
+    ["payment_links_enabled", nextSettings.paymentLinksEnabled],
+    ["dry_run_mode", nextSettings.dryRunMode],
+    ["academy_manager_phone", nextSettings.managerPhone || DEFAULT_REMINDER_SETTINGS.managerPhone],
+  ].map(([setting_key, setting_value]) => ({
+    setting_key,
+    setting_value,
+    updated_by: getActiveManagerEmail(),
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabaseClient
+    .from("system_settings")
+    .upsert(rows, { onConflict: "setting_key" });
+
+  if (error) {
+    if (reminderSettingsMessage) reminderSettingsMessage.textContent = error.message;
+    return;
+  }
+
+  reminderSettings = {
+    ...nextSettings,
+    managerPhone: nextSettings.managerPhone || DEFAULT_REMINDER_SETTINGS.managerPhone,
+  };
+  syncReminderSettingsPanel();
+  showToast("Reminder feature flags saved.");
 };
 
 const getRenewalAmountForPlan = () => {
@@ -1891,6 +2032,7 @@ const renderSummary = (alertKids) => {
 
   const feesPendingKids = alertKids.filter(isFeesPending);
   const renewalPendingKids = alertKids.filter(isRenewalPending);
+  const criticalKids = alertKids.filter((kid) => getReminderState(kid).isCritical);
   const renderAlertGroup = (title, students) => students.length
     ? `<span class="alert-name-group"><strong>${title}</strong>${students
         .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
@@ -1898,6 +2040,7 @@ const renderSummary = (alertKids) => {
     : "";
 
   alertSummary.innerHTML = [
+    renderAlertGroup("Over 10 days", criticalKids),
     renderAlertGroup("Fees to collect", feesPendingKids),
     renderAlertGroup("Renewal follow-up", renewalPendingKids),
   ].filter(Boolean).join("");
@@ -2076,9 +2219,10 @@ const renderKids = () => {
     const renewalStatus = getRenewalStatusLabel(kid);
     const dueDate = getPaidThroughDate(kid);
     const daysUntilDue = -getDaysSinceDate(dueDate);
+    const reminderState = getReminderState(kid);
 
     const row = document.createElement("tr");
-    row.className = needsAttention ? "alert-row" : "";
+    row.className = reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
     row.innerHTML = `
       <td data-label="Player"><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
       <td data-label="Age">${kid.age}</td>
@@ -2116,6 +2260,11 @@ const renderKids = () => {
               ${
                 canRenew
                   ? `<button class="renew-btn" data-action="renew-open" data-id="${kid.id}" type="button">Mark fee paid</button>`
+                  : ""
+              }
+              ${
+                reminderState.isDue
+                  ? `<button class="secondary-btn reminder-btn" data-action="send-reminder" data-id="${kid.id}" type="button">${reminderSettings.dryRunMode ? "Dry-run reminder" : "Send reminder"}</button>`
                   : ""
               }
               <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">Delete</button>
@@ -2204,15 +2353,78 @@ const loadPlayerTimeline = async (studentId) => {
   return data || [];
 };
 
+const sendReminderDryRun = async (kid) => {
+  if (!kid || !isBackendReady || !isManagerLoggedIn) return;
+  const reminderState = getReminderState(kid);
+  if (!reminderState.isDue) {
+    showToast(`${kid.name} is not due for a fee reminder.`);
+    return;
+  }
+
+  await loadReminderSettings();
+  const dryRun = reminderSettings.dryRunMode || !reminderSettings.whatsappRemindersEnabled;
+  const status = dryRun ? "dry_run" : "queued";
+  const messagePreview = buildReminderPreview(kid, reminderState);
+  const { data: reminderEvent, error } = await supabaseClient
+    .from("reminder_events")
+    .insert({
+      student_id: kid.id,
+      reminder_type: reminderState.reminderType,
+      channel: "whatsapp",
+      status,
+      dry_run: dryRun,
+      due_date: reminderState.dueDate,
+      overdue_days: reminderState.overdueDays,
+      plan_options: REMINDER_PLAN_OPTIONS,
+      parent_phone: kid.parentContactNo || "",
+      manager_phone: reminderSettings.managerPhone,
+      message_preview: messagePreview,
+      created_by: getActiveManagerEmail(),
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    showToast(`Reminder could not be logged: ${error.message}`);
+    return;
+  }
+
+  await supabaseClient.from("payment_link_requests").insert({
+    reminder_event_id: reminderEvent.id,
+    student_id: kid.id,
+    payment_type: reminderState.reminderType === "joining_fee" ? "joining" : "renewal",
+    plan_type: "awaiting_parent_choice",
+    months_covered: 0,
+    amount: 0,
+    cycle_start_date: reminderState.dueDate,
+    provider: "razorpay",
+    status: reminderSettings.paymentLinksEnabled && !dryRun ? "awaiting_parent_choice" : "dry_run",
+    dry_run: dryRun || !reminderSettings.paymentLinksEnabled,
+    created_by: getActiveManagerEmail(),
+  });
+
+  showToast(
+    dryRun
+      ? `Dry-run WhatsApp reminder logged for ${kid.name}.`
+      : `WhatsApp reminder queued for ${kid.name}.`
+  );
+};
+
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
   const timeline = await loadPlayerTimeline(kid.id);
   const paymentRows = getPlayerPaymentRows(kid);
   const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
+  const reminderState = getReminderState(kid);
 
   playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `
+    ${
+      reminderState.isCritical
+        ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Follow up with parent today.</div>`
+        : ""
+    }
     <div class="player-profile-grid">
       <div class="profile-stat"><span>Training duration</span><strong>${getTrainingDuration(kid)}</strong></div>
       <div class="profile-stat"><span>Joined</span><strong>${formatDate(kid.joinDate)}</strong></div>
@@ -2264,6 +2476,15 @@ const renderPlayerDetails = async (kid) => {
           : `<p class="sub-copy">No paid fee records yet.</p>`
       }
     </div>
+    ${
+      isManagerLoggedIn && reminderState.isDue
+        ? `<div class="player-detail-section reminder-action-panel">
+            <h4>WhatsApp reminder</h4>
+            <p class="meta-text">${reminderSettings.dryRunMode ? "Dry-run is ON. This logs the reminder and timeline only." : "Live sending is controlled by Supabase feature flags."}</p>
+            <button class="primary-btn" type="button" data-profile-reminder-id="${kid.id}">${reminderSettings.dryRunMode ? "Log dry-run reminder" : "Send WhatsApp reminder"}</button>
+          </div>`
+        : ""
+    }
     <div class="player-detail-section">
       <h4>Timeline</h4>
       ${
@@ -2309,6 +2530,10 @@ const loadFinance = async () => {
   if (financeInsights) financeInsights.hidden = !managerReady;
   if (financeExportPanel) financeExportPanel.hidden = true; // Export panel hidden for now
   if (financeRangePanel) financeRangePanel.hidden = !managerReady;
+  if (managerReady) {
+    await loadReminderSettings();
+  }
+  syncReminderSettingsPanel();
   const expenseDateInput = document.getElementById("expenseDate");
   if (expenseDateInput && !expenseDateInput.value) {
     expenseDateInput.value = toLocalIsoDate();
@@ -2516,6 +2741,7 @@ financeCustomEnd?.addEventListener("change", () => {
   financeRangeMode = "custom";
   loadFinance();
 });
+saveReminderSettingsButton?.addEventListener("click", saveReminderSettings);
 
 financeMiniChart?.addEventListener("click", (event) => {
   const target = event.target.closest("[data-finance-month]");
@@ -2922,6 +3148,12 @@ kidsTableBody.addEventListener("click", async (event) => {
     return;
   }
 
+  if (action === "send-reminder") {
+    const kid = kids.find((item) => item.id === id);
+    await sendReminderDryRun(kid);
+    return;
+  }
+
   if (!isBackendReady || !isManagerLoggedIn || !isEditMode) {
     return;
   }
@@ -3142,6 +3374,16 @@ copyPaymentMobileButton.addEventListener("click", () =>
 closePlayerDetailButton?.addEventListener("click", () => {
   playerDetailPopup.hidden = true;
   document.body.classList.remove("popup-open");
+});
+playerDetailContent?.addEventListener("click", async (event) => {
+  if (!(event.target instanceof Element)) return;
+  const target = event.target.closest("[data-profile-reminder-id]");
+  if (!(target instanceof HTMLButtonElement)) return;
+  const kid = kids.find((item) => item.id === target.dataset.profileReminderId);
+  target.disabled = true;
+  await sendReminderDryRun(kid);
+  target.disabled = false;
+  if (kid) await renderPlayerDetails(kid);
 });
 closeReceiptButton?.addEventListener("click", closeReceiptPopup);
 receiptPopup?.addEventListener("click", (event) => {
@@ -3510,6 +3752,9 @@ const initializeApp = async () => {
   // Fetch next reg no before session/roster — those calls can be slow or stall; reg no must not wait on them.
   await loadAdmissionRegNo();
   await refreshSession();
+  if (isManagerLoggedIn) {
+    await loadReminderSettings();
+  }
   await loadKids();
   if (isManagerLoggedIn) {
     await loadFinance();
