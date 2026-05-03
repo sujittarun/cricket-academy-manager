@@ -240,6 +240,15 @@ const academyPaymentConfig = {
   notePrefix: String(PAYMENT_CONFIG.notePrefix || "Gen Alpha admission").trim(),
 };
 
+const toLocalIsoDate = (date = new Date()) => {
+  const localDate = date instanceof Date ? date : new Date(date);
+  return [
+    localDate.getFullYear(),
+    String(localDate.getMonth() + 1).padStart(2, "0"),
+    String(localDate.getDate()).padStart(2, "0"),
+  ].join("-");
+};
+
 let kids = [];
 let isManagerLoggedIn = false;
 let editingKidId = null;
@@ -253,7 +262,7 @@ let hasTriggeredServiceWorkerRefresh = false;
 let isEditMode = false;
 let admissionPaymentIntentId = "";
 let todayAttendanceIds = new Set();
-let attendanceDateValue = new Date().toISOString().split("T")[0];
+let attendanceDateValue = toLocalIsoDate();
 let isFeesVerified = false;
 let realtimeStudentsChannel = null;
 let realtimeAttendanceChannel = null;
@@ -356,8 +365,8 @@ const isMissingStudentProfileColumnError = (error) => {
 };
 
 const setJoinDateLimit = () => {
-  joinDateInput.max = new Date().toISOString().split("T")[0];
-  admissionJoinDate.max = new Date().toISOString().split("T")[0];
+  joinDateInput.max = toLocalIsoDate();
+  admissionJoinDate.max = toLocalIsoDate();
 };
 
 const formatDate = (value) =>
@@ -376,15 +385,24 @@ const addMonthsIso = (dateValue, months) => {
   date.setMonth(date.getMonth() + months);
   const daysInTargetMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   date.setDate(Math.min(originalDay, daysInTargetMonth));
-  return date.toISOString().split("T")[0];
+  return toLocalIsoDate(date);
 };
 
 const getInitialCoverageMonths = (kid) => {
   if (kid.feesPaid !== "yes" || Number(kid.amountPaid || 0) <= 0) return 0;
   const amount = Number(kid.amountPaid || 0);
   const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
-  if (withoutAdmissionFee >= 20000 || Math.round(amount) === 20000) return 6;
-  if ((withoutAdmissionFee >= 9000 && withoutAdmissionFee < 10000) || Math.round(amount) === 9000) return 3;
+  const roundedAmount = Math.round(amount);
+
+  if (withoutAdmissionFee >= 20000 || [20000, 20500].includes(roundedAmount)) return 6;
+  // Older records may only have total amount, not the selected plan. Treat both
+  // discounted and full 3-month totals as quarterly coverage.
+  if (
+    [9000, 9500, 10500, 11000].includes(roundedAmount) ||
+    (withoutAdmissionFee >= 9000 && withoutAdmissionFee <= 10500)
+  ) {
+    return 3;
+  }
   return 1;
 };
 
@@ -404,6 +422,18 @@ const getPaymentPlanLabel = (planType, monthsCovered) => {
   return months > 1 ? `${months} months` : "Monthly";
 };
 
+const getPaymentMonthsCovered = (payment) => {
+  const explicitMonths = Math.max(Number(payment.months_covered || payment.monthsCovered || 1), 1);
+  const planMonths = RENEWAL_PLANS[payment.plan_type || payment.planType]?.months || 1;
+  const amount = Math.round(Number(payment.amount || 0));
+  const amountMonths = [20000, 20500].includes(amount)
+    ? 6
+    : [9000, 9500, 10500, 11000].includes(amount)
+      ? 3
+      : 1;
+  return Math.max(explicitMonths, planMonths, amountMonths);
+};
+
 const getPlayerPaymentRows = (kid) => {
   const rows = [];
   if (kid.feesPaid === "yes" && Number(kid.amountPaid || 0) > 0) {
@@ -417,7 +447,7 @@ const getPlayerPaymentRows = (kid) => {
     });
   }
   getStudentPayments(kid).forEach((payment) => {
-    const months = Number(payment.months_covered || payment.monthsCovered || 1);
+    const months = getPaymentMonthsCovered(payment);
     rows.push({
       date: payment.paid_on || payment.paidOn,
       title: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Joining payment" : "Renewal payment",
@@ -440,7 +470,7 @@ const getPaidThroughDate = (kid) => {
 
   getStudentPayments(kid).forEach((payment) => {
     const cycleStart = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on || payment.paidOn;
-    const monthsCovered = Math.max(Number(payment.months_covered || payment.monthsCovered || 1), 1);
+    const monthsCovered = getPaymentMonthsCovered(payment);
     if (cycleStart) {
       paidThrough = maxIsoDate(paidThrough, addMonthsIso(cycleStart, monthsCovered));
     }
@@ -605,7 +635,7 @@ const buildReceiptText = (receipt) => {
     `Player: ${receipt.playerName}`,
     `Reg No: ${receipt.regNo}`,
     `Amount Paid: ${rupees(receipt.amountPaid)}`,
-    `Paid On: ${formatDate(receipt.paidOn || new Date().toISOString().split("T")[0])}`,
+    `Paid On: ${formatDate(receipt.paidOn || toLocalIsoDate())}`,
   ];
 
   if (receipt.receiptType === "renewal") {
@@ -651,7 +681,7 @@ const buildReceiptFromKid = (kid, overrides = {}) => ({
   guardianName: kid.fatherGuardianName || "Parent",
   parentContact: kid.parentContactNo || "",
   joinDate: kid.joinDate,
-  paidOn: new Date().toISOString().split("T")[0],
+  paidOn: toLocalIsoDate(),
   timeSlot: kid.timeSlot || "Not set",
   feesPaid: true,
   amountPaid: Number(overrides.amountPaid ?? kid.amountPaid ?? 0),
@@ -667,7 +697,7 @@ const buildRenewalReceiptFromKid = (kid, { plan, planTitle, monthsCovered, amoun
   playerName: kid.name,
   guardianName: kid.fatherGuardianName || "Parent",
   parentContact: kid.parentContactNo || "",
-  paidOn: new Date().toISOString().split("T")[0],
+  paidOn: toLocalIsoDate(),
   timeSlot: kid.timeSlot || "Not set",
   feesPaid: true,
   amountPaid: Number(amount || 0),
@@ -1560,7 +1590,7 @@ const loadAdmissionRegNo = async () => {
 
 const resetAdmissionForm = async () => {
   admissionForm.reset();
-  admissionJoinDate.value = new Date().toISOString().split("T")[0];
+  admissionJoinDate.value = toLocalIsoDate();
   admissionMessage.textContent = "";
   if (admissionExtractMessage) admissionExtractMessage.textContent = "";
   admissionAge.textContent = "Auto";
@@ -2781,29 +2811,31 @@ renewalForm?.addEventListener("submit", async (event) => {
   }
   const cycleDate = getDueCycleDate(kid);
   const renewals = [...kid.renewals, cycleDate];
-  const { error: updateError } = await supabaseClient
-    .from("students")
-    .update({ renewals, updated_by: getActiveManagerEmail() })
-    .eq("id", kid.id);
-  if (updateError) {
-    renewalMessage.textContent = updateError.message;
-    return;
-  }
-  const { error: paymentError } = await supabaseClient.from("student_payments").insert({
+  const { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert({
     student_id: kid.id,
     payment_type: "renewal",
     plan_type: renewalPlan.value,
     cycle_start_date: cycleDate,
     months_covered: plan.months,
     amount,
-    paid_on: new Date().toISOString().split("T")[0],
+    paid_on: toLocalIsoDate(),
     comment: renewalComment.value.trim(),
     recorded_by: getActiveManagerEmail(),
-  });
+  }).select("*").single();
   if (paymentError) {
-    renewalMessage.textContent = `Renewal saved, but payment timeline failed: ${paymentError.message}`;
-    await loadKids();
+    renewalMessage.textContent = paymentError.message;
     return;
+  }
+  const { error: updateError } = await supabaseClient
+    .from("students")
+    .update({ renewals, updated_by: getActiveManagerEmail() })
+    .eq("id", kid.id);
+  if (updateError) {
+    renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}`;
+    return;
+  }
+  if (paymentRow) {
+    financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
   }
   closeRenewalPopup();
   formMessage.textContent = `${kid.name} renewal payment saved for ${formatDate(cycleDate)}.`;
@@ -2816,6 +2848,7 @@ renewalForm?.addEventListener("submit", async (event) => {
   });
   renderReceipt(latestAdmissionReceipt);
   await loadKids();
+  await loadFinance();
 });
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
 closePaymentPopupButton.addEventListener("click", closePaymentPopup);
@@ -3082,7 +3115,7 @@ admissionForm.addEventListener("submit", async (event) => {
       guardianName: baseAdmissionPayload.p_father_guardian_name,
       parentContact: baseAdmissionPayload.p_parent_contact_no,
       joinDate: baseAdmissionPayload.p_join_date,
-      paidOn: new Date().toISOString().split("T")[0],
+      paidOn: toLocalIsoDate(),
       timeSlot: baseAdmissionPayload.p_time_slot,
       feesPaid: true,
       amountPaid: baseAdmissionPayload.p_amount_paid,
@@ -3103,7 +3136,7 @@ admissionForm.addEventListener("submit", async (event) => {
 const initializeApp = async () => {
   populateAdmissionSelectors();
   setJoinDateLimit();
-  admissionJoinDate.value = new Date().toISOString().split("T")[0];
+  admissionJoinDate.value = toLocalIsoDate();
   if (financeExportMonth) financeExportMonth.value = currentMonthKey();
   admissionPaymentIntentId = buildPaymentIntentId();
   updateActiveView();
@@ -3179,7 +3212,7 @@ initializeApp();
 
 // ── Attendance Tracker ───────────────────────────────────────────────────────
 
-const getTodayIso = () => new Date().toISOString().split("T")[0];
+const getTodayIso = () => toLocalIsoDate();
 
 const loadAttendance = async (date = attendanceDateValue) => {
   if (!isBackendReady || !isManagerLoggedIn) {
