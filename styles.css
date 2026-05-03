@@ -1012,6 +1012,26 @@ body.popup-open {
   text-underline-offset: 3px;
 }
 
+.alert-name-group {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.alert-name-group strong {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.alert-player-link {
+  width: fit-content;
+  color: white;
+  font-size: 0.9rem;
+  text-decoration-color: rgba(255, 255, 255, 0.64);
+}
+
 .player-popup-backdrop {
   position: fixed;
   inset: 0;

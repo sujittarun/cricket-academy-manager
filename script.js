@@ -208,15 +208,15 @@ const ADMISSION_MONTHS = [
 const ADMISSION_ONE_TIME_FEE = 500;
 const ADMISSION_FEE_PLANS = {
   monthly: { title: "Monthly", base: 3500 },
-  quarterly: { title: "3 months", base: 9000 },
-  halfyearly: { title: "6 months", base: 20000 },
+  quarterly: { title: "3 months", base: 10000 },
+  halfyearly: { title: "6 months", base: 20500 },
   special: { title: "Special training", base: 10000 },
   custom: { title: "Custom amount", base: 0 },
 };
 const RENEWAL_PLANS = {
   monthly: { title: "Monthly", amount: 3500, months: 1 },
-  quarterly: { title: "3 months", amount: 9000, months: 3 },
-  halfyearly: { title: "6 months", amount: 20000, months: 6 },
+  quarterly: { title: "3 months", amount: 10500, months: 3 },
+  halfyearly: { title: "6 months", amount: 21000, months: 6 },
   special: { title: "Special training", amount: 10000, months: 1 },
   custom: { title: "Custom amount", amount: 0, months: 1 },
 };
@@ -394,7 +394,7 @@ const getInitialCoverageMonths = (kid) => {
   const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
   const roundedAmount = Math.round(amount);
 
-  if (withoutAdmissionFee >= 20000 || [20000, 20500].includes(roundedAmount)) return 6;
+  if (withoutAdmissionFee >= 20000 || [20000, 20500, 21000].includes(roundedAmount)) return 6;
   // Older records may only have total amount, not the selected plan. Treat both
   // discounted and full 3-month totals as quarterly coverage.
   if (
@@ -426,7 +426,7 @@ const getPaymentMonthsCovered = (payment) => {
   const explicitMonths = Math.max(Number(payment.months_covered || payment.monthsCovered || 1), 1);
   const planMonths = RENEWAL_PLANS[payment.plan_type || payment.planType]?.months || 1;
   const amount = Math.round(Number(payment.amount || 0));
-  const amountMonths = [20000, 20500].includes(amount)
+  const amountMonths = [20000, 20500, 21000].includes(amount)
     ? 6
     : [9000, 9500, 10500, 11000].includes(amount)
       ? 3
@@ -1649,9 +1649,18 @@ const renderSummary = (alertKids) => {
     return;
   }
 
-  alertSummary.textContent = `Need fees or renewal action for: ${alertKids
-    .map((kid) => kid.name)
-    .join(", ")}`;
+  const feesPendingKids = alertKids.filter(isFeesPending);
+  const renewalPendingKids = alertKids.filter(isRenewalPending);
+  const renderAlertGroup = (title, students) => students.length
+    ? `<span class="alert-name-group"><strong>${title}</strong>${students
+        .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
+        .join("")}</span>`
+    : "";
+
+  alertSummary.innerHTML = [
+    renderAlertGroup("Fees to collect", feesPendingKids),
+    renderAlertGroup("Renewal follow-up", renewalPendingKids),
+  ].filter(Boolean).join("");
 };
 
 const updateActiveView = () => {
@@ -2918,6 +2927,13 @@ rosterTabButton.addEventListener("click", () => {
 playerSearchInput?.addEventListener("input", (event) => {
   rosterSearchQuery = event.target.value || "";
   renderKids();
+});
+alertSummary?.addEventListener("click", async (event) => {
+  if (!(event.target instanceof Element)) return;
+  const target = event.target.closest("[data-alert-player-id]");
+  if (!(target instanceof HTMLButtonElement)) return;
+  const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
+  await renderPlayerDetails(kid);
 });
 rosterStatusFilterInput?.addEventListener("change", (event) => {
   rosterStatusFilter = event.target.value || "all";
