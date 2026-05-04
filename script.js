@@ -3547,7 +3547,6 @@ alertSummary?.addEventListener("click", async (event) => {
   if (!(target instanceof HTMLButtonElement)) return;
   const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
   scrollToPlayerInRoster(kid?.id);
-  await renderPlayerDetails(kid);
 });
 
 criticalAlertSummary?.addEventListener("click", async (event) => {
@@ -3556,7 +3555,6 @@ criticalAlertSummary?.addEventListener("click", async (event) => {
   if (!(target instanceof HTMLButtonElement)) return;
   const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
   scrollToPlayerInRoster(kid?.id);
-  await renderPlayerDetails(kid);
 });
 
 rosterStatusFilterInput?.addEventListener("change", (event) => {
