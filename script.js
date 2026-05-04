@@ -2366,6 +2366,42 @@ const sendReminderDryRun = async (kid) => {
   }
 
   await loadReminderSettings();
+  const session = await supabaseClient.auth.getSession();
+  const accessToken = session?.data?.session?.access_token;
+  if (accessToken) {
+    try {
+      const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: SUPABASE_CONFIG.anonKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "send_reminder",
+          studentId: kid.id,
+          dueDate: reminderState.dueDate,
+          reminderType: reminderState.reminderType,
+        }),
+      });
+      const functionBody = await functionResponse.json();
+      if (functionResponse.ok && functionBody?.success) {
+        return {
+          success: true,
+          message: functionBody.message || `Dry-run WhatsApp reminder logged for ${kid.name}.`,
+        };
+      }
+      if (functionResponse.status !== 404) {
+        return {
+          success: false,
+          message: functionBody?.error || "WhatsApp reminder function failed.",
+        };
+      }
+    } catch (_) {
+      // If the function is not deployed yet, keep the local dry-run path usable.
+    }
+  }
+
   const dryRun = reminderSettings.dryRunMode || !reminderSettings.whatsappRemindersEnabled;
   const status = dryRun ? "dry_run" : "queued";
   const messagePreview = buildReminderPreview(kid, reminderState);
