@@ -2354,11 +2354,15 @@ const loadPlayerTimeline = async (studentId) => {
 };
 
 const sendReminderDryRun = async (kid) => {
-  if (!kid || !isBackendReady || !isManagerLoggedIn) return;
+  if (!kid) {
+    return { success: false, message: "Player record not found." };
+  }
+  if (!isBackendReady || !isManagerLoggedIn) {
+    return { success: false, message: "Login as manager before logging reminders." };
+  }
   const reminderState = getReminderState(kid);
   if (!reminderState.isDue) {
-    showToast(`${kid.name} is not due for a fee reminder.`);
-    return;
+    return { success: false, message: `${kid.name} is not due for a fee reminder.` };
   }
 
   await loadReminderSettings();
@@ -2385,11 +2389,10 @@ const sendReminderDryRun = async (kid) => {
     .single();
 
   if (error) {
-    showToast(`Reminder could not be logged: ${error.message}`);
-    return;
+    return { success: false, message: `Reminder could not be logged: ${error.message}` };
   }
 
-  await supabaseClient.from("payment_link_requests").insert({
+  const { error: linkError } = await supabaseClient.from("payment_link_requests").insert({
     reminder_event_id: reminderEvent.id,
     student_id: kid.id,
     payment_type: reminderState.reminderType === "joining_fee" ? "joining" : "renewal",
@@ -2403,11 +2406,19 @@ const sendReminderDryRun = async (kid) => {
     created_by: getActiveManagerEmail(),
   });
 
-  showToast(
-    dryRun
+  if (linkError) {
+    return {
+      success: false,
+      message: `Reminder logged, but payment-link dry-run failed: ${linkError.message}`,
+    };
+  }
+
+  return {
+    success: true,
+    message: dryRun
       ? `Dry-run WhatsApp reminder logged for ${kid.name}.`
-      : `WhatsApp reminder queued for ${kid.name}.`
-  );
+      : `WhatsApp reminder queued for ${kid.name}.`,
+  };
 };
 
 const renderPlayerDetails = async (kid) => {
@@ -3134,11 +3145,12 @@ kidForm.addEventListener("submit", async (event) => {
 });
 
 kidsTableBody.addEventListener("click", async (event) => {
-  const target = event.target;
-
-  if (!(target instanceof HTMLButtonElement)) {
+  if (!(event.target instanceof Element)) {
     return;
   }
+  const target = event.target.closest("[data-action]");
+
+  if (!(target instanceof HTMLButtonElement)) return;
 
   const { id, action } = target.dataset;
 
@@ -3150,7 +3162,13 @@ kidsTableBody.addEventListener("click", async (event) => {
 
   if (action === "send-reminder") {
     const kid = kids.find((item) => item.id === id);
-    await sendReminderDryRun(kid);
+    target.disabled = true;
+    const originalText = target.textContent;
+    target.textContent = "Logging...";
+    const result = await sendReminderDryRun(kid);
+    target.disabled = false;
+    target.textContent = originalText;
+    showToast(result.message);
     return;
   }
 
@@ -3381,9 +3399,13 @@ playerDetailContent?.addEventListener("click", async (event) => {
   if (!(target instanceof HTMLButtonElement)) return;
   const kid = kids.find((item) => item.id === target.dataset.profileReminderId);
   target.disabled = true;
-  await sendReminderDryRun(kid);
+  const originalText = target.textContent;
+  target.textContent = "Logging...";
+  const result = await sendReminderDryRun(kid);
+  showToast(result.message);
   target.disabled = false;
-  if (kid) await renderPlayerDetails(kid);
+  target.textContent = originalText;
+  if (kid && result.success) await renderPlayerDetails(kid);
 });
 closeReceiptButton?.addEventListener("click", closeReceiptPopup);
 receiptPopup?.addEventListener("click", (event) => {
