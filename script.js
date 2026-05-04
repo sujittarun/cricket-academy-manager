@@ -334,6 +334,7 @@ const normalizeKid = (kid) => {
     paymentUpiId: kid.payment_upi_id || "",
     paymentReference: kid.payment_reference || "",
     comments: kid.comments || "",
+    filledBy: kid.filled_by || "",
     fatherGuardianName: kid.father_guardian_name || "",
     parentContactNo: kid.parent_contact_no || "",
     alternateContactNo: kid.alternate_contact_no || "",
@@ -2502,6 +2503,7 @@ const renderPlayerDetails = async (kid) => {
         }
       </p>
       ${kid.alternateContactNo ? `<p>Alternate: <a class="call-link" href="tel:${kid.alternateContactNo}">${kid.alternateContactNo}</a></p>` : ""}
+      ${kid.filledBy ? `<p class="meta-text">Form filled by: ${kid.filledBy}</p>` : ""}
       ${
         kid.schoolCollege || kid.grade || kid.address
           ? `<p class="meta-text">${[kid.schoolCollege, kid.grade ? `Grade ${kid.grade}` : "", kid.address]
@@ -3665,6 +3667,7 @@ admissionForm.addEventListener("submit", async (event) => {
     p_payment_upi_id:
       String(formData.get("paymentUpiId") || academyPaymentConfig.upiId || "").trim(),
     p_payment_reference: String(formData.get("paymentReference") || "").trim(),
+    p_filled_by: String(formData.get("filledBy") || "Parent / Guardian").trim(),
     p_comments: String(formData.get("comments") || "").trim(),
     p_batsman_style: String(formData.get("batsmanStyle") || "").trim(),
     p_bowling_styles: formData.getAll("bowlingStyles").map((value) => String(value)),
@@ -3675,9 +3678,16 @@ admissionForm.addEventListener("submit", async (event) => {
 
   let { data, error } = await supabaseClient.rpc("submit_admission_form", baseAdmissionPayload);
 
-  // Backward compatibility: some DBs still expose an older RPC signature without payment args.
+  // Backward compatibility: some DBs still expose an older RPC signature.
+  if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
+    const noFilledByPayload = { ...baseAdmissionPayload };
+    delete noFilledByPayload.p_filled_by;
+    ({ data, error } = await supabaseClient.rpc("submit_admission_form", noFilledByPayload));
+  }
+
   if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
     const legacyPayload = { ...baseAdmissionPayload };
+    delete legacyPayload.p_filled_by;
     delete legacyPayload.p_payment_method;
     delete legacyPayload.p_payment_upi_id;
     delete legacyPayload.p_payment_reference;
@@ -3710,6 +3720,7 @@ admissionForm.addEventListener("submit", async (event) => {
         payment_method: baseAdmissionPayload.p_payment_method || "UPI",
         payment_upi_id: baseAdmissionPayload.p_payment_upi_id || "",
         payment_reference: baseAdmissionPayload.p_payment_reference || "",
+        filled_by: baseAdmissionPayload.p_filled_by || "Parent / Guardian",
         comments: baseAdmissionPayload.p_comments || "",
         batsman_style: baseAdmissionPayload.p_batsman_style || "",
         bowling_styles: baseAdmissionPayload.p_bowling_styles || [],
