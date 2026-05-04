@@ -1191,6 +1191,26 @@ const applyRosterMovementFilter = (monthKey, type) => {
   document.querySelector(".records-panel")?.scrollIntoView({ block: "start", behavior: "smooth" });
 };
 
+const scrollToPlayerInRoster = (kidId) => {
+  if (!kidId) return;
+  activeView = "roster";
+  rosterMovementFilter = null;
+  rosterSearchQuery = "";
+  resetRosterDetailFilters();
+  updateActiveView();
+  renderKids();
+
+  window.requestAnimationFrame(() => {
+    const row = kidsTableBody?.querySelector(`[data-player-row-id="${CSS.escape(kidId)}"]`);
+    const scrollTarget = row || document.querySelector(".records-panel");
+    scrollTarget?.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (row) {
+      row.classList.add("row-focus-pulse");
+      window.setTimeout(() => row.classList.remove("row-focus-pulse"), 2200);
+    }
+  });
+};
+
 const getStudentType = (kid) => (kid.renewals.length > 0 ? "Returning" : "New");
 const isActiveKid = (kid) => !kid.discontinued;
 const isFeesPending = (kid) => isActiveKid(kid) && kid.feesPaid !== "yes";
@@ -2236,6 +2256,7 @@ const renderKids = () => {
     const reminderState = getReminderState(kid);
 
     const row = document.createElement("tr");
+    row.dataset.playerRowId = kid.id;
     row.className = reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
     row.innerHTML = `
       <td data-label="Player"><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
@@ -3525,6 +3546,7 @@ alertSummary?.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-alert-player-id]");
   if (!(target instanceof HTMLButtonElement)) return;
   const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
+  scrollToPlayerInRoster(kid?.id);
   await renderPlayerDetails(kid);
 });
 
@@ -3533,6 +3555,7 @@ criticalAlertSummary?.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-alert-player-id]");
   if (!(target instanceof HTMLButtonElement)) return;
   const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
+  scrollToPlayerInRoster(kid?.id);
   await renderPlayerDetails(kid);
 });
 
