@@ -7,6 +7,9 @@ const kidsTableBody = document.getElementById("kidsTableBody");
 const emptyState = document.getElementById("emptyState");
 const alertCount = document.getElementById("alertCount");
 const alertSummary = document.getElementById("alertSummary");
+const criticalAlertCard = document.getElementById("criticalAlertCard");
+const criticalAlertCount = document.getElementById("criticalAlertCount");
+const criticalAlertSummary = document.getElementById("criticalAlertSummary");
 const feesPaidSelect = document.getElementById("feesPaid");
 const amountPaidInput = document.getElementById("amountPaid");
 const jerseySizeSelect = document.getElementById("jerseySize");
@@ -2006,40 +2009,54 @@ const updateAuthPanel = () => {
 const renderSummary = (alertKids) => {
   if (!isManagerLoggedIn) {
     mastheadBottom.hidden = true;
+    if (criticalAlertCard) criticalAlertCard.hidden = true;
     return;
   }
 
   mastheadBottom.hidden = false;
-  heroLabel.textContent = "30-Day Alerts";
-  const totalAlerts = alertKids.length;
+  heroLabel.textContent = "Alert";
+  const criticalKids = alertKids.filter((kid) => getReminderState(kid).isCritical);
+  const standardAlertKids = alertKids.filter((kid) => !getReminderState(kid).isCritical);
+  const totalAlerts = standardAlertKids.length;
 
-  alertCount.textContent =
-    totalAlerts === 1 ? "1 kid needs attention" : `${totalAlerts} kids need attention`;
+  alertCount.textContent = totalAlerts === 0
+    ? "No regular alerts"
+    : totalAlerts === 1
+      ? "1 regular alert"
+      : `${totalAlerts} regular alerts`;
 
   if (!isBackendReady) {
     alertSummary.textContent = "Connect Supabase to load academy records.";
+    if (criticalAlertCard) criticalAlertCard.hidden = true;
     return;
   }
 
   if (totalAlerts === 0) {
-    alertSummary.textContent = "All current join fees and renewals are up to date.";
-    return;
+    alertSummary.textContent = criticalKids.length
+      ? "Regular alerts are clear. Immediate follow-up is shown separately."
+      : "All current join fees and renewals are up to date.";
+  } else {
+    const feesPendingKids = standardAlertKids.filter(isFeesPending);
+    const renewalPendingKids = standardAlertKids.filter(isRenewalPending);
+    const renderAlertGroup = (title, students) => students.length
+      ? `<span class="alert-name-group"><strong>${title}</strong>${students
+          .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
+          .join("")}</span>`
+      : "";
+
+    alertSummary.innerHTML = [
+      renderAlertGroup("Fees to collect", feesPendingKids),
+      renderAlertGroup("Renewal follow-up", renewalPendingKids),
+    ].filter(Boolean).join("");
   }
 
-  const feesPendingKids = alertKids.filter(isFeesPending);
-  const renewalPendingKids = alertKids.filter(isRenewalPending);
-  const criticalKids = alertKids.filter((kid) => getReminderState(kid).isCritical);
-  const renderAlertGroup = (title, students) => students.length
-    ? `<span class="alert-name-group"><strong>${title}</strong>${students
-        .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
-        .join("")}</span>`
-    : "";
-
-  alertSummary.innerHTML = [
-    renderAlertGroup("Over 10 days", criticalKids),
-    renderAlertGroup("Fees to collect", feesPendingKids),
-    renderAlertGroup("Renewal follow-up", renewalPendingKids),
-  ].filter(Boolean).join("");
+  if (!criticalAlertCard || !criticalAlertCount || !criticalAlertSummary) return;
+  criticalAlertCard.hidden = criticalKids.length === 0;
+  criticalAlertCount.textContent =
+    criticalKids.length === 1 ? "1 player over 10 days" : `${criticalKids.length} players over 10 days`;
+  criticalAlertSummary.innerHTML = criticalKids
+    .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
+    .join("");
 };
 
 const updateActiveView = () => {
@@ -3508,6 +3525,15 @@ alertSummary?.addEventListener("click", async (event) => {
   const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
   await renderPlayerDetails(kid);
 });
+
+criticalAlertSummary?.addEventListener("click", async (event) => {
+  if (!(event.target instanceof Element)) return;
+  const target = event.target.closest("[data-alert-player-id]");
+  if (!(target instanceof HTMLButtonElement)) return;
+  const kid = kids.find((item) => item.id === target.dataset.alertPlayerId);
+  await renderPlayerDetails(kid);
+});
+
 rosterStatusFilterInput?.addEventListener("change", (event) => {
   rosterStatusFilter = event.target.value || "all";
   renderKids();

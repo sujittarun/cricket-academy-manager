@@ -280,6 +280,19 @@ body.popup-open {
   box-shadow: 0 18px 34px rgba(11, 52, 112, 0.18);
 }
 
+.critical-alert-card {
+  width: min(420px, 100%);
+  background: linear-gradient(180deg, #8d332f 0%, #5d2428 100%);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 18px 34px rgba(102, 32, 37, 0.2);
+}
+
+.critical-alert-card .hero-subtext {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
 .hero-card strong {
   font-size: 1.55rem;
   line-height: 1.1;
@@ -3133,6 +3146,10 @@ body.popup-open {
   .hero-card {
     width: 100%;
     padding: 16px 18px;
+  }
+
+  .critical-alert-card {
+    width: 100%;
   }
 
   .hero-card strong {
