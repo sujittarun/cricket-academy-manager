@@ -2053,7 +2053,7 @@ const renderSummary = (alertKids) => {
   if (!criticalAlertCard || !criticalAlertCount || !criticalAlertSummary) return;
   criticalAlertCard.hidden = criticalKids.length === 0;
   criticalAlertCount.textContent =
-    criticalKids.length === 1 ? "1 player over 10 days" : `${criticalKids.length} players over 10 days`;
+    criticalKids.length === 1 ? "1 overdue player" : `${criticalKids.length} overdue players`;
   criticalAlertSummary.innerHTML = criticalKids
     .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
     .join("");

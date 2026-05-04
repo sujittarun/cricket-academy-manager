@@ -282,15 +282,49 @@ body.popup-open {
 
 .critical-alert-card {
   width: min(420px, 100%);
+  padding: 16px 18px;
   background: linear-gradient(180deg, #8d332f 0%, #5d2428 100%);
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow: 0 18px 34px rgba(102, 32, 37, 0.2);
 }
 
+.critical-alert-card .hero-label {
+  margin-bottom: 6px;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+}
+
+.critical-alert-card strong {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 1.16rem;
+  line-height: 1.18;
+}
+
 .critical-alert-card .hero-subtext {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+
+.critical-alert-card .alert-player-link {
+  min-height: 28px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.critical-alert-card .alert-player-link:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 
 .hero-card strong {
