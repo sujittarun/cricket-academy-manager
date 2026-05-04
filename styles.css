@@ -73,6 +73,7 @@ body {
 
 .masthead-bottom {
   justify-content: flex-start;
+  align-items: flex-start;
   gap: 18px;
   margin-top: 18px;
 }
@@ -307,24 +308,6 @@ body.popup-open {
   gap: 8px;
   align-items: center;
   margin: 0;
-}
-
-.critical-alert-card .alert-player-link {
-  min-height: 28px;
-  padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.96);
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.critical-alert-card .alert-player-link:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.32);
 }
 
 .hero-card strong {
