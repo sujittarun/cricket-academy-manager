@@ -133,7 +133,6 @@ const reminderSafetyPanel = document.getElementById("reminderSafetyPanel");
 const dryRunToggle = document.getElementById("dryRunToggle");
 const whatsappReminderToggle = document.getElementById("whatsappReminderToggle");
 const paymentLinkToggle = document.getElementById("paymentLinkToggle");
-const managerPhoneInput = document.getElementById("managerPhoneInput");
 const saveReminderSettingsButton = document.getElementById("saveReminderSettingsButton");
 const reminderSettingsMessage = document.getElementById("reminderSettingsMessage");
 const exportCsvButton = document.getElementById("exportCsvButton");
@@ -251,7 +250,7 @@ const DEFAULT_REMINDER_SETTINGS = {
   whatsappRemindersEnabled: false,
   paymentLinksEnabled: false,
   dryRunMode: true,
-  managerPhone: "9059962499",
+  managerPhone: "8143960950",
 };
 const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + index));
 
@@ -569,7 +568,6 @@ const loadReminderSettings = async () => {
       "whatsapp_reminders_enabled",
       "payment_links_enabled",
       "dry_run_mode",
-      "academy_manager_phone",
     ]);
 
   if (error) {
@@ -587,7 +585,7 @@ const loadReminderSettings = async () => {
       DEFAULT_REMINDER_SETTINGS.paymentLinksEnabled
     ),
     dryRunMode: parseSettingBoolean(byKey.dry_run_mode, DEFAULT_REMINDER_SETTINGS.dryRunMode),
-    managerPhone: parseSettingText(byKey.academy_manager_phone, DEFAULT_REMINDER_SETTINGS.managerPhone),
+    managerPhone: DEFAULT_REMINDER_SETTINGS.managerPhone,
   };
   return reminderSettings;
 };
@@ -597,7 +595,7 @@ const buildReminderPreview = (kid, reminderState) => {
   const dueText = reminderState.isJoiningFee
     ? `joining fee from ${formatDate(reminderState.dueDate)}`
     : `renewal due ${formatDate(reminderState.dueDate)}`;
-  return `Gen Alpha Cricket Academy reminder for ${kid.name}: ${dueText}. Parent can choose ${planChoices}. Manager help: ${reminderSettings.managerPhone}.`;
+  return `Gen Alpha Cricket Academy reminder for ${kid.name}: ${dueText}. Parent can choose ${planChoices}. Help: ${reminderSettings.managerPhone}.`;
 };
 
 const syncReminderSettingsPanel = () => {
@@ -608,11 +606,10 @@ const syncReminderSettingsPanel = () => {
   if (dryRunToggle) dryRunToggle.checked = reminderSettings.dryRunMode;
   if (whatsappReminderToggle) whatsappReminderToggle.checked = reminderSettings.whatsappRemindersEnabled;
   if (paymentLinkToggle) paymentLinkToggle.checked = reminderSettings.paymentLinksEnabled;
-  if (managerPhoneInput) managerPhoneInput.value = reminderSettings.managerPhone;
   if (reminderSettingsMessage) {
     reminderSettingsMessage.textContent = reminderSettings.dryRunMode
       ? "Safe: external sending is disabled."
-      : "Live mode requires Meta/Razorpay backend wiring.";
+      : "Live mode can send WhatsApp messages and UPI payment links.";
   }
 };
 
@@ -622,13 +619,12 @@ const saveReminderSettings = async () => {
     whatsappRemindersEnabled: Boolean(whatsappReminderToggle?.checked),
     paymentLinksEnabled: Boolean(paymentLinkToggle?.checked),
     dryRunMode: Boolean(dryRunToggle?.checked),
-    managerPhone: String(managerPhoneInput?.value || DEFAULT_REMINDER_SETTINGS.managerPhone).replace(/\D/g, "").slice(-10),
+    managerPhone: DEFAULT_REMINDER_SETTINGS.managerPhone,
   };
   const rows = [
     ["whatsapp_reminders_enabled", nextSettings.whatsappRemindersEnabled],
     ["payment_links_enabled", nextSettings.paymentLinksEnabled],
     ["dry_run_mode", nextSettings.dryRunMode],
-    ["academy_manager_phone", nextSettings.managerPhone || DEFAULT_REMINDER_SETTINGS.managerPhone],
   ].map(([setting_key, setting_value]) => ({
     setting_key,
     setting_value,
@@ -647,7 +643,7 @@ const saveReminderSettings = async () => {
 
   reminderSettings = {
     ...nextSettings,
-    managerPhone: nextSettings.managerPhone || DEFAULT_REMINDER_SETTINGS.managerPhone,
+    managerPhone: DEFAULT_REMINDER_SETTINGS.managerPhone,
   };
   syncReminderSettingsPanel();
   showToast("Reminder feature flags saved.");
@@ -2436,7 +2432,7 @@ const sendReminderDryRun = async (kid) => {
     months_covered: 0,
     amount: 0,
     cycle_start_date: reminderState.dueDate,
-    provider: "razorpay",
+    provider: "upi",
     status: reminderSettings.paymentLinksEnabled && !dryRun ? "awaiting_parent_choice" : "dry_run",
     dry_run: dryRun || !reminderSettings.paymentLinksEnabled,
     created_by: getActiveManagerEmail(),
