@@ -2506,6 +2506,28 @@ const getFreshManagerAccessToken = async () => {
   return refreshedSession?.access_token || session.access_token;
 };
 
+const callReminderFunction = async (kid, reminderState, accessToken) => {
+  const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      apikey: SUPABASE_CONFIG.anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "send_reminder",
+      studentId: kid.id,
+      dueDate: reminderState.dueDate,
+      reminderType: reminderState.reminderType,
+    }),
+  });
+  const functionBody = await functionResponse.json();
+  return { functionResponse, functionBody };
+};
+
+const isReminderAuthError = (message = "") =>
+  /auth|session|jwt|bearer|authorization/i.test(String(message));
+
 const sendReminderDryRun = async (kid) => {
   if (!kid) {
     return { success: false, message: "Player record not found." };
@@ -2519,24 +2541,23 @@ const sendReminderDryRun = async (kid) => {
   }
 
   await loadReminderSettings();
-  const accessToken = await getFreshManagerAccessToken();
+  let accessToken = await getFreshManagerAccessToken();
   if (accessToken) {
     try {
-      const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          apikey: SUPABASE_CONFIG.anonKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "send_reminder",
-          studentId: kid.id,
-          dueDate: reminderState.dueDate,
-          reminderType: reminderState.reminderType,
-        }),
-      });
-      const functionBody = await functionResponse.json();
+      let { functionResponse, functionBody } = await callReminderFunction(kid, reminderState, accessToken);
+      if (
+        !functionResponse.ok &&
+        functionResponse.status !== 404 &&
+        isReminderAuthError(functionBody?.error)
+      ) {
+        const {
+          data: { session: refreshedSession },
+        } = await supabaseClient.auth.refreshSession();
+        accessToken = refreshedSession?.access_token || "";
+        if (accessToken) {
+          ({ functionResponse, functionBody } = await callReminderFunction(kid, reminderState, accessToken));
+        }
+      }
       if (functionResponse.ok && functionBody?.success) {
         return {
           success: true,
@@ -2546,7 +2567,9 @@ const sendReminderDryRun = async (kid) => {
       if (functionResponse.status !== 404) {
         return {
           success: false,
-          message: functionBody?.error || "WhatsApp reminder function failed.",
+          message: isReminderAuthError(functionBody?.error)
+            ? "Manager session expired. Please logout, login again, then send the reminder."
+            : functionBody?.error || "WhatsApp reminder function failed.",
         };
       }
     } catch (_) {
