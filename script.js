@@ -39,6 +39,9 @@ const activeCount = document.getElementById("activeCount");
 const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
 const studentMovementChart = document.getElementById("studentMovementChart");
+const admissionReviewPanel = document.getElementById("admissionReviewPanel");
+const admissionReviewCount = document.getElementById("admissionReviewCount");
+const admissionReviewList = document.getElementById("admissionReviewList");
 const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
 const rosterView = document.getElementById("rosterView");
@@ -285,6 +288,7 @@ const toLocalIsoDate = (date = new Date()) => {
 };
 
 let kids = [];
+let pendingAdmissions = [];
 let isManagerLoggedIn = false;
 let editingKidId = null;
 let isAuthPanelOpen = false;
@@ -302,6 +306,7 @@ let isFeesVerified = false;
 let realtimeStudentsChannel = null;
 let realtimeAttendanceChannel = null;
 let realtimeFinanceChannel = null;
+let realtimeAdmissionsChannel = null;
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let financePayments = [];
@@ -343,6 +348,29 @@ const normalizeKid = (kid) => {
     address: kid.address || "",
   };
 };
+
+const normalizePendingAdmission = (admission) => ({
+  id: admission.id,
+  regNo: admission.reg_no,
+  applicantName: admission.applicant_name || "",
+  age: Number(admission.age) || 0,
+  gender: admission.gender || "",
+  fatherGuardianName: admission.father_guardian_name || "",
+  parentContactNo: admission.parent_contact_no || "",
+  alternateContactNo: admission.emergency_contact_no || "",
+  schoolCollege: admission.school_college || "",
+  city: admission.city || "",
+  address: admission.address || "",
+  timeSlot: admission.time_slot || "",
+  joinDate: admission.join_date || "",
+  feesPaid: Boolean(admission.fees_paid),
+  amountPaid: Number(admission.amount_paid) || 0,
+  jerseySize: admission.jersey_size || "",
+  jerseyPairs: Number(admission.jersey_pairs) || 0,
+  filledBy: admission.filled_by || "Parent / Guardian",
+  comments: admission.comments || "",
+  createdAt: admission.created_at || "",
+});
 
 const toDatabasePayload = ({
   name,
@@ -2190,6 +2218,7 @@ const updateAccessUI = () => {
   syncAmountState();
   updateActiveView();
   updateAuthPanel();
+  renderAdmissionReviewQueue();
 };
 
 const renderKids = () => {
@@ -2369,6 +2398,76 @@ const loadKids = async () => {
   if (isManagerLoggedIn) {
     queueFinanceRefresh();
   }
+};
+
+const renderAdmissionReviewQueue = () => {
+  if (!admissionReviewPanel || !admissionReviewCount || !admissionReviewList) return;
+
+  const managerReady = isBackendReady && isManagerLoggedIn;
+  admissionReviewPanel.hidden = !managerReady || pendingAdmissions.length === 0;
+  admissionReviewCount.textContent =
+    pendingAdmissions.length === 1 ? "1 pending" : `${pendingAdmissions.length} pending`;
+
+  if (!managerReady || pendingAdmissions.length === 0) {
+    admissionReviewList.innerHTML = "";
+    return;
+  }
+
+  admissionReviewList.innerHTML = pendingAdmissions
+    .map((admission) => {
+      const contact = admission.parentContactNo || admission.alternateContactNo || "No phone saved";
+      const payLabel = admission.feesPaid
+        ? `Paid Rs ${admission.amountPaid.toLocaleString("en-IN")}`
+        : "Fees not paid";
+      return `
+        <article class="admission-review-card">
+          <div class="review-main">
+            <div>
+              <p class="review-reg">Reg ${escapeHtml(admission.regNo || "-")} · ${escapeHtml(admission.filledBy)}</p>
+              <h3>${escapeHtml(admission.applicantName)}</h3>
+              <p class="review-meta">${escapeHtml(admission.age)} yrs · ${escapeHtml(admission.timeSlot || "Slot not set")} · Joining ${escapeHtml(formatDate(admission.joinDate))}</p>
+            </div>
+            <span class="status-pill ${admission.feesPaid ? "status-paid" : "status-unpaid"}">${escapeHtml(payLabel)}</span>
+          </div>
+          <div class="review-details">
+            <span>Parent: ${escapeHtml(admission.fatherGuardianName || "-")}</span>
+            <span>Phone: ${escapeHtml(contact)}</span>
+            <span>School: ${escapeHtml(admission.schoolCollege || "-")}</span>
+            <span>Jersey: ${escapeHtml(admission.jerseySize || "Not set")} · ${admission.jerseyPairs || 0} pair${admission.jerseyPairs === 1 ? "" : "s"}</span>
+          </div>
+          ${admission.comments ? `<p class="review-comment">${escapeHtml(admission.comments)}</p>` : ""}
+          <div class="review-actions">
+            <button class="primary-btn" type="button" data-approve-admission="${escapeHtml(admission.id)}">Approve to roster</button>
+            <button class="danger-btn" type="button" data-reject-admission="${escapeHtml(admission.id)}">Reject</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+};
+
+const loadPendingAdmissions = async () => {
+  if (!isBackendReady || !isManagerLoggedIn) {
+    pendingAdmissions = [];
+    renderAdmissionReviewQueue();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("admissions")
+    .select("*")
+    .eq("review_status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    pendingAdmissions = [];
+    renderAdmissionReviewQueue();
+    showToast(`Unable to load admission review queue: ${error.message}`);
+    return;
+  }
+
+  pendingAdmissions = (data || []).map(normalizePendingAdmission);
+  renderAdmissionReviewQueue();
 };
 
 const loadPlayerTimeline = async (studentId) => {
@@ -3038,6 +3137,12 @@ const initializeAuthListener = () => {
       }
       updateAccessUI();
       renderKids();
+      if (isManagerLoggedIn) {
+        loadPendingAdmissions();
+      } else {
+        pendingAdmissions = [];
+        renderAdmissionReviewQueue();
+      }
       restartRealtimeSync();
     }, 0);
   });
@@ -3076,6 +3181,7 @@ loginForm.addEventListener("submit", async (event) => {
   activeView = "roster";
   await refreshSession();
   await loadKids();
+  await loadPendingAdmissions();
   await loadFinance();
 });
 
@@ -3095,12 +3201,45 @@ const handleLogout = async () => {
   isAuthPanelOpen = false;
   isEditMode = false;
   activeView = "admission";
+  pendingAdmissions = [];
   await refreshSession();
+  renderAdmissionReviewQueue();
   renderKids();
 };
 
 logoutButton.addEventListener("click", handleLogout);
 quickLogoutButton.addEventListener("click", handleLogout);
+
+admissionReviewList?.addEventListener("click", async (event) => {
+  const approveButton = event.target.closest("[data-approve-admission]");
+  const rejectButton = event.target.closest("[data-reject-admission]");
+  const admissionId = approveButton?.dataset.approveAdmission || rejectButton?.dataset.rejectAdmission;
+
+  if (!admissionId || !isBackendReady || !isManagerLoggedIn) return;
+
+  const actionButton = approveButton || rejectButton;
+  actionButton.disabled = true;
+  actionButton.textContent = approveButton ? "Approving..." : "Rejecting...";
+
+  const rpcName = approveButton ? "approve_admission" : "reject_admission";
+  const { error } = await supabaseClient.rpc(rpcName, {
+    p_admission_id: admissionId,
+    p_reviewed_by: getActiveManagerEmail(),
+    p_review_notes: "",
+  });
+
+  if (error) {
+    showToast(error.message || "Unable to update admission review.");
+    actionButton.disabled = false;
+    actionButton.textContent = approveButton ? "Approve to roster" : "Reject";
+    return;
+  }
+
+  pendingAdmissions = pendingAdmissions.filter((admission) => admission.id !== admissionId);
+  renderAdmissionReviewQueue();
+  await loadKids();
+  showToast(approveButton ? "Admission approved and added to roster." : "Admission rejected.");
+});
 
 kidForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -3748,6 +3887,7 @@ admissionForm.addEventListener("submit", async (event) => {
         ready_to_start: baseAdmissionPayload.p_ready_to_start,
         consent_accepted: baseAdmissionPayload.p_consent_accepted,
         terms_accepted: baseAdmissionPayload.p_terms_accepted,
+        review_status: "pending",
       })
       .select("id, reg_no")
       .single();
@@ -3765,10 +3905,10 @@ admissionForm.addEventListener("submit", async (event) => {
 
   const row = Array.isArray(data) ? data[0] : data;
   const regNo = row?.reg_no ?? admissionRegNo.textContent;
-  admissionMessage.textContent = `Admission submitted successfully. Reg No ${regNo}.`;
+  admissionMessage.textContent = `Admission submitted for manager review. Reg No ${regNo}.`;
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
   closePaymentPopup();
-  showToast(`Admission saved for ${String(formData.get("applicantName") || "").trim()}`);
+  showToast(`Admission submitted for ${String(formData.get("applicantName") || "").trim()}`);
   if (baseAdmissionPayload.p_fees_paid) {
     latestAdmissionReceipt = {
       receiptType: "joining",
@@ -3791,7 +3931,9 @@ admissionForm.addEventListener("submit", async (event) => {
     latestAdmissionReceipt = null;
   }
   await resetAdmissionForm();
-  await loadKids();
+  if (isManagerLoggedIn) {
+    await loadPendingAdmissions();
+  }
 });
 
 // Reset is handled in the payment verify section below to also unlock fees field.
@@ -4117,12 +4259,13 @@ const showRealtimeToast = (message) => {
 };
 
 const stopRealtimeSync = () => {
-  [realtimeStudentsChannel, realtimeAttendanceChannel, realtimeFinanceChannel].forEach((channel) => {
+  [realtimeStudentsChannel, realtimeAttendanceChannel, realtimeFinanceChannel, realtimeAdmissionsChannel].forEach((channel) => {
     if (channel) supabaseClient.removeChannel(channel);
   });
   realtimeStudentsChannel = null;
   realtimeAttendanceChannel = null;
   realtimeFinanceChannel = null;
+  realtimeAdmissionsChannel = null;
 };
 
 const restartRealtimeSync = () => {
@@ -4133,7 +4276,7 @@ const restartRealtimeSync = () => {
 
 const initRealtimeSync = () => {
   if (!isBackendReady) return;
-  if (realtimeStudentsChannel || realtimeAttendanceChannel || realtimeFinanceChannel) return;
+  if (realtimeStudentsChannel || realtimeAttendanceChannel || realtimeFinanceChannel || realtimeAdmissionsChannel) return;
 
   // Students table — fast sync for roster edits/adds/deletes
   realtimeStudentsChannel = supabaseClient
@@ -4218,6 +4361,19 @@ const initRealtimeSync = () => {
       () => {
         queueFinanceRefresh();
         if (activeView === "finance") showRealtimeToast("Fee payment timeline updated");
+      }
+    )
+    .subscribe();
+
+  realtimeAdmissionsChannel = supabaseClient
+    .channel("public:admissions")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "admissions" },
+      async () => {
+        if (isManagerLoggedIn) {
+          await loadPendingAdmissions();
+        }
       }
     )
     .subscribe();
