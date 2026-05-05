@@ -2487,6 +2487,25 @@ const loadPlayerTimeline = async (studentId) => {
   return data || [];
 };
 
+const getFreshManagerAccessToken = async () => {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.access_token) return "";
+
+  const expiresAtMs = Number(session.expires_at || 0) * 1000;
+  if (expiresAtMs && expiresAtMs - Date.now() > 60000) {
+    return session.access_token;
+  }
+
+  const {
+    data: { session: refreshedSession },
+  } = await supabaseClient.auth.refreshSession();
+
+  return refreshedSession?.access_token || session.access_token;
+};
+
 const sendReminderDryRun = async (kid) => {
   if (!kid) {
     return { success: false, message: "Player record not found." };
@@ -2500,8 +2519,7 @@ const sendReminderDryRun = async (kid) => {
   }
 
   await loadReminderSettings();
-  const session = await supabaseClient.auth.getSession();
-  const accessToken = session?.data?.session?.access_token;
+  const accessToken = await getFreshManagerAccessToken();
   if (accessToken) {
     try {
       const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
