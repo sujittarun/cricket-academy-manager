@@ -1,7 +1,8 @@
-const CACHE_NAME = "gen-alpha-academy-v11";
+const CACHE_NAME = "gen-alpha-academy-v12";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./pay.html",
   "./styles.css",
   "./script.js",
   "./supabase-config.js",
@@ -15,6 +16,7 @@ const APP_SHELL = [
 /** Match GitHub Pages project URLs (e.g. /repo/script.js), not only root-hosted /script.js */
 const NETWORK_FIRST_PATH_ENDINGS = [
   "/index.html",
+  "/pay.html",
   "/styles.css",
   "/script.js",
   "/supabase-config.js",
