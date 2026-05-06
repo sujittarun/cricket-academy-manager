@@ -25,9 +25,7 @@
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 20px;
+        padding: clamp(14px, 4vw, 34px);
         color: var(--ink);
         font-family: "Trebuchet MS", Verdana, sans-serif;
         background:
@@ -36,10 +34,15 @@
       }
 
       .pay-card {
-        width: min(430px, 100%);
+        width: min(760px, 100%);
+        min-height: calc(100vh - clamp(28px, 8vw, 68px));
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 0 auto;
         border: 1px solid rgba(21, 87, 166, 0.16);
-        border-radius: 28px;
-        padding: 24px;
+        border-radius: clamp(24px, 5vw, 38px);
+        padding: clamp(22px, 6vw, 48px);
         background: rgba(255, 255, 255, 0.92);
         box-shadow: 0 24px 60px rgba(16, 34, 63, 0.16);
       }
@@ -47,20 +50,20 @@
       .brand {
         display: flex;
         align-items: center;
-        gap: 14px;
-        margin-bottom: 20px;
+        gap: clamp(14px, 4vw, 22px);
+        margin-bottom: clamp(22px, 5vw, 36px);
       }
 
       .brand img {
-        width: 58px;
-        height: 58px;
+        width: clamp(64px, 15vw, 96px);
+        height: clamp(64px, 15vw, 96px);
         object-fit: contain;
       }
 
       .eyebrow {
         margin: 0;
         color: var(--blue);
-        font-size: 0.78rem;
+        font-size: clamp(0.78rem, 2.4vw, 0.95rem);
         font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -69,14 +72,14 @@
       h1 {
         margin: 3px 0 0;
         color: var(--deep);
-        font-size: clamp(1.35rem, 6vw, 1.9rem);
+        font-size: clamp(1.65rem, 7vw, 3rem);
         line-height: 1.05;
       }
 
       .amount-box {
-        margin: 18px 0;
-        padding: 18px;
-        border-radius: 22px;
+        margin: 0 0 clamp(18px, 5vw, 30px);
+        padding: clamp(24px, 7vw, 42px);
+        border-radius: clamp(22px, 5vw, 34px);
         background: linear-gradient(135deg, #1557a6, #0d3d78);
         color: white;
       }
@@ -84,31 +87,33 @@
       .amount-label {
         margin: 0 0 5px;
         color: rgba(255, 255, 255, 0.78);
-        font-size: 0.82rem;
+        font-size: clamp(0.85rem, 2.6vw, 1rem);
       }
 
       .amount {
         margin: 0;
-        font-size: 2.25rem;
+        font-size: clamp(2.7rem, 12vw, 5.2rem);
         font-weight: 900;
         letter-spacing: -0.04em;
       }
 
       .detail-grid {
         display: grid;
-        gap: 10px;
-        margin: 18px 0;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 0 0 clamp(18px, 5vw, 30px);
       }
 
       .detail {
         display: flex;
         justify-content: space-between;
+        flex-direction: column;
         gap: 14px;
-        padding: 12px 13px;
+        padding: clamp(14px, 4vw, 18px);
         border: 1px solid var(--line);
-        border-radius: 15px;
+        border-radius: 18px;
         background: var(--soft);
-        font-size: 0.9rem;
+        font-size: clamp(0.9rem, 2.8vw, 1rem);
       }
 
       .detail span:first-child {
@@ -116,17 +121,18 @@
       }
 
       .detail strong {
-        text-align: right;
+        text-align: left;
+        overflow-wrap: anywhere;
       }
 
       .pay-button {
         width: 100%;
         border: 0;
-        border-radius: 18px;
-        padding: 15px 18px;
+        border-radius: 22px;
+        padding: clamp(18px, 5vw, 24px);
         color: #0f2852;
         background: linear-gradient(135deg, var(--gold), #ffd86c);
-        font-size: 1.04rem;
+        font-size: clamp(1.12rem, 4vw, 1.35rem);
         font-weight: 900;
         cursor: pointer;
         box-shadow: 0 12px 24px rgba(247, 201, 72, 0.36);
@@ -142,7 +148,7 @@
       .secondary {
         border: 1px solid var(--line);
         border-radius: 15px;
-        padding: 11px 12px;
+        padding: 13px 12px;
         color: var(--blue);
         background: white;
         font-weight: 800;
@@ -151,11 +157,29 @@
 
       .message {
         min-height: 20px;
-        margin: 13px 0 0;
+        margin: 16px 0 0;
         color: var(--muted);
-        font-size: 0.84rem;
+        font-size: clamp(0.86rem, 2.8vw, 0.98rem);
         line-height: 1.4;
         text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        body {
+          padding: 0;
+          background: white;
+        }
+
+        .pay-card {
+          min-height: 100vh;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>

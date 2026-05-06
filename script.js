@@ -253,9 +253,9 @@ const REMINDER_PLAN_LABELS = {
   need_help: "Need Help",
 };
 const DEFAULT_REMINDER_SETTINGS = {
-  whatsappRemindersEnabled: false,
-  paymentLinksEnabled: false,
-  dryRunMode: true,
+  whatsappRemindersEnabled: true,
+  paymentLinksEnabled: true,
+  dryRunMode: false,
   managerPhone: "8143960950",
 };
 const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + index));
@@ -631,18 +631,7 @@ const buildReminderPreview = (kid, reminderState) => {
 };
 
 const syncReminderSettingsPanel = () => {
-  if (!reminderSafetyPanel) return;
-  const managerReady = isBackendReady && isManagerLoggedIn;
-  reminderSafetyPanel.hidden = !managerReady;
-  if (!managerReady) return;
-  if (dryRunToggle) dryRunToggle.checked = reminderSettings.dryRunMode;
-  if (whatsappReminderToggle) whatsappReminderToggle.checked = reminderSettings.whatsappRemindersEnabled;
-  if (paymentLinkToggle) paymentLinkToggle.checked = reminderSettings.paymentLinksEnabled;
-  if (reminderSettingsMessage) {
-    reminderSettingsMessage.textContent = reminderSettings.dryRunMode
-      ? "Safe: external sending is disabled."
-      : "Live mode can send WhatsApp messages and UPI payment links.";
-  }
+  if (reminderSafetyPanel) reminderSafetyPanel.hidden = true;
 };
 
 const saveReminderSettings = async () => {
@@ -2328,7 +2317,7 @@ const renderKids = () => {
               }
               ${
                 reminderState.isDue
-                  ? `<button class="secondary-btn reminder-btn" data-action="send-reminder" data-id="${kid.id}" type="button">${reminderSettings.dryRunMode ? "Dry-run reminder" : "Send reminder"}</button>`
+                  ? `<button class="secondary-btn reminder-btn" data-action="send-reminder" data-id="${kid.id}" type="button">Send reminder</button>`
                   : ""
               }
               <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">Delete</button>
@@ -2703,8 +2692,8 @@ const renderPlayerDetails = async (kid) => {
       isManagerLoggedIn && reminderState.isDue
         ? `<div class="player-detail-section reminder-action-panel">
             <h4>WhatsApp reminder</h4>
-            <p class="meta-text">${reminderSettings.dryRunMode ? "Dry-run is ON. This logs the reminder and timeline only." : "Live sending is controlled by Supabase feature flags."}</p>
-            <button class="primary-btn" type="button" data-profile-reminder-id="${kid.id}">${reminderSettings.dryRunMode ? "Log dry-run reminder" : "Send WhatsApp reminder"}</button>
+            <p class="meta-text">Manual reminder only. Parent receives WhatsApp with payment options.</p>
+            <button class="primary-btn" type="button" data-profile-reminder-id="${kid.id}">Send WhatsApp reminder</button>
           </div>`
         : ""
     }
