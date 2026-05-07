@@ -1154,7 +1154,6 @@ body.popup-open {
 }
 
 .academy-reel-frame {
-  height: 292px;
   min-height: 0;
   overflow: hidden;
   border-radius: 18px;
@@ -1166,7 +1165,6 @@ body.popup-open {
 .academy-reel-strip {
   display: flex;
   gap: 12px;
-  height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 10px 10px 14px;
@@ -1185,39 +1183,109 @@ body.popup-open {
 
 .academy-reel-card {
   position: relative;
-  flex: 0 0 188px;
-  height: 232px;
+  display: grid;
+  grid-template-rows: 128px auto;
+  flex: 0 0 192px;
   overflow: hidden;
   border: 1px solid rgba(15, 34, 64, 0.08);
-  border-radius: 16px;
+  border-radius: 18px;
   background: #ffffff;
   box-shadow: 0 10px 24px rgba(11, 52, 112, 0.12);
+  color: var(--text);
+  text-decoration: none;
   scroll-snap-align: start;
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.academy-reel-crop {
-  height: 100%;
+.academy-reel-card:hover,
+.academy-reel-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(11, 52, 112, 0.16);
+}
+
+.academy-reel-visual {
+  position: relative;
+  display: block;
   overflow: hidden;
-  background: #f8fbff;
+  background:
+    radial-gradient(circle at 24% 12%, rgba(244, 191, 42, 0.38), transparent 30%),
+    linear-gradient(135deg, rgba(11, 52, 112, 0.94), rgba(26, 79, 157, 0.76));
 }
 
-.academy-reel-embed {
+.academy-reel-visual img {
   width: 100%;
-  height: 376px;
-  margin-top: -72px;
-  border: 0;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.82;
+  transform: scale(1.08);
 }
 
-.academy-reel-card::after {
+.academy-reel-visual::after {
   content: "";
   position: absolute;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(4, 18, 43, 0.46), transparent 48%),
+    linear-gradient(135deg, rgba(244, 191, 42, 0.08), rgba(26, 79, 157, 0.26));
+}
+
+.academy-play-mark {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 18px rgba(4, 18, 43, 0.24);
+}
+
+.academy-play-mark::after {
+  content: "";
+  position: absolute;
+  top: 10px;
   left: 0;
-  z-index: 2;
-  height: 42px;
-  pointer-events: none;
-  background: linear-gradient(to top, #ffffff 24%, rgba(255, 255, 255, 0));
+  right: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 11px solid var(--accent-dark);
+  transform: translateX(2px);
+}
+
+.academy-reel-text {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.academy-reel-text span {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.academy-reel-text strong {
+  color: var(--accent-dark);
+  font-size: 0.86rem;
+  line-height: 1.18;
+}
+
+.reel-card-blue .academy-reel-visual {
+  background: linear-gradient(135deg, #092c62, #2b72bd);
+}
+
+.reel-card-gold .academy-reel-visual {
+  background: linear-gradient(135deg, #123d76, #f4bf2a);
+}
+
+.reel-card-slate .academy-reel-visual {
+  background: linear-gradient(135deg, #081b38, #25507f);
 }
 
 .admission-banner {
@@ -3128,7 +3196,7 @@ body.popup-open {
   }
 
   .academy-reel-frame {
-    height: 276px;
+    height: auto;
   }
 
   .admission-compact-layout {
@@ -3588,7 +3656,7 @@ body.popup-open {
   }
 
   .academy-reel-frame {
-    height: 260px;
+    height: auto;
     border-radius: 16px;
   }
 
