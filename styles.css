@@ -1093,7 +1093,7 @@ body.popup-open {
 
 .academy-moments {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(260px, 320px);
+  grid-template-columns: minmax(200px, 0.55fr) minmax(320px, 1.45fr);
   gap: 14px;
   align-items: center;
   margin-bottom: 14px;
@@ -1132,32 +1132,14 @@ body.popup-open {
   line-height: 1.35;
 }
 
-.moment-link-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.moment-link-list a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid rgba(26, 79, 157, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--accent-dark);
-  font-size: 0.76rem;
+.moments-helper {
+  color: var(--accent-dark) !important;
+  font-size: 0.76rem !important;
   font-weight: 800;
-  text-decoration: none;
 }
 
 .academy-reel-frame {
-  display: grid;
-  justify-items: center;
-  align-items: start;
-  height: 270px;
+  height: 292px;
   min-height: 0;
   overflow: hidden;
   border-radius: 18px;
@@ -1166,12 +1148,34 @@ body.popup-open {
     rgba(255, 255, 255, 0.7);
 }
 
+.academy-reel-strip {
+  display: flex;
+  gap: 12px;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 10px 14px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.academy-reel-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.academy-reel-strip::-webkit-scrollbar-thumb {
+  background: rgba(26, 79, 157, 0.22);
+  border-radius: 999px;
+}
+
 .academy-instagram-embed {
+  flex: 0 0 246px !important;
   width: 326px !important;
   min-width: 0 !important;
-  margin: 0 auto !important;
-  transform: scale(0.74);
-  transform-origin: top center;
+  margin: 0 !important;
+  transform: scale(0.76);
+  transform-origin: top left;
+  scroll-snap-align: start;
 }
 
 .admission-banner {
@@ -3082,7 +3086,7 @@ body.popup-open {
   }
 
   .academy-reel-frame {
-    height: 250px;
+    height: 276px;
   }
 
   .admission-compact-layout {
@@ -3542,7 +3546,7 @@ body.popup-open {
   }
 
   .academy-reel-frame {
-    height: 230px;
+    height: 260px;
     border-radius: 16px;
   }
 
