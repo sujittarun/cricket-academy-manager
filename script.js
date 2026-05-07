@@ -231,15 +231,15 @@ const ADMISSION_MONTHS = [
 const ADMISSION_ONE_TIME_FEE = 500;
 const ADMISSION_FEE_PLANS = {
   monthly: { title: "Monthly", base: 3500 },
-  quarterly: { title: "3 months", base: 10000 },
-  halfyearly: { title: "6 months", base: 20500 },
+  quarterly: { title: "3 months", base: 9975 },
+  halfyearly: { title: "6 months", base: 18900 },
   special: { title: "Special training", base: 10000 },
   custom: { title: "Custom amount", base: 0 },
 };
 const RENEWAL_PLANS = {
   monthly: { title: "Monthly", amount: 3500, months: 1 },
-  quarterly: { title: "3 months", amount: 10500, months: 3 },
-  halfyearly: { title: "6 months", amount: 21000, months: 6 },
+  quarterly: { title: "3 months", amount: 9975, months: 3 },
+  halfyearly: { title: "6 months", amount: 18900, months: 6 },
   special: { title: "Special training", amount: 10000, months: 1 },
   custom: { title: "Custom amount", amount: 0, months: 1 },
 };
@@ -458,11 +458,11 @@ const getInitialCoverageMonths = (kid) => {
   const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
   const roundedAmount = Math.round(amount);
 
-  if (withoutAdmissionFee >= 20000 || [20000, 20500, 21000].includes(roundedAmount)) return 6;
+  if (withoutAdmissionFee >= 18900 || [18900, 19400, 20000, 20500, 21000].includes(roundedAmount)) return 6;
   // Older records may only have total amount, not the selected plan. Treat both
   // discounted and full 3-month totals as quarterly coverage.
   if (
-    [9000, 9500, 10500, 11000].includes(roundedAmount) ||
+    [9000, 9500, 9975, 10475, 10500, 11000].includes(roundedAmount) ||
     (withoutAdmissionFee >= 9000 && withoutAdmissionFee <= 10500)
   ) {
     return 3;
@@ -490,9 +490,9 @@ const getPaymentMonthsCovered = (payment) => {
   const explicitMonths = Math.max(Number(payment.months_covered || payment.monthsCovered || 1), 1);
   const planMonths = RENEWAL_PLANS[payment.plan_type || payment.planType]?.months || 1;
   const amount = Math.round(Number(payment.amount || 0));
-  const amountMonths = [20000, 20500, 21000].includes(amount)
+  const amountMonths = [18900, 19400, 20000, 20500, 21000].includes(amount)
     ? 6
-    : [9000, 9500, 10500, 11000].includes(amount)
+    : [9000, 9500, 9975, 10475, 10500, 11000].includes(amount)
       ? 3
       : 1;
   return Math.max(explicitMonths, planMonths, amountMonths);
