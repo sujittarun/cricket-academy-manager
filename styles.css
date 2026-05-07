@@ -1155,6 +1155,7 @@ body.popup-open {
 
 .academy-reel-frame {
   min-height: 0;
+  overflow: hidden;
   border-radius: 18px;
   background:
     linear-gradient(135deg, rgba(11, 52, 112, 0.08), rgba(244, 191, 42, 0.12)),
@@ -1162,37 +1163,62 @@ body.popup-open {
   padding: 10px;
 }
 
-.academy-video-card {
-  display: grid;
-  grid-template-columns: minmax(180px, 0.74fr) minmax(120px, 0.26fr);
-  align-items: stretch;
-  min-height: 244px;
+.academy-media-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.academy-media-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.academy-media-row::-webkit-scrollbar-thumb {
+  background: rgba(26, 79, 157, 0.22);
+  border-radius: 999px;
+}
+
+.academy-video-card,
+.academy-instagram-card {
+  flex: 0 0 174px;
+  width: 174px;
+  height: 248px;
   overflow: hidden;
-  margin: 0;
   border: 1px solid rgba(15, 34, 64, 0.08);
   border-radius: 18px;
   background: #ffffff;
   box-shadow: 0 10px 24px rgba(11, 52, 112, 0.12);
+  scroll-snap-align: start;
+}
+
+.academy-video-card {
+  position: relative;
+  margin: 0;
 }
 
 .academy-video-player {
   width: 100%;
   height: 100%;
-  min-height: 244px;
   background: #061932;
   object-fit: cover;
 }
 
 .academy-video-card figcaption {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  left: 9px;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 6px;
-  padding: 14px;
-  background:
-    radial-gradient(circle at top right, rgba(244, 191, 42, 0.2), transparent 42%),
-    linear-gradient(150deg, #08244d, #123d76);
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(8, 36, 77, 0.82);
   color: #ffffff;
+  pointer-events: none;
 }
 
 .academy-video-card figcaption span {
@@ -1203,10 +1229,16 @@ body.popup-open {
   text-transform: uppercase;
 }
 
-.academy-video-card figcaption strong {
-  max-width: 12ch;
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  line-height: 1.05;
+.academy-instagram-card {
+  position: relative;
+}
+
+.academy-instagram-embed {
+  width: 326px !important;
+  min-width: 326px !important;
+  margin: 0 !important;
+  transform: scale(0.56);
+  transform-origin: top left;
 }
 
 .admission-banner {
@@ -3120,14 +3152,6 @@ body.popup-open {
     height: auto;
   }
 
-  .academy-video-card {
-    grid-template-columns: 1fr;
-  }
-
-  .academy-video-card figcaption strong {
-    max-width: none;
-  }
-
   .admission-compact-layout {
     grid-template-columns: 1fr;
   }
@@ -3587,10 +3611,6 @@ body.popup-open {
   .academy-reel-frame {
     height: auto;
     border-radius: 16px;
-  }
-
-  .academy-video-player {
-    min-height: 320px;
   }
 
   .admission-banner {
