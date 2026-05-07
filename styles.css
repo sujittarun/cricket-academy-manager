@@ -1183,14 +1183,46 @@ body.popup-open {
   border-radius: 999px;
 }
 
-.academy-instagram-embed {
-  flex: 0 0 246px !important;
-  width: 326px !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  transform: scale(0.76);
-  transform-origin: top left;
+.academy-reel-card {
+  position: relative;
+  flex: 0 0 188px;
+  height: 252px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(11, 52, 112, 0.12);
   scroll-snap-align: start;
+}
+
+.academy-reel-crop {
+  height: 100%;
+  overflow: hidden;
+  background: #f8fbff;
+}
+
+.academy-reel-embed {
+  width: 100%;
+  height: 332px;
+  margin-top: -58px;
+  border: 0;
+}
+
+.academy-reel-open {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(11, 52, 112, 0.9);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(11, 52, 112, 0.2);
 }
 
 .admission-banner {
