@@ -243,6 +243,10 @@ const RENEWAL_PLANS = {
   special: { title: "Special training", amount: 10000, months: 1 },
   custom: { title: "Custom amount", amount: 0, months: 1 },
 };
+const PLAN_DISCOUNT_LABELS = {
+  quarterly: "5% discount applied",
+  halfyearly: "10% discount applied",
+};
 const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "need_help"];
 const REMINDER_PLAN_LABELS = {
   monthly: "1 Month",
@@ -1490,9 +1494,10 @@ const syncAdmissionAmountState = () => {
     admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
   }
   if (admissionFeeSummary) {
+    const discountLabel = PLAN_DISCOUNT_LABELS[admissionFeePlan?.value];
     admissionFeeSummary.textContent = admissionFeePlan?.value === "custom"
       ? `Custom amount: Rs ${total.toLocaleString("en-IN")}.`
-      : `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")} + Rs ${ADMISSION_ONE_TIME_FEE} admission. First payment Rs ${total.toLocaleString("en-IN")}.`;
+      : `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")}${discountLabel ? ` (${discountLabel})` : ""} + Rs ${ADMISSION_ONE_TIME_FEE} admission. First payment Rs ${total.toLocaleString("en-IN")}.`;
   }
   updatePaymentAssist();
 };
