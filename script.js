@@ -2434,9 +2434,11 @@ const sendReminderDryRun = async (kid) => {
         };
       }
       if (functionResponse.status !== 404) {
+        const isExpiredSession = [401, 403].includes(functionResponse.status) &&
+          isReminderAuthError(functionBody?.error);
         return {
           success: false,
-          message: isReminderAuthError(functionBody?.error)
+          message: isExpiredSession
             ? "Manager session expired. Please logout, login again, then send the reminder."
             : functionBody?.error || "WhatsApp reminder function failed.",
         };
