@@ -1132,10 +1132,25 @@ body.popup-open {
   line-height: 1.35;
 }
 
-.moments-helper {
-  color: var(--accent-dark) !important;
-  font-size: 0.76rem !important;
+.moment-link-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.moment-link-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(26, 79, 157, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-dark);
+  font-size: 0.76rem;
   font-weight: 800;
+  text-decoration: none;
 }
 
 .academy-reel-frame {
