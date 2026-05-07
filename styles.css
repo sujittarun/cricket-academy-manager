@@ -1091,6 +1091,85 @@ body.popup-open {
   margin-bottom: 14px;
 }
 
+.academy-moments {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.88fr) minmax(320px, 1.12fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(244, 191, 42, 0.22), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.9));
+  box-shadow: 0 18px 38px rgba(11, 52, 112, 0.1);
+}
+
+.academy-moments-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.academy-moments-copy h3,
+.academy-moments-copy p {
+  margin: 0;
+}
+
+.academy-moments-copy h3 {
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.05;
+  color: var(--accent-dark);
+}
+
+.academy-moments-copy p {
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.moment-link-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.moment-link-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(26, 79, 157, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.academy-reel-frame {
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(11, 52, 112, 0.08), rgba(244, 191, 42, 0.12)),
+    rgba(255, 255, 255, 0.7);
+}
+
+.academy-instagram-embed {
+  width: min(100%, 540px) !important;
+  min-width: min(100%, 326px) !important;
+  margin: 0 auto !important;
+}
+
 .admission-banner {
   display: flex;
   justify-content: space-between;
@@ -2994,6 +3073,14 @@ body.popup-open {
     display: grid;
   }
 
+  .academy-moments {
+    grid-template-columns: 1fr;
+  }
+
+  .academy-reel-frame {
+    min-height: 320px;
+  }
+
   .admission-compact-layout {
     grid-template-columns: 1fr;
   }
@@ -3439,6 +3526,20 @@ body.popup-open {
 
   .admission-panel {
     padding: 14px;
+  }
+
+  .academy-moments {
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .academy-moments-copy {
+    gap: 8px;
+  }
+
+  .academy-reel-frame {
+    min-height: 260px;
+    border-radius: 16px;
   }
 
   .admission-banner {
