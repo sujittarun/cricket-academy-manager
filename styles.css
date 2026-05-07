@@ -1155,137 +1155,58 @@ body.popup-open {
 
 .academy-reel-frame {
   min-height: 0;
-  overflow: hidden;
   border-radius: 18px;
   background:
     linear-gradient(135deg, rgba(11, 52, 112, 0.08), rgba(244, 191, 42, 0.12)),
     rgba(255, 255, 255, 0.7);
+  padding: 10px;
 }
 
-.academy-reel-strip {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 10px 10px 14px;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
-
-.academy-reel-strip::-webkit-scrollbar {
-  height: 6px;
-}
-
-.academy-reel-strip::-webkit-scrollbar-thumb {
-  background: rgba(26, 79, 157, 0.22);
-  border-radius: 999px;
-}
-
-.academy-reel-card {
-  position: relative;
+.academy-video-card {
   display: grid;
-  grid-template-rows: 128px auto;
-  flex: 0 0 192px;
+  grid-template-columns: minmax(180px, 0.74fr) minmax(120px, 0.26fr);
+  align-items: stretch;
+  min-height: 244px;
   overflow: hidden;
+  margin: 0;
   border: 1px solid rgba(15, 34, 64, 0.08);
   border-radius: 18px;
   background: #ffffff;
   box-shadow: 0 10px 24px rgba(11, 52, 112, 0.12);
-  color: var(--text);
-  text-decoration: none;
-  scroll-snap-align: start;
-  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.academy-reel-card:hover,
-.academy-reel-card:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 30px rgba(11, 52, 112, 0.16);
-}
-
-.academy-reel-visual {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 24% 12%, rgba(244, 191, 42, 0.38), transparent 30%),
-    linear-gradient(135deg, rgba(11, 52, 112, 0.94), rgba(26, 79, 157, 0.76));
-}
-
-.academy-reel-visual img {
+.academy-video-player {
   width: 100%;
   height: 100%;
+  min-height: 244px;
+  background: #061932;
   object-fit: cover;
-  opacity: 0.82;
-  transform: scale(1.08);
 }
 
-.academy-reel-visual::after {
-  content: "";
-  position: absolute;
-  inset: 0;
+.academy-video-card figcaption {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 14px;
   background:
-    linear-gradient(to top, rgba(4, 18, 43, 0.46), transparent 48%),
-    linear-gradient(135deg, rgba(244, 191, 42, 0.08), rgba(26, 79, 157, 0.26));
+    radial-gradient(circle at top right, rgba(244, 191, 42, 0.2), transparent 42%),
+    linear-gradient(150deg, #08244d, #123d76);
+  color: #ffffff;
 }
 
-.academy-play-mark {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  z-index: 1;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 18px rgba(4, 18, 43, 0.24);
-}
-
-.academy-play-mark::after {
-  content: "";
-  position: absolute;
-  top: 10px;
-  left: 0;
-  right: 0;
-  margin: auto;
-  width: 0;
-  height: 0;
-  border-top: 7px solid transparent;
-  border-bottom: 7px solid transparent;
-  border-left: 11px solid var(--accent-dark);
-  transform: translateX(2px);
-}
-
-.academy-reel-text {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
-}
-
-.academy-reel-text span {
-  color: var(--accent);
-  font-size: 0.68rem;
+.academy-video-card figcaption span {
+  color: #f4bf2a;
+  font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.academy-reel-text strong {
-  color: var(--accent-dark);
-  font-size: 0.86rem;
-  line-height: 1.18;
-}
-
-.reel-card-blue .academy-reel-visual {
-  background: linear-gradient(135deg, #092c62, #2b72bd);
-}
-
-.reel-card-gold .academy-reel-visual {
-  background: linear-gradient(135deg, #123d76, #f4bf2a);
-}
-
-.reel-card-slate .academy-reel-visual {
-  background: linear-gradient(135deg, #081b38, #25507f);
+.academy-video-card figcaption strong {
+  max-width: 12ch;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.05;
 }
 
 .admission-banner {
@@ -3199,6 +3120,14 @@ body.popup-open {
     height: auto;
   }
 
+  .academy-video-card {
+    grid-template-columns: 1fr;
+  }
+
+  .academy-video-card figcaption strong {
+    max-width: none;
+  }
+
   .admission-compact-layout {
     grid-template-columns: 1fr;
   }
@@ -3658,6 +3587,10 @@ body.popup-open {
   .academy-reel-frame {
     height: auto;
     border-radius: 16px;
+  }
+
+  .academy-video-player {
+    min-height: 320px;
   }
 
   .admission-banner {
