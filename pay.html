@@ -16,6 +16,7 @@
         --muted: #667085;
         --line: #d9e2f2;
         --soft: #f3f7fd;
+        --card: rgba(255, 255, 255, 0.96);
       }
 
       * {
@@ -25,45 +26,55 @@
       body {
         margin: 0;
         min-height: 100vh;
-        padding: clamp(14px, 4vw, 34px);
+        display: grid;
+        place-items: center;
+        padding: clamp(18px, 4vw, 40px);
         color: var(--ink);
         font-family: "Trebuchet MS", Verdana, sans-serif;
         background:
-          radial-gradient(circle at top left, rgba(247, 201, 72, 0.24), transparent 34%),
+          radial-gradient(circle at 18% 8%, rgba(247, 201, 72, 0.34), transparent 28%),
+          radial-gradient(circle at 86% 72%, rgba(21, 87, 166, 0.18), transparent 30%),
           linear-gradient(145deg, #eef5ff 0%, #ffffff 48%, #e8f1ff 100%);
       }
 
       .pay-card {
-        width: min(760px, 100%);
-        min-height: calc(100vh - clamp(28px, 8vw, 68px));
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        position: relative;
+        width: min(620px, 100%);
+        overflow: hidden;
         margin: 0 auto;
-        border: 1px solid rgba(21, 87, 166, 0.16);
-        border-radius: clamp(24px, 5vw, 38px);
-        padding: clamp(22px, 6vw, 48px);
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 24px 60px rgba(16, 34, 63, 0.16);
+        border: 1px solid rgba(21, 87, 166, 0.14);
+        border-radius: clamp(26px, 4vw, 34px);
+        padding: clamp(18px, 4vw, 28px);
+        background: var(--card);
+        box-shadow: 0 28px 70px rgba(16, 34, 63, 0.18);
+      }
+
+      .pay-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 9px;
+        background: linear-gradient(90deg, var(--blue), var(--gold));
       }
 
       .brand {
         display: flex;
         align-items: center;
-        gap: clamp(14px, 4vw, 22px);
-        margin-bottom: clamp(22px, 5vw, 36px);
+        gap: 14px;
+        margin: 6px 0 18px;
       }
 
       .brand img {
-        width: clamp(64px, 15vw, 96px);
-        height: clamp(64px, 15vw, 96px);
+        width: clamp(58px, 11vw, 74px);
+        height: clamp(58px, 11vw, 74px);
         object-fit: contain;
+        filter: drop-shadow(0 10px 18px rgba(13, 47, 95, 0.12));
       }
 
       .eyebrow {
         margin: 0;
         color: var(--blue);
-        font-size: clamp(0.78rem, 2.4vw, 0.95rem);
+        font-size: clamp(0.72rem, 2vw, 0.82rem);
         font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -72,27 +83,34 @@
       h1 {
         margin: 3px 0 0;
         color: var(--deep);
-        font-size: clamp(1.65rem, 7vw, 3rem);
-        line-height: 1.05;
+        font-size: clamp(1.45rem, 5vw, 2.05rem);
+        line-height: 1.08;
       }
 
       .amount-box {
-        margin: 0 0 clamp(18px, 5vw, 30px);
-        padding: clamp(24px, 7vw, 42px);
-        border-radius: clamp(22px, 5vw, 34px);
-        background: linear-gradient(135deg, #1557a6, #0d3d78);
+        position: relative;
+        overflow: hidden;
+        margin: 0 0 14px;
+        padding: clamp(20px, 5vw, 30px);
+        border-radius: clamp(22px, 5vw, 28px);
+        background:
+          radial-gradient(circle at 90% 18%, rgba(247, 201, 72, 0.32), transparent 26%),
+          linear-gradient(135deg, #1557a6, #0d3d78);
         color: white;
       }
 
       .amount-label {
         margin: 0 0 5px;
         color: rgba(255, 255, 255, 0.78);
-        font-size: clamp(0.85rem, 2.6vw, 1rem);
+        font-size: 0.86rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
       }
 
       .amount {
         margin: 0;
-        font-size: clamp(2.7rem, 12vw, 5.2rem);
+        font-size: clamp(2.65rem, 11vw, 4.35rem);
+        line-height: 0.95;
         font-weight: 900;
         letter-spacing: -0.04em;
       }
@@ -100,39 +118,42 @@
       .detail-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        margin: 0 0 clamp(18px, 5vw, 30px);
+        gap: 10px;
+        margin: 0 0 14px;
       }
 
       .detail {
-        display: flex;
-        justify-content: space-between;
-        flex-direction: column;
-        gap: 14px;
-        padding: clamp(14px, 4vw, 18px);
+        display: grid;
+        gap: 6px;
+        min-height: 78px;
+        padding: 13px 14px;
         border: 1px solid var(--line);
-        border-radius: 18px;
+        border-radius: 16px;
         background: var(--soft);
-        font-size: clamp(0.9rem, 2.8vw, 1rem);
       }
 
       .detail span:first-child {
         color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 800;
       }
 
       .detail strong {
         text-align: left;
         overflow-wrap: anywhere;
+        font-size: 0.98rem;
+        line-height: 1.25;
       }
 
       .pay-button {
         width: 100%;
         border: 0;
-        border-radius: 22px;
-        padding: clamp(18px, 5vw, 24px);
+        min-height: 58px;
+        border-radius: 19px;
+        padding: 0 20px;
         color: #0f2852;
         background: linear-gradient(135deg, var(--gold), #ffd86c);
-        font-size: clamp(1.12rem, 4vw, 1.35rem);
+        font-size: clamp(1.08rem, 3.8vw, 1.22rem);
         font-weight: 900;
         cursor: pointer;
         box-shadow: 0 12px 24px rgba(247, 201, 72, 0.36);
@@ -142,42 +163,49 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-        margin-top: 10px;
+        margin-top: 11px;
       }
 
       .secondary {
         border: 1px solid var(--line);
-        border-radius: 15px;
-        padding: 13px 12px;
+        border-radius: 14px;
+        padding: 12px;
         color: var(--blue);
         background: white;
+        font-size: 0.88rem;
         font-weight: 800;
         cursor: pointer;
       }
 
       .message {
-        min-height: 20px;
-        margin: 16px 0 0;
+        min-height: 19px;
+        margin: 13px 0 0;
         color: var(--muted);
-        font-size: clamp(0.86rem, 2.8vw, 0.98rem);
+        font-size: 0.88rem;
         line-height: 1.4;
         text-align: center;
       }
 
       @media (max-width: 560px) {
         body {
-          padding: 0;
-          background: white;
+          align-items: start;
+          padding: 16px;
         }
 
         .pay-card {
-          min-height: 100vh;
-          border: 0;
-          border-radius: 0;
-          box-shadow: none;
+          width: 100%;
+          border-radius: 28px;
         }
 
         .detail-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .brand {
+          align-items: flex-start;
+        }
+
+        .secondary-row {
           grid-template-columns: 1fr;
         }
       }
