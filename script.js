@@ -847,11 +847,22 @@ const renderFinanceMonthPopup = (monthKey) => {
   financeMonthPopupTitle.textContent = range.label;
   financeMonthPopupContent.innerHTML = `
     <div class="finance-month-summary">
-      <span>Revenue <strong>${rupees(revenueTotal)}</strong></span>
-      <span>Joining <strong>${rupees(joiningTotal)}</strong></span>
-      <span>Renewal <strong>${rupees(renewalTotal)}</strong></span>
-      <span>Expenses <strong>${rupees(expenseTotal)}</strong></span>
-      <span class="${revenueTotal - expenseTotal < 0 ? "negative" : "positive"}">Net <strong>${rupees(revenueTotal - expenseTotal)}</strong></span>
+      <div class="finance-summary-card revenue-breakdown">
+        <span>Revenue</span>
+        <strong>${rupees(revenueTotal)}</strong>
+        <div class="finance-summary-submetrics">
+          <small>Joining <b>${rupees(joiningTotal)}</b></small>
+          <small>Renewal <b>${rupees(renewalTotal)}</b></small>
+        </div>
+      </div>
+      <div class="finance-summary-card">
+        <span>Expenses</span>
+        <strong>${rupees(expenseTotal)}</strong>
+      </div>
+      <div class="finance-summary-card ${revenueTotal - expenseTotal < 0 ? "negative" : "positive"}">
+        <span>Net</span>
+        <strong>${rupees(revenueTotal - expenseTotal)}</strong>
+      </div>
     </div>
     <div class="finance-month-columns">
       <section>
