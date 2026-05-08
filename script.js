@@ -708,9 +708,8 @@ const monthRange = (monthKey) => {
 };
 
 const FINANCE_RANGE_OPTIONS = {
-  week: { label: "This week", months: 0, type: "week" },
   month: { label: "This month", months: 1 },
-  "2months": { label: "2 months", months: 2 },
+  lastmonth: { label: "Last month", months: 0, type: "lastmonth" },
   "3months": { label: "3 months", months: 3 },
   "6months": { label: "6 months", months: 6 },
   year: { label: "This year", months: 0, type: "year" },
@@ -758,11 +757,9 @@ const financeRangeFromMode = () => {
   const today = new Date();
   let startDate;
   let endDate;
-  if (option.type === "week") {
-    const day = today.getDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day;
-    startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
-    endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6);
+  if (option.type === "lastmonth") {
+    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    endDate = new Date(today.getFullYear(), today.getMonth(), 0);
   } else if (option.type === "year") {
     startDate = new Date(today.getFullYear(), 0, 1);
     endDate = new Date(today.getFullYear(), 11, 31);
