@@ -816,6 +816,12 @@ const renderFinanceMonthPopup = (monthKey) => {
   const revenueRows = buildFinanceRevenueRows().filter((row) => String(row.date || "").startsWith(monthKey));
   const expenseRows = financeExpenses.filter((row) => String(row.expense_date || "").startsWith(monthKey));
   const revenueTotal = revenueRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const joiningTotal = revenueRows
+    .filter((row) => row.type === "Joining")
+    .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const renewalTotal = revenueRows
+    .filter((row) => row.type === "Renewal")
+    .reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const expenseTotal = expenseRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const renderRevenueRows = () => revenueRows.length
     ? revenueRows.map((row) => `
@@ -842,6 +848,8 @@ const renderFinanceMonthPopup = (monthKey) => {
   financeMonthPopupContent.innerHTML = `
     <div class="finance-month-summary">
       <span>Revenue <strong>${rupees(revenueTotal)}</strong></span>
+      <span>Joining <strong>${rupees(joiningTotal)}</strong></span>
+      <span>Renewal <strong>${rupees(renewalTotal)}</strong></span>
       <span>Expenses <strong>${rupees(expenseTotal)}</strong></span>
       <span class="${revenueTotal - expenseTotal < 0 ? "negative" : "positive"}">Net <strong>${rupees(revenueTotal - expenseTotal)}</strong></span>
     </div>
