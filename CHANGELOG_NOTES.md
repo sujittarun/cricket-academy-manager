@@ -15,6 +15,15 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-09
 
+### Payment Pending Verification Status
+
+- Added `Payment pending verification` behavior in the web admission and roster/review UI.
+- Parent UPI payment claims no longer auto-mark fees paid.
+- Submitted UPI amount/reference is kept for manager review, while finance/paid stats/receipts stay unconfirmed until manager verifies payment.
+- Admission payment copy now explains that receipts are sent only after academy confirmation.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+
 ### Web Context and Changelog Files
 
 - Added `PROJECT_CONTEXT.md` and this `CHANGELOG_NOTES.md` to the web repo.
@@ -43,4 +52,3 @@ Add the newest entry at the top under a date heading. Keep each entry short but 
 - Files or features affected.
 - Verification done.
 - Commit hash if pushed.
-

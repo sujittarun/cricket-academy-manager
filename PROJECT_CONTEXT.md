@@ -55,6 +55,7 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
   - consent and terms mandatory.
 - Mobile number validation: parent and alternate contact should be 10 digits when provided/required.
 - Payment is not mandatory. If fees paid is "No", no receipt should be generated at submit time.
+- Parent UPI payments are not automatically verified. If a parent marks payment made or enters UTR/reference, show/store it as `Payment pending verification`: keep `fees_paid=false`, keep the submitted amount/reference for manager review, do not count it in finance, and do not generate receipt until manager verifies/marks paid.
 
 ## Fees and Renewal Logic
 
@@ -113,6 +114,7 @@ Current fee constants:
 - Manual reminders only for now. Do not enable automatic reminder schedule until user asks.
 - Reminder options: 1 Month, 3 Months, 6 Months, Need Help.
 - Razorpay is paused/not used.
+- Current non-gateway UPI flow must not auto-mark paid. Treat parent payment claims as pending verification until a manager confirms.
 - Current UPI ID in web config/code: `9059962499@ybl`.
 - Payment phone: `9059962499`.
 - Account name: Srinivas.
@@ -154,4 +156,3 @@ Current fee constants:
 - For layout changes, verify desktop and mobile browser behavior where possible.
 - For Supabase/RPC changes, confirm signatures match web and Android.
 - For fee changes, test monthly/3-month/6-month/custom/special and due dates.
-

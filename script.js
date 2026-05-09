@@ -319,8 +319,24 @@ let reminderSettings = { ...DEFAULT_REMINDER_SETTINGS };
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
+const derivePaymentStatus = ({ feesPaid, amountPaid = 0, paymentReference = "", paymentStatus = "" }) => {
+  if (feesPaid === true || feesPaid === "yes" || paymentStatus === "paid") return "paid";
+  if (paymentStatus === "pending_verification") return "pending_verification";
+  if (Number(amountPaid || 0) > 0 || String(paymentReference || "").trim()) return "pending_verification";
+  return "unpaid";
+};
+
+const paymentStatusLabel = (status) => {
+  if (status === "paid") return "Paid";
+  if (status === "pending_verification") return "Pending verification";
+  return "Not paid";
+};
+
 const normalizeKid = (kid) => {
   const renewals = Array.isArray(kid.renewals) ? kid.renewals.filter(Boolean) : [];
+  const paymentReference = kid.payment_reference || "";
+  const amountPaid = Number(kid.amount_paid) || 0;
+  const feesPaid = kid.fees_paid ? "yes" : "no";
 
   return {
     id: kid.id,
@@ -328,8 +344,8 @@ const normalizeKid = (kid) => {
     age: Number(kid.age) || 0,
     timeSlot: kid.time_slot || "",
     joinDate: kid.join_date || "",
-    feesPaid: kid.fees_paid ? "yes" : "no",
-    amountPaid: Number(kid.amount_paid) || 0,
+    feesPaid,
+    amountPaid,
     jerseySize: kid.jersey_size || "",
     jerseyPairs: Number(kid.jersey_pairs) || 0,
     renewals,
@@ -339,7 +355,13 @@ const normalizeKid = (kid) => {
     discontinuedAt: kid.discontinued_at || "",
     paymentMethod: kid.payment_method || "",
     paymentUpiId: kid.payment_upi_id || "",
-    paymentReference: kid.payment_reference || "",
+    paymentReference,
+    paymentStatus: derivePaymentStatus({
+      feesPaid,
+      amountPaid,
+      paymentReference,
+      paymentStatus: kid.payment_status || "",
+    }),
     comments: kid.comments || "",
     filledBy: kid.filled_by || "",
     fatherGuardianName: kid.father_guardian_name || "",
@@ -371,6 +393,13 @@ const normalizePendingAdmission = (admission) => ({
   jerseyPairs: Number(admission.jersey_pairs) || 0,
   filledBy: admission.filled_by || "Parent / Guardian",
   comments: admission.comments || "",
+  paymentReference: admission.payment_reference || "",
+  paymentStatus: derivePaymentStatus({
+    feesPaid: Boolean(admission.fees_paid),
+    amountPaid: Number(admission.amount_paid) || 0,
+    paymentReference: admission.payment_reference || "",
+    paymentStatus: admission.payment_status || "",
+  }),
   createdAt: admission.created_at || "",
 });
 
@@ -557,6 +586,7 @@ const getDueCycleDate = (kid) => {
 
 const getRenewalStatusLabel = (kid) => {
   if (kid.discontinued) return "Tracking paused";
+  if (kid.paymentStatus === "pending_verification") return "Payment pending verification";
   if (kid.feesPaid !== "yes") return "Join fee pending";
   const daysPastDue = getDaysSinceDate(getPaidThroughDate(kid));
   if (daysPastDue > 1) return `${daysPastDue} days overdue`;
@@ -1666,7 +1696,7 @@ const refreshPaymentReturnHint = () => {
     }
 
     paymentReturnHint.hidden = false;
-    paymentReturnHint.textContent = `Back from ${pending.provider || "UPI payment"}? If the payment is complete, switch Fees paid to Yes and enter the UTR if your app shows one.`;
+    paymentReturnHint.textContent = `Back from ${pending.provider || "UPI payment"}? If payment is complete, enter the UTR/reference so the academy can verify it.`;
   } catch (error) {
     sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
     paymentReturnHint.hidden = true;
@@ -2165,6 +2195,9 @@ const renderKids = () => {
     const studentType = getStudentType(kid);
     const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
     const renewalStatus = getRenewalStatusLabel(kid);
+    const paymentPending = kid.paymentStatus === "pending_verification";
+    const feeStatusText = paymentPending ? "Pending verification" : feesPending ? "Not paid" : "Paid";
+    const feeStatusClass = paymentPending ? "status-pending" : feesPending ? "status-unpaid" : "status-paid";
     const dueDate = getPaidThroughDate(kid);
     const daysUntilDue = -getDaysSinceDate(dueDate);
     const reminderState = getReminderState(kid);
@@ -2191,8 +2224,8 @@ const renderKids = () => {
       <td data-label="Join date">${formatDate(kid.joinDate)}</td>
       <td data-label="Latest renewal">${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
       <td data-label="Fees paid">
-        <span class="status-pill ${feesPending ? "status-unpaid" : "status-paid"}">
-          ${feesPending ? "Not paid" : "Paid"}
+        <span class="status-pill ${feeStatusClass}">
+          ${feeStatusText}
         </span>
       </td>
       <td data-label="Amount paid">Rs ${Number(kid.amountPaid).toFixed(2)}</td>
@@ -2301,9 +2334,17 @@ const renderAdmissionReviewQueue = () => {
   admissionReviewList.innerHTML = pendingAdmissions
     .map((admission) => {
       const contact = admission.parentContactNo || admission.alternateContactNo || "No phone saved";
+      const isPendingVerification = admission.paymentStatus === "pending_verification";
       const payLabel = admission.feesPaid
         ? `Paid Rs ${admission.amountPaid.toLocaleString("en-IN")}`
-        : "Fees not paid";
+        : isPendingVerification
+          ? `Pending verification Rs ${admission.amountPaid.toLocaleString("en-IN")}`
+          : "Fees not paid";
+      const payClass = admission.feesPaid
+        ? "status-paid"
+        : isPendingVerification
+          ? "status-pending"
+          : "status-unpaid";
       return `
         <article class="admission-review-card">
           <div class="review-main">
@@ -2312,7 +2353,7 @@ const renderAdmissionReviewQueue = () => {
               <h3>${escapeHtml(admission.applicantName)}</h3>
               <p class="review-meta">${escapeHtml(admission.age)} yrs · ${escapeHtml(admission.timeSlot || "Slot not set")} · Joining ${escapeHtml(formatDate(admission.joinDate))}</p>
             </div>
-            <span class="status-pill ${admission.feesPaid ? "status-paid" : "status-unpaid"}">${escapeHtml(payLabel)}</span>
+            <span class="status-pill ${payClass}">${escapeHtml(payLabel)}</span>
           </div>
           <div class="review-details">
             <span>Parent: ${escapeHtml(admission.fatherGuardianName || "-")}</span>
@@ -3722,6 +3763,7 @@ admissionForm.addEventListener("submit", async (event) => {
 
   submitAdmissionButton.disabled = true;
   admissionMessage.textContent = "Submitting admission form...";
+  const paymentSubmittedForVerification = String(formData.get("feesPaid") || "no") === "yes";
 
   const baseAdmissionPayload = {
     p_applicant_name: String(formData.get("applicantName") || "").trim(),
@@ -3738,11 +3780,8 @@ admissionForm.addEventListener("submit", async (event) => {
     p_parent_aadhaar_no: String(formData.get("aadhaar") || "").trim(),
     p_time_slot: String(formData.get("timeSlot") || "").trim(),
     p_join_date: String(formData.get("joinDate") || "").trim(),
-    p_fees_paid: String(formData.get("feesPaid") || "no") === "yes",
-    p_amount_paid:
-      String(formData.get("feesPaid") || "no") === "yes"
-        ? getAdmissionAmount()
-        : 0,
+    p_fees_paid: false,
+    p_amount_paid: paymentSubmittedForVerification ? getAdmissionAmount() : 0,
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
     p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
@@ -3827,7 +3866,9 @@ admissionForm.addEventListener("submit", async (event) => {
 
   const row = Array.isArray(data) ? data[0] : data;
   const regNo = row?.reg_no ?? admissionRegNo.textContent;
-  admissionMessage.textContent = `Admission submitted for manager review. Reg No ${regNo}.`;
+  admissionMessage.textContent = paymentSubmittedForVerification
+    ? `Admission submitted for manager review. Payment is pending academy verification. Reg No ${regNo}.`
+    : `Admission submitted for manager review. Reg No ${regNo}.`;
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
   closePaymentPopup();
   showToast(`Admission submitted for ${String(formData.get("applicantName") || "").trim()}`);
@@ -4356,7 +4397,7 @@ const maybeShowPaymentVerify = () => {
   }
 };
 
-// UTR confirm submission — lock fees to "yes" and close
+// UTR confirm submission: mark the admission as pending manager verification.
 paymentVerifyForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   const utr = paymentUtrInput?.value?.trim();
@@ -4365,10 +4406,9 @@ paymentVerifyForm?.addEventListener("submit", (event) => {
     return;
   }
 
-  // Mark fees as paid and lock the field
+  // Keep fees unverified in DB, but mark that the parent claims payment was made.
   if (admissionFeesPaid) {
     admissionFeesPaid.value = "yes";
-    admissionFeesPaid.disabled = true;
   }
   // Populate hidden parity fields
   const methodInput = document.getElementById("admissionPaymentMethod");
@@ -4381,7 +4421,7 @@ paymentVerifyForm?.addEventListener("submit", (event) => {
 
   // Close popup and show confirmation
   closePaymentPopup();
-  showToast(`✓ Payment confirmed (Ref: ${utr}). Fees marked as paid.`);
+  showToast(`Payment reference saved. Manager will verify before receipt.`);
 
   // Reset verify UI for next time
   if (paymentVerifyForm) paymentVerifyForm.reset();

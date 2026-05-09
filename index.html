@@ -816,7 +816,7 @@
                       Fees paid
                       <select id="admissionFeesPaid" name="feesPaid" required>
                         <option value="no">No</option>
-                        <option value="yes">Yes</option>
+                        <option value="yes">Paid by UPI - verify by manager</option>
                       </select>
                     </label>
                     <label>
@@ -1063,7 +1063,7 @@
             </div>
 
             <p class="payment-help-copy" id="paymentHelpCopy">
-              After payment, come back to the form and switch Fees paid to Yes before submitting the admission.
+              After payment, come back and submit it for manager verification. Receipt is sent only after the academy confirms the payment.
             </p>
             <p id="paymentReturnHint" class="payment-return-hint" hidden></p>
             
@@ -1073,12 +1073,12 @@
             
             <div id="paymentVerifyFlow" class="payment-verify-flow" hidden>
               <div class="verify-heading">
-                <h4>Payment Successful?</h4>
-                <p>Enter the 12-digit UTR or Reference No. from your app to verify the transaction.</p>
+                <h4>Payment done?</h4>
+                <p>Enter the UTR or reference number from your UPI app. The academy manager will verify it before marking fees paid.</p>
               </div>
               <form id="paymentVerifyForm" class="verify-form">
                 <input id="paymentUtrInput" type="text" placeholder="e.g. 312345678901" required minlength="4" />
-                <button type="submit" class="primary-btn">Confirm Payment</button>
+                <button type="submit" class="primary-btn">Submit for verification</button>
               </form>
             </div>
           </div>
