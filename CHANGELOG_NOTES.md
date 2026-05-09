@@ -15,6 +15,16 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-09
 
+### Renewal Payment WhatsApp Follow-Up
+
+- Updated `pay.html` so tapping `Pay Now` calls the Supabase WhatsApp function with `payment_attempted` when the link includes a reminder event id.
+- The live function sends the parent: `After payment, just reply here with "Paid" or send the payment screenshot.`
+- If parent replies `Paid` or sends a screenshot/image/document, the function marks the reminder/payment-link as `payment_pending_verification` and replies: `Once the academy confirms the payment, we’ll update your renewal and send the receipt.`
+- This does not auto-renew, count finance revenue, or send receipt. Manager verification is still required.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+  - safe deployed endpoint smoke test returned `eventId is required`.
+
 ### Payment Pending Verification Status
 
 - Added `Payment pending verification` behavior in the web admission and roster/review UI.

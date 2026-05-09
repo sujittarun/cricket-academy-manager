@@ -248,11 +248,13 @@
     <script>
       const params = new URLSearchParams(window.location.search);
       const config = window.GEN_ALPHA_PAYMENT_CONFIG || {};
+      const supabaseConfig = window.GEN_ALPHA_SUPABASE_CONFIG || {};
       const upiId = String(config.upiId || "").trim();
       const payeeName = String(config.payeeName || "Gen Alpha Cricket Academy").trim();
       const amount = Number(params.get("a") || 0);
       const player = String(params.get("name") || "Cricket fees").trim();
       const plan = String(params.get("p") || "fees").trim();
+      const reminderEventId = String(params.get("e") || "").trim();
       const amountText = document.getElementById("amountText");
       const playerText = document.getElementById("playerText");
       const upiText = document.getElementById("upiText");
@@ -288,15 +290,50 @@
         }
       };
 
-      document.getElementById("payButton").addEventListener("click", () => {
+      const notifyPaymentAttempt = async () => {
+        if (!reminderEventId || !supabaseConfig.url) {
+          return;
+        }
+
+        const notifyKey = `gen-alpha-payment-attempt-${reminderEventId}`;
+        if (sessionStorage.getItem(notifyKey)) {
+          return;
+        }
+
+        const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/whatsapp-reminder`;
+        const request = fetch(endpoint, {
+          method: "POST",
+          keepalive: true,
+          headers: {
+            "Content-Type": "application/json",
+            ...(supabaseConfig.anonKey ? { apikey: supabaseConfig.anonKey } : {}),
+          },
+          body: JSON.stringify({
+            action: "payment_attempted",
+            eventId: reminderEventId,
+          }),
+        }).then((response) => {
+          if (response.ok) {
+            sessionStorage.setItem(notifyKey, "1");
+          }
+        });
+
+        await Promise.race([
+          request.catch(() => {}),
+          new Promise((resolve) => window.setTimeout(resolve, 700)),
+        ]);
+      };
+
+      document.getElementById("payButton").addEventListener("click", async () => {
         if (!upiId) {
           messageText.textContent = "UPI payment is not configured. Please contact academy staff.";
           return;
         }
         messageText.textContent = "Opening your UPI app...";
+        await notifyPaymentAttempt();
         window.location.href = `upi://pay?${upiUri}`;
         window.setTimeout(() => {
-          messageText.textContent = "If no UPI app opened, copy the UPI ID and pay manually.";
+          messageText.textContent = 'After payment, reply "Paid" on WhatsApp or send the payment screenshot.';
         }, 1600);
       });
 

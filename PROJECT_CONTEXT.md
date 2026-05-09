@@ -115,6 +115,12 @@ Current fee constants:
 - Reminder options: 1 Month, 3 Months, 6 Months, Need Help.
 - Razorpay is paused/not used.
 - Current non-gateway UPI flow must not auto-mark paid. Treat parent payment claims as pending verification until a manager confirms.
+- Renewal WhatsApp payment flow:
+  - Parent selects a renewal plan in WhatsApp.
+  - Function sends payment page link with reminder event id.
+  - When parent taps `Pay Now` on `pay.html`, call the WhatsApp function with `payment_attempted`, update reminder/payment-link status, and send: `After payment, just reply here with "Paid" or send the payment screenshot.`
+  - If parent replies `Paid` or sends a screenshot/image/document in WhatsApp, mark reminder/payment-link as `payment_pending_verification` and reply: `Once the academy confirms the payment, we’ll update your renewal and send the receipt.`
+  - Still do not mark renewal paid, extend due date, count finance revenue, or send receipt until manager verifies payment.
 - Current UPI ID in web config/code: `9059962499@ybl`.
 - Payment phone: `9059962499`.
 - Account name: Srinivas.
