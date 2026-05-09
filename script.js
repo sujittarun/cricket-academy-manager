@@ -2451,6 +2451,27 @@ const callReminderFunction = async (kid, reminderState, accessToken) => {
   return { functionResponse, functionBody };
 };
 
+const callRenewalVerifiedFunction = async ({ kid, planTitle, amount, cycleDate, toDate, accessToken }) => {
+  const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      apikey: SUPABASE_CONFIG.anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "renewal_verified",
+      studentId: kid.id,
+      planLabel: planTitle,
+      amount,
+      fromDate: cycleDate,
+      toDate,
+    }),
+  });
+  const functionBody = await functionResponse.json();
+  return { functionResponse, functionBody };
+};
+
 const isReminderAuthError = (message = "") =>
   /auth|session|jwt|bearer|authorization/i.test(String(message));
 
@@ -3534,8 +3555,28 @@ renewalForm?.addEventListener("submit", async (event) => {
   if (paymentRow) {
     financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
   }
+  const renewalToDate = addMonthsIso(cycleDate, plan.months);
+  const accessToken = await getFreshManagerAccessToken();
+  let whatsappNotice = "";
+  if (accessToken) {
+    try {
+      const { functionResponse, functionBody } = await callRenewalVerifiedFunction({
+        kid,
+        planTitle: plan.title,
+        amount,
+        cycleDate,
+        toDate: renewalToDate,
+        accessToken,
+      });
+      if (!functionResponse.ok || functionBody?.success === false) {
+        whatsappNotice = ` WhatsApp confirmation not sent: ${functionBody?.error || "unknown error"}.`;
+      }
+    } catch (error) {
+      whatsappNotice = ` WhatsApp confirmation not sent: ${error.message || "unknown error"}.`;
+    }
+  }
   closeRenewalPopup();
-  formMessage.textContent = `${kid.name} renewal payment saved for ${formatDate(cycleDate)}.`;
+  formMessage.textContent = `${kid.name} renewed from ${formatDate(cycleDate)} to ${formatDate(renewalToDate)}.${whatsappNotice}`;
   latestAdmissionReceipt = buildRenewalReceiptFromKid(kid, {
     plan: renewalPlan.value,
     planTitle: plan.title,

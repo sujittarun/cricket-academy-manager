@@ -15,11 +15,19 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-09
 
+### Renewal Verification WhatsApp and Proof Logging
+
+- Changed parent payment-proof reply to: `Once the academy confirms the payment, we’ll update your renewal. Thank You!`
+- When staff records a renewal payment, the WhatsApp function now sends a renewal confirmation with player name, selected plan, and renewal date range.
+- Parent `Paid` text or screenshot/document replies are stored in reminder debug metadata; raw webhook payloads remain in `whatsapp_webhook_events`.
+- Screenshot/document payment proof media is downloaded from Meta and stored in private Supabase Storage bucket `payment-proofs` when possible.
+- Added explicit timeline/debug events for parent payment proof received and renewal confirmation sent.
+
 ### Renewal Payment WhatsApp Follow-Up
 
 - Updated `pay.html` so tapping `Pay Now` calls the Supabase WhatsApp function with `payment_attempted` when the link includes a reminder event id.
 - The live function sends the parent: `After payment, just reply here with "Paid" or send the payment screenshot.`
-- If parent replies `Paid` or sends a screenshot/image/document, the function marks the reminder/payment-link as `payment_pending_verification` and replies: `Once the academy confirms the payment, we’ll update your renewal and send the receipt.`
+- If parent replies `Paid` or sends a screenshot/image/document, the function marks the reminder/payment-link as `payment_pending_verification` and replies: `Once the academy confirms the payment, we’ll update your renewal. Thank You!`
 - This does not auto-renew, count finance revenue, or send receipt. Manager verification is still required.
 - Verification done:
   - `node --check web-app-repo/script.js`
