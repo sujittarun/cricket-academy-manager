@@ -309,10 +309,12 @@ let realtimeStudentsChannel = null;
 let realtimeAttendanceChannel = null;
 let realtimeFinanceChannel = null;
 let realtimeAdmissionsChannel = null;
+let realtimeRemindersChannel = null;
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let financePayments = [];
 let financeExpenses = [];
+let paymentFollowUps = [];
 let financeRangeMode = "month-picker";
 let latestAdmissionReceipt = null;
 let reminderSettings = { ...DEFAULT_REMINDER_SETTINGS };
@@ -330,6 +332,60 @@ const paymentStatusLabel = (status) => {
   if (status === "paid") return "Paid";
   if (status === "pending_verification") return "Pending verification";
   return "Not paid";
+};
+
+const normalizePaymentFollowUp = (reminder = null, link = null) => ({
+  studentId: reminder?.student_id || link?.student_id || "",
+  reminderId: reminder?.id || link?.reminder_event_id || "",
+  reminderStatus: reminder?.status || "",
+  linkStatus: link?.status || "",
+  reminderType: reminder?.reminder_type || link?.payment_type || "",
+  selectedPlan: link?.plan_type || reminder?.selected_plan || "",
+  amount: Number(link?.amount ?? reminder?.amount ?? 0) || 0,
+  monthsCovered: Number(link?.months_covered || 0) || 0,
+  cycleStartDate: link?.cycle_start_date || reminder?.due_date || "",
+  paymentLinkUrl: link?.payment_link_url || reminder?.payment_link_url || "",
+  createdAt: link?.created_at || reminder?.created_at || "",
+  reminder,
+  link,
+});
+
+const isPaymentPendingFollowUp = (followUp) =>
+  ["payment_pending_verification", "pending_verification"].includes(followUp?.linkStatus) ||
+  ["payment_pending_verification", "pending_verification"].includes(followUp?.reminderStatus);
+
+const isReminderSentFollowUp = (followUp) =>
+  [
+    "queued",
+    "accepted",
+    "sent",
+    "delivered",
+    "read",
+    "payment_link_sent",
+    "payment_attempted",
+    "help_requested",
+  ].includes(followUp?.reminderStatus) ||
+  ["awaiting_parent_choice", "payment_link_sent", "payment_attempted"].includes(followUp?.linkStatus);
+
+const getPaymentFollowUpForKid = (kid) =>
+  paymentFollowUps.find((followUp) => followUp.studentId === kid?.id) || null;
+
+const getFeeDisplayState = (kid) => {
+  const followUp = getPaymentFollowUpForKid(kid);
+  if (isPaymentPendingFollowUp(followUp) || kid?.paymentStatus === "pending_verification") {
+    return { label: "Pending verification", className: "status-pending", followUp };
+  }
+  if (isReminderSentFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
+    return { label: "Reminder sent", className: "status-reminder", followUp };
+  }
+  if (kid?.feesPaid === "yes") return { label: "Paid", className: "status-paid", followUp };
+  return { label: "Not paid", className: "status-unpaid", followUp };
+};
+
+const getConfirmablePaymentFollowUp = (kid) => {
+  const followUp = getPaymentFollowUpForKid(kid);
+  if (!isPaymentPendingFollowUp(followUp)) return null;
+  return followUp;
 };
 
 const normalizeKid = (kid) => {
@@ -2195,9 +2251,7 @@ const renderKids = () => {
     const studentType = getStudentType(kid);
     const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
     const renewalStatus = getRenewalStatusLabel(kid);
-    const paymentPending = kid.paymentStatus === "pending_verification";
-    const feeStatusText = paymentPending ? "Pending verification" : feesPending ? "Not paid" : "Paid";
-    const feeStatusClass = paymentPending ? "status-pending" : feesPending ? "status-unpaid" : "status-paid";
+    const feeDisplay = getFeeDisplayState(kid);
     const dueDate = getPaidThroughDate(kid);
     const daysUntilDue = -getDaysSinceDate(dueDate);
     const reminderState = getReminderState(kid);
@@ -2224,8 +2278,8 @@ const renderKids = () => {
       <td data-label="Join date">${formatDate(kid.joinDate)}</td>
       <td data-label="Latest renewal">${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
       <td data-label="Fees paid">
-        <span class="status-pill ${feeStatusClass}">
-          ${feeStatusText}
+        <span class="status-pill ${feeDisplay.className}">
+          ${feeDisplay.label}
         </span>
       </td>
       <td data-label="Amount paid">Rs ${Number(kid.amountPaid).toFixed(2)}</td>
@@ -2292,6 +2346,7 @@ const refreshSession = async () => {
 const loadKids = async () => {
   if (!isBackendReady) {
     kids = [];
+    paymentFollowUps = [];
     renderKids();
     return;
   }
@@ -2312,10 +2367,59 @@ const loadKids = async () => {
   }
 
   kids = data.map(normalizeKid);
+  if (isManagerLoggedIn) {
+    await loadPaymentFollowUps();
+  } else {
+    paymentFollowUps = [];
+  }
   renderKids();
   if (isManagerLoggedIn) {
     queueFinanceRefresh();
   }
+};
+
+const loadPaymentFollowUps = async () => {
+  if (!isBackendReady || !isManagerLoggedIn) {
+    paymentFollowUps = [];
+    return;
+  }
+
+  const [reminderResult, linkResult] = await Promise.all([
+    supabaseClient
+      .from("reminder_events")
+      .select("id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response")
+      .order("created_at", { ascending: false })
+      .limit(300),
+    supabaseClient
+      .from("payment_link_requests")
+      .select("id,reminder_event_id,student_id,payment_type,plan_type,months_covered,amount,cycle_start_date,status,payment_link_url,created_at")
+      .order("created_at", { ascending: false })
+      .limit(300),
+  ]);
+
+  if (reminderResult.error || linkResult.error) {
+    paymentFollowUps = [];
+    return;
+  }
+
+  const remindersByStudent = new Map();
+  (reminderResult.data || []).forEach((reminder) => {
+    if (reminder.student_id && !remindersByStudent.has(reminder.student_id)) {
+      remindersByStudent.set(reminder.student_id, reminder);
+    }
+  });
+
+  const linksByStudent = new Map();
+  (linkResult.data || []).forEach((link) => {
+    if (link.student_id && !linksByStudent.has(link.student_id)) {
+      linksByStudent.set(link.student_id, link);
+    }
+  });
+
+  const studentIds = new Set([...remindersByStudent.keys(), ...linksByStudent.keys()]);
+  paymentFollowUps = [...studentIds].map((studentId) =>
+    normalizePaymentFollowUp(remindersByStudent.get(studentId), linksByStudent.get(studentId))
+  );
 };
 
 const renderAdmissionReviewQueue = () => {
@@ -2410,7 +2514,44 @@ const loadPlayerTimeline = async (studentId) => {
     return [];
   }
 
-  return data || [];
+  return Promise.all((data || []).map(async (item) => {
+    const proofPath = extractPaymentProofPath(item.details || "");
+    if (!proofPath) return item;
+    const proofUrl = await createPaymentProofSignedUrl(proofPath);
+    return { ...item, proofPath, proofUrl };
+  }));
+};
+
+const extractPaymentProofPath = (details = "") => {
+  const match = String(details).match(/payment-proofs\/([^\s.]+\/[^\s.]+\.(?:jpg|jpeg|png|webp|pdf))/i);
+  return match?.[1] || "";
+};
+
+const createPaymentProofSignedUrl = async (path) => {
+  if (!path || !supabaseClient?.storage) return "";
+  const { data, error } = await supabaseClient
+    .storage
+    .from("payment-proofs")
+    .createSignedUrl(path, 60 * 10);
+  return error ? "" : data?.signedUrl || "";
+};
+
+const openPaymentProofViewer = (url) => {
+  if (!url) return;
+  const viewer = document.createElement("div");
+  viewer.className = "proof-viewer-backdrop";
+  viewer.innerHTML = `
+    <div class="proof-viewer" role="dialog" aria-modal="true" aria-label="Payment proof">
+      <button class="icon-button proof-viewer-close" type="button">Close</button>
+      <img src="${escapeHtml(url)}" alt="Payment proof screenshot" />
+    </div>
+  `;
+  viewer.addEventListener("click", (event) => {
+    if (event.target === viewer || event.target.closest(".proof-viewer-close")) {
+      viewer.remove();
+    }
+  });
+  document.body.appendChild(viewer);
 };
 
 const getFreshManagerAccessToken = async () => {
@@ -2470,6 +2611,83 @@ const callRenewalVerifiedFunction = async ({ kid, planTitle, amount, cycleDate, 
   });
   const functionBody = await functionResponse.json();
   return { functionResponse, functionBody };
+};
+
+const planKeyForFollowUp = (followUp) => {
+  const key = followUp?.selectedPlan || "monthly";
+  return RENEWAL_PLANS[key] ? key : "monthly";
+};
+
+const confirmPendingPaymentReceived = async (kid, followUp) => {
+  if (!kid || !followUp) {
+    return { success: false, message: "No pending payment proof found for this player." };
+  }
+  if (!isManagerLoggedIn) {
+    return { success: false, message: "Login as manager before confirming payment." };
+  }
+
+  const planKey = planKeyForFollowUp(followUp);
+  const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
+  const amount = Number(followUp.amount || plan.amount);
+  const cycleDate = followUp.cycleStartDate || getDueCycleDate(kid);
+  const monthsCovered = Number(followUp.monthsCovered || plan.months || 1);
+  const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
+
+  const { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert({
+    student_id: kid.id,
+    payment_type: "renewal",
+    plan_type: planKey,
+    cycle_start_date: cycleDate,
+    months_covered: monthsCovered,
+    amount,
+    paid_on: toLocalIsoDate(),
+    comment: "Confirmed from WhatsApp payment proof.",
+    recorded_by: getActiveManagerEmail(),
+  }).select("*").single();
+  if (paymentError) {
+    return { success: false, message: paymentError.message };
+  }
+
+  const renewals = [...new Set([...kid.renewals, cycleDate])];
+  const { error: updateError } = await supabaseClient
+    .from("students")
+    .update({ renewals, updated_by: getActiveManagerEmail() })
+    .eq("id", kid.id);
+  if (updateError) {
+    return { success: false, message: `Payment saved, but player renewal status failed: ${updateError.message}` };
+  }
+
+  if (paymentRow) {
+    financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
+  }
+
+  const accessToken = await getFreshManagerAccessToken();
+  let warning = "";
+  if (accessToken) {
+    try {
+      const { functionResponse, functionBody } = await callRenewalVerifiedFunction({
+        kid,
+        planTitle: plan.title,
+        amount,
+        cycleDate,
+        toDate: renewalToDate,
+        accessToken,
+      });
+      if (!functionResponse.ok || functionBody?.success === false) {
+        warning = ` WhatsApp confirmation not sent: ${functionBody?.error || "unknown error"}.`;
+      }
+    } catch (error) {
+      warning = ` WhatsApp confirmation not sent: ${error.message || "unknown error"}.`;
+    }
+  }
+
+  await loadPaymentFollowUps();
+  await loadKids();
+  await loadFinance();
+  return {
+    success: true,
+    message: `${kid.name} payment confirmed and renewed from ${formatDate(cycleDate)} to ${formatDate(renewalToDate)}.${warning}`,
+  };
 };
 
 const isReminderAuthError = (message = "") =>
@@ -2588,6 +2806,13 @@ const renderPlayerDetails = async (kid) => {
   const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
   const reminderState = getReminderState(kid);
+  const feeDisplay = getFeeDisplayState(kid);
+  const pendingPaymentFollowUp = getConfirmablePaymentFollowUp(kid);
+  const pendingPlanKey = planKeyForFollowUp(pendingPaymentFollowUp);
+  const pendingPlan = RENEWAL_PLANS[pendingPlanKey] || RENEWAL_PLANS.monthly;
+  const pendingAmount = Number(pendingPaymentFollowUp?.amount || pendingPlan.amount || 0);
+  const pendingCycleDate = pendingPaymentFollowUp?.cycleStartDate || getDueCycleDate(kid);
+  const pendingToDate = addMonthsIso(pendingCycleDate, Number(pendingPaymentFollowUp?.monthsCovered || pendingPlan.months || 1));
 
   playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `
@@ -2601,6 +2826,7 @@ const renderPlayerDetails = async (kid) => {
       <div class="profile-stat"><span>Joined</span><strong>${formatDate(kid.joinDate)}</strong></div>
       <div class="profile-stat"><span>Next fee due</span><strong>${kid.discontinued ? "Paused" : formatDate(getPaidThroughDate(kid))}</strong></div>
       <div class="profile-stat"><span>Amount paid</span><strong>Rs ${Number(kid.amountPaid).toFixed(2)}</strong></div>
+      <div class="profile-stat"><span>Fee status</span><strong>${feeDisplay.label}</strong></div>
     </div>
     <div class="player-detail-section">
       <h4>Parent details</h4>
@@ -2649,6 +2875,15 @@ const renderPlayerDetails = async (kid) => {
       }
     </div>
     ${
+      isManagerLoggedIn && pendingPaymentFollowUp
+        ? `<div class="player-detail-section payment-verification-panel">
+            <h4>Payment pending verification</h4>
+            <p class="meta-text">${pendingPlan.title} · ${rupees(pendingAmount)} · ${formatDate(pendingCycleDate)} to ${formatDate(pendingToDate)}</p>
+            <button class="primary-btn" type="button" data-profile-confirm-payment-id="${kid.id}">Confirm payment received</button>
+          </div>`
+        : ""
+    }
+    ${
       isManagerLoggedIn && reminderState.isDue
         ? `<div class="player-detail-section reminder-action-panel">
             <h4>WhatsApp reminder</h4>
@@ -2666,6 +2901,14 @@ const renderPlayerDetails = async (kid) => {
                 <strong>${item.title || item.event_type}</strong>
                 <span>${formatDate(item.event_date)} · ${item.changed_by || "System"}</span>
                 ${item.details ? `<p>${item.details}</p>` : ""}
+                ${
+                  item.proofUrl
+                    ? `<button class="proof-thumb" type="button" data-proof-url="${escapeHtml(item.proofUrl)}">
+                        <img src="${escapeHtml(item.proofUrl)}" alt="Payment proof thumbnail" />
+                        <span>View proof</span>
+                      </button>`
+                    : ""
+                }
               </li>
             `).join("")}</ol>`
           : `<p class="sub-copy">No timeline records yet. Run the player profile timeline SQL migration to start capturing changes.</p>`
@@ -3369,6 +3612,10 @@ kidsTableBody.addEventListener("click", async (event) => {
     const result = await sendReminderDryRun(kid);
     target.disabled = false;
     target.textContent = originalText;
+    if (result.success) {
+      await loadPaymentFollowUps();
+      renderKids();
+    }
     showToast(result.message);
     return;
   }
@@ -3610,6 +3857,28 @@ closePlayerDetailButton?.addEventListener("click", () => {
 });
 playerDetailContent?.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) return;
+  const proofTarget = event.target.closest("[data-proof-url]");
+  if (proofTarget) {
+    openPaymentProofViewer(proofTarget.dataset.proofUrl || "");
+    return;
+  }
+  const confirmTarget = event.target.closest("[data-profile-confirm-payment-id]");
+  if (confirmTarget instanceof HTMLButtonElement) {
+    const kid = kids.find((item) => item.id === confirmTarget.dataset.profileConfirmPaymentId);
+    const followUp = getConfirmablePaymentFollowUp(kid);
+    confirmTarget.disabled = true;
+    const originalText = confirmTarget.textContent;
+    confirmTarget.textContent = "Confirming...";
+    const result = await confirmPendingPaymentReceived(kid, followUp);
+    showToast(result.message);
+    confirmTarget.disabled = false;
+    confirmTarget.textContent = originalText;
+    if (kid && result.success) {
+      const refreshedKid = kids.find((item) => item.id === kid.id) || kid;
+      await renderPlayerDetails(refreshedKid);
+    }
+    return;
+  }
   const target = event.target.closest("[data-profile-reminder-id]");
   if (!(target instanceof HTMLButtonElement)) return;
   const kid = kids.find((item) => item.id === target.dataset.profileReminderId);
@@ -3617,6 +3886,9 @@ playerDetailContent?.addEventListener("click", async (event) => {
   const originalText = target.textContent;
   target.textContent = "Logging...";
   const result = await sendReminderDryRun(kid);
+  if (result.success) {
+    await loadPaymentFollowUps();
+  }
   showToast(result.message);
   target.disabled = false;
   target.textContent = originalText;
@@ -4263,13 +4535,14 @@ const showRealtimeToast = (message) => {
 };
 
 const stopRealtimeSync = () => {
-  [realtimeStudentsChannel, realtimeAttendanceChannel, realtimeFinanceChannel, realtimeAdmissionsChannel].forEach((channel) => {
+  [realtimeStudentsChannel, realtimeAttendanceChannel, realtimeFinanceChannel, realtimeAdmissionsChannel, realtimeRemindersChannel].forEach((channel) => {
     if (channel) supabaseClient.removeChannel(channel);
   });
   realtimeStudentsChannel = null;
   realtimeAttendanceChannel = null;
   realtimeFinanceChannel = null;
   realtimeAdmissionsChannel = null;
+  realtimeRemindersChannel = null;
 };
 
 const restartRealtimeSync = () => {
@@ -4280,7 +4553,7 @@ const restartRealtimeSync = () => {
 
 const initRealtimeSync = () => {
   if (!isBackendReady) return;
-  if (realtimeStudentsChannel || realtimeAttendanceChannel || realtimeFinanceChannel || realtimeAdmissionsChannel) return;
+  if (realtimeStudentsChannel || realtimeAttendanceChannel || realtimeFinanceChannel || realtimeAdmissionsChannel || realtimeRemindersChannel) return;
 
   // Students table — fast sync for roster edits/adds/deletes
   realtimeStudentsChannel = supabaseClient
@@ -4378,6 +4651,28 @@ const initRealtimeSync = () => {
         if (isManagerLoggedIn) {
           await loadPendingAdmissions();
         }
+      }
+    )
+    .subscribe();
+
+  realtimeRemindersChannel = supabaseClient
+    .channel("public:reminder-payment-status")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "reminder_events" },
+      async () => {
+        if (!isManagerLoggedIn) return;
+        await loadPaymentFollowUps();
+        renderKids();
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "payment_link_requests" },
+      async () => {
+        if (!isManagerLoggedIn) return;
+        await loadPaymentFollowUps();
+        renderKids();
       }
     )
     .subscribe();

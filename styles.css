@@ -997,6 +997,12 @@ body.popup-open {
   color: #8d6400;
 }
 
+.status-reminder {
+  background: rgba(26, 79, 157, 0.1);
+  color: var(--accent-dark);
+  border: 1px solid rgba(26, 79, 157, 0.16);
+}
+
 .alert-pill {
   background: rgba(244, 191, 42, 0.22);
   color: #8d6400;
@@ -1351,6 +1357,13 @@ body.popup-open {
   gap: 8px;
 }
 
+.payment-verification-panel {
+  display: grid;
+  gap: 8px;
+  border-color: rgba(244, 191, 42, 0.28);
+  background: rgba(255, 248, 226, 0.82);
+}
+
 .profile-stat span {
   display: block;
   color: var(--muted);
@@ -1453,6 +1466,65 @@ body.popup-open {
   color: var(--muted);
   font-size: 0.74rem;
   line-height: 1.35;
+}
+
+.proof-thumb {
+  display: inline-grid;
+  grid-template-columns: 54px auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  padding: 5px 9px 5px 5px;
+  border: 1px solid rgba(15, 34, 64, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--accent-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.proof-thumb img {
+  width: 54px;
+  height: 42px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: rgba(15, 34, 64, 0.08);
+}
+
+.proof-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 12, 28, 0.72);
+}
+
+.proof-viewer {
+  position: relative;
+  max-width: min(92vw, 720px);
+  max-height: 88vh;
+  padding: 14px;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+}
+
+.proof-viewer img {
+  display: block;
+  max-width: 100%;
+  max-height: 78vh;
+  border-radius: 16px;
+  object-fit: contain;
+}
+
+.proof-viewer-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .finance-stats {
