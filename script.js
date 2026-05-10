@@ -174,7 +174,7 @@ let expenseSearchQuery = "";
 let rosterSortKey = "joinDate";
 let rosterSortOrder = "desc";
 let rosterSearchQuery = "";
-let rosterStatusFilter = "all";
+let rosterStatusFilter = "active";
 let rosterJerseyFilter = "all";
 let rosterTypeFilter = "all";
 let rosterFeePaidFilter = "all";
@@ -652,7 +652,7 @@ const getDueCycleDate = (kid) => {
 
 const getRenewalStatusLabel = (kid) => {
   if (kid.discontinued) return "Tracking paused";
-  if (kid.paymentStatus === "pending_verification") return "Payment pending verification";
+  if (kid.paymentStatus === "pending_verification") return "Pending verification";
   if (kid.feesPaid !== "yes") return "Join fee pending";
   const daysPastDue = getDaysSinceDate(getPaidThroughDate(kid));
   if (daysPastDue > 1) return `${daysPastDue} days overdue`;
@@ -663,6 +663,16 @@ const getRenewalStatusLabel = (kid) => {
 };
 
 const getReminderState = (kid) => {
+  if (kid.discontinued) {
+    return {
+      isDue: false,
+      isJoiningFee: false,
+      dueDate: getPaidThroughDate(kid),
+      overdueDays: 0,
+      isCritical: false,
+      reminderType: "renewal",
+    };
+  }
   const isJoiningFee = isFeesPending(kid);
   const dueDate = isJoiningFee ? kid.joinDate : getPaidThroughDate(kid);
   const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
@@ -1298,13 +1308,13 @@ const movementFilterLabel = () => {
 const resetRosterDetailFilters = () => {
   activeSlotFilter = "";
   rosterSearchQuery = "";
-  rosterStatusFilter = "all";
+  rosterStatusFilter = "active";
   rosterJerseyFilter = "all";
   rosterTypeFilter = "all";
   rosterFeePaidFilter = "all";
   rosterFeeDueFilter = "all";
   if (playerSearchInput) playerSearchInput.value = "";
-  if (rosterStatusFilterInput) rosterStatusFilterInput.value = "all";
+  if (rosterStatusFilterInput) rosterStatusFilterInput.value = "active";
   if (rosterJerseyFilterInput) rosterJerseyFilterInput.value = "all";
   if (rosterTypeFilterInput) rosterTypeFilterInput.value = "all";
   if (rosterFeePaidFilterInput) rosterFeePaidFilterInput.value = "all";
@@ -2268,7 +2278,7 @@ const renderKids = () => {
 
     const row = document.createElement("tr");
     row.dataset.playerRowId = kid.id;
-    row.className = reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
+    row.className = kid.discontinued ? "discontinued-row" : reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
     row.innerHTML = `
       <td data-label="Player"><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
       <td data-label="Age">${kid.age}</td>

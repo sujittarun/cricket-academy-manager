@@ -797,11 +797,11 @@ body.popup-open {
 #rosterView .kids-table th:nth-child(11),
 #rosterView .kids-table td:nth-child(11) { width: 7%; }
 #rosterView .kids-table th:nth-child(12),
-#rosterView .kids-table td:nth-child(12) { width: 8%; }
+#rosterView .kids-table td:nth-child(12) { width: 10%; }
 #rosterView .kids-table th:nth-child(13),
 #rosterView .kids-table td:nth-child(13) { width: 7%; }
 #rosterView .kids-table th:nth-child(14),
-#rosterView .kids-table td:nth-child(14) { width: 10%; }
+#rosterView .kids-table td:nth-child(14) { width: 8%; }
 
 .slot-toolbar {
   display: flex;
@@ -960,6 +960,13 @@ body.popup-open {
 .kids-table tbody tr.critical-row {
   background: linear-gradient(90deg, rgba(196, 58, 58, 0.14), rgba(255, 242, 216, 0.72));
   box-shadow: inset 4px 0 0 var(--danger);
+}
+
+.kids-table tbody tr.discontinued-row {
+  background: rgba(239, 244, 250, 0.6);
+}
+.kids-table tbody tr.discontinued-row td {
+  color: rgba(102, 112, 133, 0.9);
 }
 
 .kids-table tbody tr.row-focus-pulse {
