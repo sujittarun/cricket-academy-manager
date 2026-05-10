@@ -657,12 +657,12 @@ const getReminderState = (kid) => {
   const dueDate = isJoiningFee ? kid.joinDate : getPaidThroughDate(kid);
   const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
   return {
-    isDue: isJoiningFee || isRenewalPending(kid),
+    isDue: !isJoiningFee && isRenewalPending(kid),
     isJoiningFee,
     dueDate,
     overdueDays,
     isCritical: overdueDays > 10,
-    reminderType: isJoiningFee ? "joining_fee" : "renewal",
+    reminderType: "renewal",
   };
 };
 
