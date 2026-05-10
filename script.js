@@ -384,8 +384,18 @@ const getFeeDisplayState = (kid) => {
 
 const getConfirmablePaymentFollowUp = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
-  if (!isPaymentPendingFollowUp(followUp)) return null;
-  return followUp;
+  if (isPaymentPendingFollowUp(followUp)) return followUp;
+  if (kid?.paymentStatus === "pending_verification" && kid?.feesPaid !== "yes") {
+    return {
+      studentId: kid.id,
+      selectedPlan: "monthly",
+      amount: kid.amountPaid || 3500,
+      monthsCovered: 1,
+      cycleStartDate: kid.joinDate || getDueCycleDate(kid),
+      isSyntheticJoiningFee: true,
+    };
+  }
+  return null;
 };
 
 const normalizeKid = (kid) => {
@@ -2632,26 +2642,34 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
   const cycleDate = followUp.cycleStartDate || getDueCycleDate(kid);
   const monthsCovered = Number(followUp.monthsCovered || plan.months || 1);
   const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
+  const isJoiningFee = followUp.isSyntheticJoiningFee === true;
 
   const { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert({
     student_id: kid.id,
-    payment_type: "renewal",
+    payment_type: isJoiningFee ? "joining" : "renewal",
     plan_type: planKey,
     cycle_start_date: cycleDate,
     months_covered: monthsCovered,
     amount,
     paid_on: toLocalIsoDate(),
-    comment: "Confirmed from WhatsApp payment proof.",
+    comment: isJoiningFee ? "Joining fee confirmed by manager." : "Confirmed from WhatsApp payment proof.",
     recorded_by: getActiveManagerEmail(),
   }).select("*").single();
   if (paymentError) {
     return { success: false, message: paymentError.message };
   }
 
-  const renewals = [...new Set([...kid.renewals, cycleDate])];
+  let updatePayload = {};
+  if (isJoiningFee) {
+    updatePayload = { fees_paid: true, payment_status: "paid", updated_by: getActiveManagerEmail() };
+  } else {
+    const renewals = [...new Set([...kid.renewals, cycleDate])];
+    updatePayload = { renewals, updated_by: getActiveManagerEmail() };
+  }
+
   const { error: updateError } = await supabaseClient
     .from("students")
-    .update({ renewals, updated_by: getActiveManagerEmail() })
+    .update(updatePayload)
     .eq("id", kid.id);
   if (updateError) {
     return { success: false, message: `Payment saved, but player renewal status failed: ${updateError.message}` };
@@ -2661,13 +2679,20 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
     financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
   }
 
+  if (isJoiningFee) {
+    kid.feesPaid = "yes";
+    kid.paymentStatus = "paid";
+  } else {
+    kid.renewals = updatePayload.renewals;
+  }
+
   const accessToken = await getFreshManagerAccessToken();
   let warning = "";
   if (accessToken) {
     try {
       const { functionResponse, functionBody } = await callRenewalVerifiedFunction({
         kid,
-        planTitle: plan.title,
+        planTitle: isJoiningFee ? "Joining Fee" : plan.title,
         amount,
         cycleDate,
         toDate: renewalToDate,
