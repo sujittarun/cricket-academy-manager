@@ -2661,7 +2661,7 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
 
   let updatePayload = {};
   if (isJoiningFee) {
-    updatePayload = { fees_paid: true, payment_status: "paid", updated_by: getActiveManagerEmail() };
+    updatePayload = { fees_paid: true, updated_by: getActiveManagerEmail() };
   } else {
     const renewals = [...new Set([...kid.renewals, cycleDate])];
     updatePayload = { renewals, updated_by: getActiveManagerEmail() };
