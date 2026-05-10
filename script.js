@@ -2538,12 +2538,28 @@ const extractPaymentProofPath = (details = "") => {
 };
 
 const createPaymentProofSignedUrl = async (path) => {
-  if (!path || !supabaseClient?.storage) return "";
-  const { data, error } = await supabaseClient
-    .storage
-    .from("payment-proofs")
-    .createSignedUrl(path, 60 * 10);
-  return error ? "" : data?.signedUrl || "";
+  if (!path) return "";
+  const accessToken = await getFreshManagerAccessToken();
+  if (!accessToken) return "";
+
+  try {
+    const response = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/sign/payment-proofs/${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+        "apikey": SUPABASE_CONFIG.anonKey
+      },
+      body: JSON.stringify({ expiresIn: 60 * 10 })
+    });
+    if (!response.ok) return "";
+    const data = await response.json();
+    const signedUrl = data?.signedURL || data?.signedUrl;
+    if (!signedUrl) return "";
+    return signedUrl.startsWith("http") ? signedUrl : `${SUPABASE_CONFIG.url}/storage/v1${signedUrl}`;
+  } catch {
+    return "";
+  }
 };
 
 const openPaymentProofViewer = (url) => {
