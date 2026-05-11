@@ -1658,6 +1658,7 @@ const resetFormState = () => {
   kidForm.reset();
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
+  formPanel.hidden = true;
   syncAmountState();
 };
 
@@ -2188,7 +2189,7 @@ const updateAccessUI = () => {
     document.getElementById("password").value = lastManagerPassword;
   }
 
-  formPanel.hidden = !canEdit;
+  formPanel.hidden = true;
   renderRosterHelper();
   actionHeader.hidden = !canEdit;
 
@@ -3699,6 +3700,7 @@ kidsTableBody.addEventListener("click", async (event) => {
     saveButton.textContent = "Save changes";
     cancelEditButton.hidden = false;
     syncAmountState();
+    formPanel.hidden = false;
     formMessage.textContent = `Editing ${kidToEdit.name}. Save changes when ready.`;
     window.scrollTo({ top: kidForm.offsetTop - 40, behavior: "smooth" });
     return;
