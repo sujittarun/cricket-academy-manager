@@ -812,13 +812,7 @@
                       Joining date
                       <input id="admissionJoinDate" name="joinDate" type="date" required />
                     </label>
-                    <label>
-                      Fees paid
-                      <select id="admissionFeesPaid" name="feesPaid" required>
-                        <option value="no">No</option>
-                        <option value="yes">Paid by UPI - verify by manager</option>
-                      </select>
-                    </label>
+
                     <label>
                       Fee plan
                       <select id="admissionFeePlan" name="feePlan" required>
@@ -964,6 +958,14 @@
             <input type="hidden" id="admissionPaymentMethod" name="paymentMethod" value="UPI" />
             <input type="hidden" id="admissionPaymentUpiId" name="paymentUpiId" value="" />
             <input type="hidden" id="admissionPaymentReference" name="paymentReference" value="" />
+
+            <label class="full-span" style="margin-bottom: 24px;">
+              Fees paid
+              <select id="admissionFeesPaid" name="feesPaid" required>
+                <option value="no">No</option>
+                <option value="yes">Paid by UPI - verify by manager</option>
+              </select>
+            </label>
 
             <div class="admission-actions">
               <button id="submitAdmissionButton" type="submit" class="primary-btn">Submit admission</button>
