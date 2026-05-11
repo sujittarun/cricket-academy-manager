@@ -812,37 +812,7 @@
                       Joining date
                       <input id="admissionJoinDate" name="joinDate" type="date" required />
                     </label>
-                    <label>
-                      Fees paid
-                      <select id="admissionFeesPaid" name="feesPaid" required>
-                        <option value="no">No</option>
-                        <option value="yes">Paid by UPI - verify by manager</option>
-                      </select>
-                    </label>
-                    <label>
-                      Fee plan
-                      <select id="admissionFeePlan" name="feePlan" required>
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly">3 months - 5% off</option>
-                        <option value="halfyearly">6 months - 10% off</option>
-                        <option value="special">Special training</option>
-                        <option value="custom">Custom amount</option>
-                      </select>
-                    </label>
-                    <label id="admissionCustomAmountLabel" hidden>
-                      Custom amount
-                      <input id="admissionCustomAmount" name="customAmount" type="number" min="0" step="0.01" placeholder="Enter amount" />
-                    </label>
-                    <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
-                      Monthly: Rs 3,500 + Rs 500 admission. First payment Rs 4,000.
-                    </div>
-                    <div id="admissionPaymentAssist" class="payment-entry-inline full-span">
-                      <div class="payment-entry-side payment-entry-only-action">
-                        <button id="openPaymentPopupButton" type="button" class="primary-btn payment-open-btn">
-                          Pay now
-                        </button>
-                      </div>
-                    </div>
+
                     <label>
                       Jersey size
                       <select id="admissionJerseySize" name="jerseySize">
@@ -932,6 +902,46 @@
                         rows="3" 
                         placeholder="E.g. Previous coaching experience, medical conditions, preferred training style, etc."></textarea>
                     </label>
+                  </div>
+                </section>
+
+                <section class="admission-group">
+                  <div class="admission-group-head compact-head">
+                    <p class="section-kicker">Payment</p>
+                    <h3>Fee Details</h3>
+                  </div>
+                  <div class="admission-grid">
+                    <label>
+                      Fees paid
+                      <select id="admissionFeesPaid" name="feesPaid" required>
+                        <option value="no">No</option>
+                        <option value="yes">Paid by UPI - verify by manager</option>
+                      </select>
+                    </label>
+                    <label>
+                      Fee plan
+                      <select id="admissionFeePlan" name="feePlan" required>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">3 months - 5% off</option>
+                        <option value="halfyearly">6 months - 10% off</option>
+                        <option value="special">Special training</option>
+                        <option value="custom">Custom amount</option>
+                      </select>
+                    </label>
+                    <label id="admissionCustomAmountLabel" hidden>
+                      Custom amount
+                      <input id="admissionCustomAmount" name="customAmount" type="number" min="0" step="0.01" placeholder="Enter amount" />
+                    </label>
+                    <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
+                      Monthly: Rs 3,500 + Rs 500 admission. First payment Rs 4,000.
+                    </div>
+                    <div id="admissionPaymentAssist" class="payment-entry-inline full-span">
+                      <div class="payment-entry-side payment-entry-only-action">
+                        <button id="openPaymentPopupButton" type="button" class="primary-btn payment-open-btn">
+                          Pay now
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
