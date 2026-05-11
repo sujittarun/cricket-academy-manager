@@ -4618,7 +4618,9 @@ const initRealtimeSync = () => {
         const event = payload.eventType;
         if (event === "INSERT") {
           const newKid = normalizeKid(payload.new);
-          kids.unshift(newKid);
+          if (!kids.some((k) => k.id === newKid.id)) {
+            kids.unshift(newKid);
+          }
           showRealtimeToast(`New player added: ${newKid.name}`);
         } else if (event === "UPDATE") {
           const updated = normalizeKid(payload.new);
