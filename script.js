@@ -2275,7 +2275,12 @@ const renderKids = () => {
     const needsAttention = feesPending || renewalPending;
     const canRenew = renewalPending && isActiveKid(kid);
     const studentType = getStudentType(kid);
-    const latestRenewal = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
+    const latestRenewalRecord = getStudentPayments(kid)
+      .filter(p => p.payment_type === "renewal" || p.paymentType === "renewal")
+      .sort((a, b) => (b.cycle_start_date || b.cycleStartDate || "").localeCompare(a.cycle_start_date || a.cycleStartDate || ""))?.[0];
+    const latestRenewalFromTable = latestRenewalRecord ? (latestRenewalRecord.cycle_start_date || latestRenewalRecord.cycleStartDate) : "";
+    const latestRenewalFromArray = kid.renewals.length > 0 ? kid.renewals[kid.renewals.length - 1] : "";
+    const latestRenewal = maxIsoDate(latestRenewalFromTable, latestRenewalFromArray);
     const renewalStatus = getRenewalStatusLabel(kid);
     const feeDisplay = getFeeDisplayState(kid);
     const dueDate = getPaidThroughDate(kid);
