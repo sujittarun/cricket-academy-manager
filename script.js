@@ -2364,52 +2364,7 @@ const refreshSession = async () => {
   updateAccessUI();
 };
 
-const processAutoReminders = async () => {
-  if (!isBackendReady || !isManagerLoggedIn || !reminderSettings.whatsappRemindersEnabled) return;
-  
-  const todayIso = new Date().toISOString().split("T")[0];
-  const autoSendQueue = [];
-  
-  for (const kid of kids) {
-    if (kid.discontinued || kid.feesPaid === "yes" || kid.paymentPendingVerification) continue;
-    const reminderState = getReminderState(kid);
-    if (!reminderState.isOverdue) continue;
-    
-    const days = reminderState.overdueDays;
-    if (days !== 5 && days !== 7 && days <= 7) continue;
-    
-    const lastFollowUp = paymentFollowUps.find((f) => f.studentId === kid.id);
-    const sentToday = lastFollowUp && new Date(lastFollowUp.createdAt).toISOString().split("T")[0] === todayIso;
-    if (sentToday) continue;
-    
-    let shouldSend = false;
-    if (days === 5 || days === 6) {
-      // Catch 5 days overdue (or 6 if they missed 5). Check if we already sent for the 5-6 day window.
-      const alreadySentWindow = lastFollowUp?.reminder?.overdue_days >= 5 && lastFollowUp?.reminder?.overdue_days < 7;
-      if (!alreadySentWindow) shouldSend = true;
-    } else if (days === 7) {
-      const alreadySent7 = lastFollowUp?.reminder?.overdue_days === 7;
-      if (!alreadySent7) shouldSend = true;
-    } else if (days > 7) {
-      shouldSend = true;
-    }
-    
-    if (shouldSend) {
-      autoSendQueue.push({ kid, reminderState });
-    }
-  }
-  
-  if (autoSendQueue.length === 0) return;
 
-  for (const item of autoSendQueue) {
-    await sendReminder(item.kid, item.reminderState);
-    await new Promise((r) => setTimeout(r, 1500));
-  }
-  
-  showToast(`Auto-sent ${autoSendQueue.length} renewal reminder(s).`);
-  await loadPaymentFollowUps();
-  renderKids();
-};
 
 const loadKids = async () => {
   if (!isBackendReady) {
@@ -2444,9 +2399,6 @@ const loadKids = async () => {
   if (isManagerLoggedIn) {
     queueFinanceRefresh();
   }
-  
-  // Trigger auto reminders in the background
-  processAutoReminders();
 };
 
 const loadPaymentFollowUps = async () => {
