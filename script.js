@@ -599,7 +599,12 @@ const getPaymentMonthsCovered = (payment) => {
 
 const getPlayerPaymentRows = (kid) => {
   const rows = [];
-  if (kid.feesPaid === "yes" && Number(kid.amountPaid || 0) > 0) {
+  const payments = getStudentPayments(kid);
+  const hasJoiningPayment = payments.some(
+    (p) => p.payment_type === "joining" || p.paymentType === "joining",
+  );
+
+  if (kid.feesPaid === "yes" && Number(kid.amountPaid || 0) > 0 && !hasJoiningPayment) {
     const months = getInitialCoverageMonths(kid);
     rows.push({
       date: kid.joinDate,
@@ -609,7 +614,7 @@ const getPlayerPaymentRows = (kid) => {
       amount: Number(kid.amountPaid || 0),
     });
   }
-  getStudentPayments(kid).forEach((payment) => {
+  payments.forEach((payment) => {
     const months = getPaymentMonthsCovered(payment);
     rows.push({
       date: payment.paid_on || payment.paidOn,
