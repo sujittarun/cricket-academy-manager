@@ -4127,17 +4127,40 @@ rosterFeeDueFilterInput?.addEventListener("change", (event) => {
   renderKids();
 });
 const deletePayment = async (paymentId, kidId) => {
-  if (!confirm("Are you sure you want to delete this payment record? This will affect the student's renewal date and total amount paid.")) return;
+  if (!confirm("Are you sure you want to delete this payment record? This will roll back the student's renewal date and total amount paid.")) return;
   
   try {
-    const { error } = await supabaseClient
+    // 1. Get payment details first to know which cycle date to roll back
+    const { data: payment, error: fetchError } = await supabaseClient
+      .from("payments")
+      .select("*")
+      .eq("id", paymentId)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    const cycleDate = payment.cycle_start_date || payment.cycleStartDate;
+
+    // 2. Delete the payment record
+    const { error: deleteError } = await supabaseClient
       .from("payments")
       .delete()
       .eq("id", paymentId);
       
-    if (error) throw error;
+    if (deleteError) throw deleteError;
     
-    // Refresh student data
+    // 3. Roll back the 'renewals' array in the students table
+    const kid = await loadSingleKid(kidId);
+    if (kid && cycleDate) {
+      const updatedRenewals = (kid.renewals || []).filter(date => date !== cycleDate);
+      const { error: updateError } = await supabaseClient
+        .from("students")
+        .update({ renewals: updatedRenewals, updated_by: lastManagerEmail })
+        .eq("id", kidId);
+        
+      if (updateError) console.error("Error rolling back student renewals array:", updateError);
+    }
+    
+    // Refresh UI
     const refreshedKid = await loadSingleKid(kidId);
     if (refreshedKid) {
       kids = kids.map(k => k.id === kidId ? refreshedKid : k);
@@ -4145,12 +4168,11 @@ const deletePayment = async (paymentId, kidId) => {
       await renderPlayerDetails(refreshedKid);
     }
     
-    // Refresh finance if visible
     if (!financeView.hidden) {
       await loadFinance();
     }
     
-    alert("Payment record deleted successfully.");
+    alert("Payment record deleted and renewal date rolled back successfully.");
   } catch (error) {
     console.error("Error deleting payment:", error);
     alert(`Failed to delete payment: ${error.message}`);
