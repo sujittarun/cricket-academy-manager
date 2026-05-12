@@ -3195,10 +3195,10 @@ const loadFinance = async () => {
       const feeHeight = Math.max(6, Math.round((month.fees / maxChartValue) * 76));
       const expenseHeight = Math.max(6, Math.round((month.expenses / maxChartValue) * 76));
       return `
-        <button class="finance-chart-month" type="button" data-finance-month="${month.key}" data-tooltip="${month.fullLabel}: Fees ${rupees(month.fees)} | Expenses ${rupees(month.expenses)} | Net ${rupees(month.fees - month.expenses)}">
+        <button class="finance-chart-month" type="button" data-finance-month="${month.key}">
           <div class="finance-bars">
-            <span class="fee-bar" style="height:${feeHeight}px"></span>
-            <span class="expense-bar" style="height:${expenseHeight}px"></span>
+            <span class="fee-bar" style="height:${feeHeight}px" data-label="Fees: ${rupees(month.fees)}"></span>
+            <span class="expense-bar" style="height:${expenseHeight}px" data-label="Expenses: ${rupees(month.expenses)}"></span>
           </div>
           <strong>${month.label}</strong>
         </button>

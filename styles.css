@@ -1845,11 +1845,65 @@ body.popup-open {
   white-space: nowrap;
 }
 
-.finance-expense-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 16px 0 0;
+/* Finance Chart Zoom & Tooltips */
+.finance-chart-month {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 12px;
+}
+
+.finance-chart-month:hover {
+  transform: translateY(-8px) scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.finance-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  position: relative;
+}
+
+.fee-bar, .expense-bar {
+  width: 12px;
+  border-radius: 4px 4px 1px 1px;
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: help;
+}
+
+.fee-bar { background: linear-gradient(180deg, #10b981, #059669); }
+.expense-bar { background: linear-gradient(180deg, #ef4444, #dc2626); }
+
+.fee-bar:hover, .expense-bar:hover {
+  transform: scaleY(1.25) scaleX(1.4);
+  filter: brightness(1.2);
+  z-index: 30;
+}
+
+/* Common Tooltip Logic */
+.fee-bar::after, .expense-bar::after, .movement-bar::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: #1e293b;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.fee-bar:hover::after, .expense-bar:hover::after, .movement-bar:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-18px);
 }
 
 .finance-expense-form .primary-btn,
