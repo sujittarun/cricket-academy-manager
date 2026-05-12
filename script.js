@@ -2530,7 +2530,8 @@ const renderAdmissionReviewQueue = () => {
           </div>
           ${admission.comments ? `<p class="review-comment">${escapeHtml(admission.comments)}</p>` : ""}
           <div class="review-actions">
-            <button class="primary-btn" type="button" data-approve-admission="${escapeHtml(admission.id)}">Approve to roster</button>
+            <button class="primary-btn" type="button" data-approve-admission="${escapeHtml(admission.id)}">Approve</button>
+            ${!admission.feesPaid && !isPendingVerification ? `<button class="secondary-btn" type="button" data-remind-admission="${escapeHtml(admission.id)}">Remind</button>` : ""}
             <button class="danger-btn" type="button" data-reject-admission="${escapeHtml(admission.id)}">Reject</button>
           </div>
         </article>
@@ -4115,6 +4116,47 @@ financeTabButton?.addEventListener("click", () => switchView("finance"));
 exportCsvButton?.addEventListener("click", exportMonthlyCsv);
 exportPdfButton?.addEventListener("click", printMonthlyReport);
 admissionTabButton.addEventListener("click", () => switchView("admission"));
+admissionReviewList.addEventListener("click", async (event) => {
+  if (!(event.target instanceof Element)) return;
+  const remindBtn = event.target.closest("[data-remind-admission]");
+  if (remindBtn) {
+    const id = remindBtn.dataset.remindAdmission;
+    const admission = pendingAdmissions.find(a => a.id === id);
+    if (!admission) return;
+    
+    remindBtn.disabled = true;
+    remindBtn.textContent = "Sending...";
+    
+    try {
+      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`
+        },
+        body: JSON.stringify({
+          action: "send_admission_reminder",
+          admissionId: id
+        })
+      });
+      
+      if (response.ok) {
+        showToast("Reminder sent to WhatsApp!");
+        remindBtn.textContent = "Sent ✓";
+      } else {
+        const err = await response.json();
+        showToast(`Failed: ${err.error || "Unknown error"}`);
+        remindBtn.textContent = "Remind";
+        remindBtn.disabled = false;
+      }
+    } catch (e) {
+      showToast("Network error while sending reminder");
+      remindBtn.textContent = "Remind";
+      remindBtn.disabled = false;
+    }
+  }
+});
+
 slotFilters.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) {
     return;
@@ -4320,6 +4362,7 @@ const initializeApp = async () => {
   admissionPaymentIntentId = buildPaymentIntentId();
   updateActiveView();
   updateAccessUI();
+  if (rosterStatusFilterInput) rosterStatusFilterInput.value = rosterStatusFilter;
   renderKids();
   syncAdmissionAmountState();
   syncAdmissionStyleState();

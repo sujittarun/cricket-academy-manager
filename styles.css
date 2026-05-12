@@ -111,21 +111,64 @@ body {
 }
 
 .view-tab {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 999px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 16px;
   border: 1px solid rgba(15, 34, 64, 0.12);
   background: rgba(255, 255, 255, 0.92);
   color: var(--accent-dark);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-tab svg {
+  opacity: 0.7;
 }
 
 .view-tab.active {
   background: linear-gradient(135deg, rgba(26, 79, 157, 0.98) 0%, rgba(11, 52, 112, 0.98) 100%);
   color: white;
   border-color: transparent;
+}
+
+.view-tab.active svg {
+  opacity: 1;
+  stroke: var(--gold);
+}
+
+/* Finance Table Alignment */
+.finance-expenses-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  table-layout: fixed;
+}
+
+.finance-expenses-table th,
+.finance-expenses-table td {
+  padding: 12px 10px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-expenses-table th:nth-child(1), .finance-expenses-table td:nth-child(1) { width: 15%; } /* Type */
+.finance-expenses-table th:nth-child(2), .finance-expenses-table td:nth-child(2) { width: 12%; } /* Amount */
+.finance-expenses-table th:nth-child(3), .finance-expenses-table td:nth-child(3) { width: 12%; } /* Date */
+.finance-expenses-table th:nth-child(4), .finance-expenses-table td:nth-child(4) { width: 15%; } /* Paid By */
+.finance-expenses-table th:nth-child(5), .finance-expenses-table td:nth-child(5) { width: 34%; } /* Comment */
+.finance-expenses-table th:nth-child(6), .finance-expenses-table td:nth-child(6) { width: 12%; } /* Action */
+
+.finance-comment {
+  max-width: 100%;
+  white-space: normal;
+  font-size: 0.82rem;
+  line-height: 1.3;
 }
 
 .auth-panel {
@@ -1933,10 +1976,7 @@ body.popup-open {
   font-size: 0.78rem;
 }
 
-.finance-comment {
-  max-width: 220px;
-  white-space: normal;
-}
+
 
 .finance-insights {
   display: grid;
