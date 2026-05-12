@@ -1667,7 +1667,7 @@ body.popup-open {
   width: 18px;
   border-radius: 999px 999px 6px 6px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: help;
+  cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
   position: relative;
 }
@@ -1868,7 +1868,7 @@ body.popup-open {
 }
 
 .finance-month-stack:hover {
-  transform: translateY(-15px) scale(1.18);
+  transform: translateY(-15px) scale(1.15);
   background: white;
   box-shadow: 0 40px 80px rgba(11, 52, 112, 0.2);
   border-color: var(--primary);
@@ -1883,11 +1883,7 @@ body.popup-open {
 }
 
 .finance-month-stack.is-current:hover {
-  transform: translateY(-15px) scale(1.25);
-}
-
-.finance-month-stack.is-current strong {
-  color: var(--primary);
+  transform: translateY(-15px) scale(1.22);
 }
 
 .finance-bars {
@@ -1902,9 +1898,16 @@ body.popup-open {
 .fee-bar, .expense-bar {
   width: 18px;
   border-radius: 999px 999px 4px 4px;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
+  cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.fee-bar:hover, .expense-bar:hover {
+  transform: scaleY(1.3) scaleX(1.5);
+  filter: brightness(1.2) saturate(1.3);
+  z-index: 100;
 }
 
 .fee-bar { background: linear-gradient(180deg, #10b981, #059669); }
