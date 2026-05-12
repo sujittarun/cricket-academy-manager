@@ -4437,6 +4437,10 @@ admissionForm.addEventListener("submit", async (event) => {
 // Reset is handled in the payment verify section below to also unlock fees field.
 
 const initializeApp = async () => {
+  // 1. Instantly restore view from hash or localStorage to prevent flicker
+  const initialView = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "admission";
+  switchView(initialView, false);
+
   populateAdmissionSelectors();
   setJoinDateLimit();
   admissionJoinDate.value = toLocalIsoDate();
@@ -4513,9 +4517,6 @@ const initializeApp = async () => {
     await loadFinance();
   }
   initRealtimeSync();
-
-  const initialView = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "admission";
-  switchView(initialView, false);
 };
 
 initializeApp();
