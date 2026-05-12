@@ -1514,9 +1514,9 @@ const renderStudentMovement = () => {
         <span>${month.continuing + month.joined - month.discontinued} active trend</span>
       </div>
       <div class="movement-bars" aria-label="${month.label} student movement">
-        <span class="movement-bar continuing" style="height:${Math.max(8, Math.round((month.continuing / maxValue) * 82))}px" title="Continuing: ${month.continuing}"></span>
-        <span class="movement-bar joined" style="height:${Math.max(8, Math.round((month.joined / maxValue) * 82))}px" title="Joined: ${month.joined}"></span>
-        <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 82))}px" title="Discontinued: ${month.discontinued}"></span>
+        <span class="movement-bar continuing" style="height:${Math.max(8, Math.round((month.continuing / maxValue) * 82))}px" data-label="Continuing: ${month.continuing}"></span>
+        <span class="movement-bar joined" style="height:${Math.max(8, Math.round((month.joined / maxValue) * 82))}px" data-label="Joined: ${month.joined}"></span>
+        <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 82))}px" data-label="Left: ${month.discontinued}"></span>
       </div>
       <div class="movement-counts">
         <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}"><i class="movement-dot continuing"></i>${month.continuing} continuing</button>
