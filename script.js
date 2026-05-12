@@ -2172,7 +2172,7 @@ const updateAccessUI = () => {
     accessMode.textContent = canEdit
       ? "Manager edit mode"
       : managerReady
-        ? "Manager roster mode"
+        ? "" // Removed text per user request
         : "Admission mode";
     loginHint.textContent = managerReady
       ? "Manager access is active. Use Edit to unlock entry and player actions."
