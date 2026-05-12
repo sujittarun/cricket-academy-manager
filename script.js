@@ -3233,7 +3233,7 @@ const loadFinance = async () => {
               <td data-label="Amount"><strong>${rupees(item.amount)}</strong></td>
               <td data-label="Date">${formatDate(item.expense_date)}</td>
               <td data-label="Paid by">${item.paid_by}</td>
-              <td data-label="Comment" class="meta-text finance-comment">${item.comment || "-"}</td>
+              <td data-label="Comment" class="finance-comment">${item.comment || "-"}</td>
               <td data-label="Action">
                 <button class="danger-btn expense-delete-btn" data-expense-delete="${item.id}" type="button">Delete</button>
               </td>
@@ -4492,9 +4492,13 @@ admissionForm.addEventListener("submit", async (event) => {
 // Reset is handled in the payment verify section below to also unlock fees field.
 
 const initializeApp = async () => {
-  // 1. Instantly restore view from hash or localStorage to prevent flicker
-  const initialView = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "admission";
-  switchView(initialView, false);
+  // 1. Instantly determine and set the correct starting view to prevent any flicker
+  const startingView = document.documentElement.getAttribute("data-starting-view") || 
+                       window.location.hash.replace("#", "") || 
+                       localStorage.getItem("activeView") || 
+                       "admission";
+  
+  switchView(startingView, false);
 
   populateAdmissionSelectors();
   setJoinDateLimit();

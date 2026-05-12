@@ -20,6 +20,13 @@
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function() {
+        // Prevent flicker by determining view early
+        const view = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "admission";
+        document.documentElement.setAttribute("data-starting-view", view);
+      })();
+    </script>
   </head>
   <body>
     <main class="app-shell">
