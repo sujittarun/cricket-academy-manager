@@ -328,70 +328,88 @@ body.popup-open {
 
 .hero-card {
   width: min(520px, 100%);
-  padding: 24px 28px;
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  padding: 30px 32px;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   color: white;
-  border-radius: 24px;
+  border-radius: 28px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 20px 40px rgba(30, 58, 138, 0.25);
-  transition: transform 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 25px 50px -12px rgba(30, 58, 138, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.hero-card::before {
+/* Glassy Shine Effect */
+.hero-card::after {
   content: "";
   position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-}
-
-.hero-card:hover {
-  transform: translateY(-5px);
+  top: -150%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  transform: rotate(-45deg);
+  pointer-events: none;
 }
 
 .critical-alert-card {
   width: min(420px, 100%);
-  padding: 24px 28px;
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(153, 27, 27, 0.3);
-  animation: card-pulse 3s infinite ease-in-out;
-}
-
-@keyframes card-pulse {
-  0% { box-shadow: 0 20px 40px rgba(153, 27, 27, 0.3); }
-  50% { box-shadow: 0 20px 50px rgba(220, 38, 38, 0.5); }
-  100% { box-shadow: 0 20px 40px rgba(153, 27, 27, 0.3); }
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 
+    0 25px 50px -12px rgba(185, 28, 28, 0.5),
+    0 0 15px rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .hero-card .hero-label {
   text-transform: uppercase;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-card .hero-label::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
 }
 
 .hero-card strong {
   display: block;
-  font-size: 1.8rem;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 12px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 2.1rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .hero-card .hero-subtext {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
+  backdrop-filter: blur(4px);
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .panel {
@@ -975,19 +993,27 @@ body.popup-open {
 #rosterView .kids-table th:nth-child(2),
 #rosterView .kids-table td:nth-child(2) { width: 3%; min-width: 50px; }  /* Age */
 #rosterView .kids-table th:nth-child(3),
-#rosterView .kids-table td:nth-child(3) { width: 6%; min-width: 90px; }  /* Slot */
+#rosterView .kids-table td:nth-child(3) { width: 5%; min-width: 75px; }  /* Time Slot */
+#rosterView .kids-table th:nth-child(4),
+#rosterView .kids-table td:nth-child(4) { width: 5%; min-width: 65px; }  /* Jersey */
+#rosterView .kids-table th:nth-child(5),
+#rosterView .kids-table td:nth-child(5) { width: 5%; min-width: 75px; }  /* Status */
+#rosterView .kids-table th:nth-child(6),
+#rosterView .kids-table td:nth-child(6) { width: 5%; min-width: 75px; }  /* Student type */
+#rosterView .kids-table th:nth-child(7),
+#rosterView .kids-table td:nth-child(7) { width: 4%; min-width: 60px; }  /* Tenure */
 #rosterView .kids-table th:nth-child(8),
-#rosterView .kids-table td:nth-child(8) { min-width: 100px; } /* Join date */
+#rosterView .kids-table td:nth-child(8) { width: 8%; min-width: 95px; }  /* Join date */
 #rosterView .kids-table th:nth-child(9),
-#rosterView .kids-table td:nth-child(9) { min-width: 130px; } /* Latest renewal */
+#rosterView .kids-table td:nth-child(9) { width: 10%; min-width: 140px; } /* Latest renewal */
 #rosterView .kids-table th:nth-child(10),
-#rosterView .kids-table td:nth-child(10) { min-width: 110px; } /* Fees paid */
+#rosterView .kids-table td:nth-child(10) { width: 8%; min-width: 110px; } /* Fees paid */
 #rosterView .kids-table th:nth-child(11),
-#rosterView .kids-table td:nth-child(11) { min-width: 110px; } /* Amount paid */
+#rosterView .kids-table td:nth-child(11) { width: 8%; min-width: 120px; } /* Amount paid */
 #rosterView .kids-table th:nth-child(12),
-#rosterView .kids-table td:nth-child(12) { min-width: 130px; } /* Next fee due */
+#rosterView .kids-table td:nth-child(12) { width: 10%; min-width: 150px; } /* Next fee due */
 #rosterView .kids-table th:nth-child(13),
-#rosterView .kids-table td:nth-child(13) { min-width: 150px; } /* Last Updated */
+#rosterView .kids-table td:nth-child(13) { width: 10%; min-width: 160px; } /* Last Updated */
 #rosterView .kids-table th:last-child,
 #rosterView .kids-table td:last-child { min-width: 60px; text-align: center; } /* Actions */
 
