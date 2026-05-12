@@ -4179,7 +4179,7 @@ const deletePayment = async (paymentId, kidId) => {
   }
 };
 
-kidsTableBody?.addEventListener("click", (event) => {
+kidsTable?.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;
   const button = event.target.closest("[data-roster-sort]");
   if (!button) return;
