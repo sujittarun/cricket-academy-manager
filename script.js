@@ -2421,6 +2421,16 @@ const refreshSession = async () => {
 
 
 
+const loadSingleKid = async (id) => {
+  const { data, error } = await supabaseClient
+    .from("students")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) return null;
+  return normalizeKid(data);
+};
+
 const loadKids = async () => {
   if (!isBackendReady) {
     kids = [];
