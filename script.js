@@ -960,7 +960,11 @@ const buildFinanceRevenueRows = () => {
       amount: Number(payment.amount || 0),
     };
   });
-  return [...initialFees, ...renewalFees];
+  return [...initialFees, ...renewalFees].sort((a, b) => {
+    const dateA = a.date || "";
+    const dateB = b.date || "";
+    return dateB.localeCompare(dateA);
+  });
 };
 
 const renderFinanceMonthPopup = (monthKey) => {
