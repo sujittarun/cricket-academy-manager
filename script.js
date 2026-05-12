@@ -3628,12 +3628,16 @@ admissionReviewList?.addEventListener("click", async (event) => {
   actionButton.disabled = true;
   actionButton.textContent = approveButton ? "Approving..." : "Rejecting...";
 
-  const rpcName = approveButton ? "approve_admission" : "reject_admission";
-  const { error } = await supabaseClient.rpc(rpcName, {
-    p_admission_id: admissionId,
-    p_reviewed_by: getActiveManagerEmail(),
-    p_review_notes: "",
-  });
+  let error;
+  if (approveButton) {
+    ({ error } = await supabaseClient.rpc(rpcName, {
+      p_admission_id: admissionId,
+      p_reviewed_by: getActiveManagerEmail(),
+      p_review_notes: "",
+    }));
+  } else {
+    ({ error } = await supabaseClient.from("admissions").delete().eq("id", admissionId));
+  }
 
   if (error) {
     showToast(error.message || "Unable to update admission review.");
