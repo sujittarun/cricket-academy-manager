@@ -30,14 +30,15 @@ body {
 }
 
 .app-shell {
-  width: min(1140px, calc(100% - 32px));
+  width: min(1600px, 95%);
   margin: 0 auto;
   padding: 40px 0 56px;
 }
 
-/* When roster is visible, allow the shell to breathe wider */
-.app-shell:has(#rosterView:not([hidden])) {
-  width: min(1360px, calc(100% - 12px));
+/* Ensure roster and finance views use the expanded width */
+.app-shell:has(#rosterView:not([hidden])),
+.app-shell:has(#financeView:not([hidden])) {
+  width: min(1800px, 98%);
 }
 
 .masthead {
@@ -827,34 +828,23 @@ body.popup-open {
   font-size: clamp(0.58rem, 0.52vw, 0.68rem);
 }
 
+#rosterView .kids-table th,
+#rosterView .kids-table td {
+  min-width: 80px;
+}
+
 #rosterView .kids-table th:nth-child(1),
-#rosterView .kids-table td:nth-child(1) { width: 12%; }
+#rosterView .kids-table td:nth-child(1) { width: 15%; min-width: 140px; } /* Player */
 #rosterView .kids-table th:nth-child(2),
-#rosterView .kids-table td:nth-child(2) { width: 4%; }
+#rosterView .kids-table td:nth-child(2) { width: 4%; min-width: 50px; }  /* Age */
 #rosterView .kids-table th:nth-child(3),
-#rosterView .kids-table td:nth-child(3) { width: 6%; }
-#rosterView .kids-table th:nth-child(4),
-#rosterView .kids-table td:nth-child(4) { width: 6%; }
-#rosterView .kids-table th:nth-child(5),
-#rosterView .kids-table td:nth-child(5) { width: 7%; }
-#rosterView .kids-table th:nth-child(6),
-#rosterView .kids-table td:nth-child(6) { width: 7%; }
-#rosterView .kids-table th:nth-child(7),
-#rosterView .kids-table td:nth-child(7) { width: 5%; }
-#rosterView .kids-table th:nth-child(8),
-#rosterView .kids-table td:nth-child(8) { width: 7%; }
-#rosterView .kids-table th:nth-child(9),
-#rosterView .kids-table td:nth-child(9) { width: 8%; }
-#rosterView .kids-table th:nth-child(10),
-#rosterView .kids-table td:nth-child(10) { width: 6%; }
-#rosterView .kids-table th:nth-child(11),
-#rosterView .kids-table td:nth-child(11) { width: 7%; }
+#rosterView .kids-table td:nth-child(3) { width: 8%; min-width: 90px; }  /* Slot */
 #rosterView .kids-table th:nth-child(12),
-#rosterView .kids-table td:nth-child(12) { width: 10%; }
+#rosterView .kids-table td:nth-child(12) { width: 10%; min-width: 100px; } /* Amount paid */
 #rosterView .kids-table th:nth-child(13),
-#rosterView .kids-table td:nth-child(13) { width: 7%; }
-#rosterView .kids-table th:nth-child(14),
-#rosterView .kids-table td:nth-child(14) { width: 8%; }
+#rosterView .kids-table td:nth-child(13) { width: 10%; min-width: 120px; } /* Next due */
+#rosterView .kids-table th:last-child,
+#rosterView .kids-table td:last-child { min-width: 180px; } /* Actions */
 
 .slot-toolbar {
   display: flex;
@@ -1913,17 +1903,51 @@ body.popup-open {
 .fee-bar { background: linear-gradient(180deg, #10b981, #059669); }
 .expense-bar { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .finance-recent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   align-items: start;
 }
 
 .finance-recent-section {
+  flex: 1;
+  min-width: 500px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
-  padding: 20px;
+  padding: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+}
+
+/* Fix table overlaps and columns */
+.finance-expenses-table th:nth-child(1) { width: 15%; } /* Type */
+.finance-expenses-table th:nth-child(2) { width: 12%; } /* Amount */
+.finance-expenses-table th:nth-child(3) { width: 12%; } /* Date */
+.finance-expenses-table th:nth-child(4) { width: 15%; } /* Paid by */
+.finance-expenses-table th:nth-child(5) { width: 30%; } /* Comment */
+.finance-expenses-table th:nth-child(6) { width: 16%; } /* Action */
+
+.finance-payments-table th:nth-child(1) { width: 20%; } /* Date */
+.finance-payments-table th:nth-child(2) { width: 40%; } /* Player */
+.finance-payments-table th:nth-child(3) { width: 20%; } /* Type */
+.finance-payments-table th:nth-child(4) { width: 20%; } /* Amount */
+
+.finance-comment {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finance-comment:hover {
+  white-space: normal;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+  background: var(--panel);
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
 }
 
 .type-pill {
