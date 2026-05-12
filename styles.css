@@ -3873,3 +3873,86 @@ body.popup-open {
     justify-content: flex-end;
   }
 }
+
+/* Premium Tab Styling & Animations */
+.view-tab {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.view-tab:active {
+  transform: scale(0.95);
+}
+
+.view-tab.active {
+  box-shadow: 0 8px 16px rgba(26, 79, 157, 0.25);
+  border-color: transparent;
+}
+
+.dashboard-view:not([hidden]) {
+  animation: viewFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes viewFadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(12px); 
+    filter: blur(4px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+    filter: blur(0);
+  }
+}
+
+/* Mobile Bottom Navigation Bar */
+@media (max-width: 720px) {
+  .view-switcher {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-top: 1px solid rgba(15, 34, 64, 0.08);
+    border-radius: 0;
+    z-index: 1000;
+    box-shadow: 0 -10px 30px rgba(11, 52, 112, 0.08);
+  }
+
+  .view-switcher-tabs {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .view-tab {
+    flex: 1;
+    padding: 0 4px;
+    font-size: 0.68rem;
+    min-height: 46px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 14px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .view-tab.active {
+    background: rgba(26, 79, 157, 0.08);
+    color: var(--accent);
+    box-shadow: none;
+  }
+
+  .app-shell {
+    padding-bottom: 110px;
+  }
+}
