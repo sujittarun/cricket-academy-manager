@@ -931,20 +931,29 @@ body.popup-open {
 #rosterView .kids-table th,
 #rosterView .kids-table td {
   min-width: 80px;
+  padding: 12px 8px;
 }
 
 #rosterView .kids-table th:nth-child(1),
-#rosterView .kids-table td:nth-child(1) { width: 15%; min-width: 140px; } /* Player */
+#rosterView .kids-table td:nth-child(1) { width: 15%; min-width: 150px; } /* Player */
 #rosterView .kids-table th:nth-child(2),
-#rosterView .kids-table td:nth-child(2) { width: 4%; min-width: 50px; }  /* Age */
+#rosterView .kids-table td:nth-child(2) { width: 4%; min-width: 60px; }  /* Age */
 #rosterView .kids-table th:nth-child(3),
-#rosterView .kids-table td:nth-child(3) { width: 8%; min-width: 90px; }  /* Slot */
+#rosterView .kids-table td:nth-child(3) { width: 8%; min-width: 100px; }  /* Slot */
+#rosterView .kids-table th:nth-child(8),
+#rosterView .kids-table td:nth-child(8) { min-width: 110px; } /* Join date */
+#rosterView .kids-table th:nth-child(9),
+#rosterView .kids-table td:nth-child(9) { min-width: 110px; } /* Latest renewal */
+#rosterView .kids-table th:nth-child(10),
+#rosterView .kids-table td:nth-child(10) { min-width: 100px; } /* Fees paid */
+#rosterView .kids-table th:nth-child(11),
+#rosterView .kids-table td:nth-child(11) { min-width: 110px; } /* Amount paid */
 #rosterView .kids-table th:nth-child(12),
-#rosterView .kids-table td:nth-child(12) { width: 10%; min-width: 100px; } /* Amount paid */
+#rosterView .kids-table td:nth-child(12) { min-width: 120px; } /* Next fee due */
 #rosterView .kids-table th:nth-child(13),
-#rosterView .kids-table td:nth-child(13) { width: 10%; min-width: 120px; } /* Next due */
+#rosterView .kids-table td:nth-child(13) { min-width: 140px; } /* Last Updated */
 #rosterView .kids-table th:last-child,
-#rosterView .kids-table td:last-child { min-width: 180px; } /* Actions */
+#rosterView .kids-table td:last-child { min-width: 80px; text-align: center; } /* Actions */
 
 .slot-toolbar {
   display: flex;
