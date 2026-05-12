@@ -2095,10 +2095,6 @@ const resetAdmissionForm = async () => {
 
 const updateAuthPanel = () => {
   authPanel.hidden = !isAuthPanelOpen;
-  authToggleButton.textContent = isManagerLoggedIn ? "" : "Manager Login";
-  if (isManagerLoggedIn) {
-    authToggleButton.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
-  }
   quickLogoutButton.hidden = !isManagerLoggedIn;
   editModeButton.hidden = !isManagerLoggedIn;
   editModeButton.textContent = isEditMode ? "Done" : "Edit";

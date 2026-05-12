@@ -356,13 +356,14 @@ body.popup-open {
 }
 
 .brand-badge {
-  width: 90px; /* Larger badge */
+  width: 100px;
   height: auto;
   object-fit: contain;
-  background: transparent !important; /* Remove white background */
-  padding: 0 !important; /* Remove padding */
-  box-shadow: none !important; /* Remove shadow */
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)); /* Add subtle depth to the badge itself */
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  mix-blend-mode: multiply; /* Blends white background into the page */
+  filter: contrast(1.1) brightness(1.05); /* Enhance clarity */
 }
 
 .brand-copy {
