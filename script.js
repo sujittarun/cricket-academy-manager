@@ -830,8 +830,7 @@ const saveReminderSettings = async () => {
 };
 
 const getRenewalAmountForPlan = () => {
-  const plan = RENEWAL_PLANS[renewalPlan?.value] || RENEWAL_PLANS.monthly;
-  return renewalPlan?.value === "custom" ? Number(renewalAmount?.value || 0) : plan.amount;
+  return Number(renewalAmount?.value || 0);
 };
 
 const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
@@ -4008,8 +4007,10 @@ admissionCustomAmount?.addEventListener("input", syncAdmissionAmountState);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
-  renewalAmount.value = renewalPlan.value === "custom" ? "" : String(plan.amount);
-  renewalAmount.readOnly = renewalPlan.value !== "custom";
+  if (renewalPlan.value !== "custom") {
+    renewalAmount.value = String(plan.amount);
+  }
+  renewalAmount.readOnly = false; // Always allow manual adjustment
 });
 closeRenewalButton?.addEventListener("click", closeRenewalPopup);
 renewalPopup?.addEventListener("click", (event) => {
