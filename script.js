@@ -1505,8 +1505,10 @@ const renderStudentMovement = () => {
   const movement = buildStudentMovement(kids, 6);
   const maxValue = Math.max(1, ...movement.flatMap((month) => [month.joined, month.continuing, month.discontinued]));
 
-  studentMovementChart.innerHTML = movement.map((month) => `
-    <article class="movement-month">
+  studentMovementChart.innerHTML = movement.map((month, idx) => {
+    const isCurrent = idx === movement.length - 1;
+    return `
+    <article class="movement-month ${isCurrent ? "is-current" : ""}">
       <div class="movement-month-head">
         <strong>${month.label}</strong>
         <span>${month.continuing + month.joined - month.discontinued} active trend</span>
@@ -1522,7 +1524,7 @@ const renderStudentMovement = () => {
         <button type="button" data-movement-filter="left" data-movement-month="${month.key}"><i class="movement-dot discontinued"></i>${month.discontinued} left</button>
       </div>
     </article>
-  `).join("");
+  `}).join("");
 };
 
 const renderRosterHelper = () => {
