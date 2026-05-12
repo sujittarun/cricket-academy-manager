@@ -1845,36 +1845,49 @@ body.popup-open {
   white-space: nowrap;
 }
 
-/* Finance Chart Zoom & Tooltips */
-.finance-chart-month {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border-radius: 18px;
-  padding: 10px;
+/* Finance Chart Unified Stack Zoom */
+.finance-mini-chart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+
+.finance-month-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 10px;
   border: 1px solid transparent;
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.finance-chart-month:hover {
-  transform: translateY(-12px) scale(1.15);
+.finance-month-stack:hover {
+  transform: translateY(-15px) scale(1.18);
   background: white;
-  box-shadow: 0 30px 60px rgba(11, 52, 112, 0.18);
-  border-color: rgba(26, 79, 157, 0.2);
-  z-index: 20;
+  box-shadow: 0 40px 80px rgba(11, 52, 112, 0.2);
+  border-color: var(--primary);
+  z-index: 50;
 }
 
-.finance-chart-month.is-current {
+.finance-month-stack.is-current {
   background: linear-gradient(180deg, #ffffff, rgba(244, 191, 42, 0.12));
   border: 2px solid var(--primary);
   box-shadow: 0 10px 30px rgba(244, 191, 42, 0.15);
-  transform: scale(1.04);
+  transform: scale(1.06);
 }
 
-.finance-chart-month.is-current:hover {
-  transform: translateY(-12px) scale(1.22);
+.finance-month-stack.is-current:hover {
+  transform: translateY(-15px) scale(1.25);
 }
 
-.finance-chart-month.is-current strong {
+.finance-month-stack.is-current strong {
   color: var(--primary);
-  font-weight: 900;
 }
 
 .finance-bars {
@@ -1883,54 +1896,61 @@ body.popup-open {
   justify-content: center;
   gap: 7px;
   height: 96px;
-  margin-bottom: 10px;
   position: relative;
 }
 
 .fee-bar, .expense-bar {
   width: 18px;
-  border-radius: 999px 999px 6px 6px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 999px 999px 4px 4px;
+  transition: all 0.3s ease;
   position: relative;
-  cursor: help;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 .fee-bar { background: linear-gradient(180deg, #10b981, #059669); }
 .expense-bar { background: linear-gradient(180deg, #ef4444, #dc2626); }
 
-.fee-bar:hover, .expense-bar:hover {
-  transform: scaleY(1.3) scaleX(1.5);
-  filter: brightness(1.2) saturate(1.3);
-  z-index: 30;
+/* Net Chip inside stack */
+.finance-net-chip {
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  width: 100%;
+  transition: all 0.2s ease;
 }
 
-/* Unified Tooltip Fix (No more black dots) */
-.fee-bar::after, .expense-bar::after, .movement-bar::after {
+.finance-net-chip.positive { background: rgba(16, 185, 129, 0.12); color: #065f46; }
+.finance-net-chip.negative { background: rgba(239, 68, 68, 0.12); color: #991b1b; }
+
+/* Global Tooltip fix - Pure CSS, no browser title */
+.fee-bar::after, .expense-bar::after, .movement-bar::after, .finance-net-chip::after {
   content: attr(data-label);
   position: absolute;
   bottom: 100%;
   left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  background: #1e293b;
+  transform: translateX(-50%) translateY(0);
+  background: #0f172a;
   color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
   opacity: 0;
-  visibility: hidden; /* Prevent black dot when not hovered */
+  visibility: hidden;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  z-index: 100;
 }
 
-.fee-bar:hover::after, .expense-bar:hover::after, .movement-bar:hover::after {
+.fee-bar:hover::after, .expense-bar:hover::after, .movement-bar:hover::after, .finance-net-chip:hover::after {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(-18px);
+  transform: translateX(-50%) translateY(-20px);
 }
 
 .finance-expense-form .primary-btn,
