@@ -75,16 +75,29 @@
 
         <div id="mastheadBottom" class="masthead-bottom" hidden>
           <div class="hero-card">
-            <p id="heroLabel" class="hero-label">Online Admission</p>
-            <strong id="alertCount">0 kids need attention</strong>
-            <p id="alertSummary" class="hero-subtext">
-              Add Gen Alpha academy records to start tracking.
-            </p>
+            <div class="hero-content-wrap">
+              <div class="hero-number-box">
+                <strong id="alertCount">0</strong>
+              </div>
+              <div class="hero-text-box">
+                <p id="heroLabel" class="hero-label">Cockpit</p>
+                <p id="alertSummaryText" class="hero-subtext">kids need attention</p>
+              </div>
+            </div>
+            <div id="alertSummary" class="alert-side-panel"></div>
           </div>
+
           <div id="criticalAlertCard" class="hero-card critical-alert-card" hidden>
-            <p class="hero-label">Immediate Follow-up</p>
-            <strong id="criticalAlertCount">0 overdue</strong>
-            <p id="criticalAlertSummary" class="hero-subtext"></p>
+            <div class="hero-content-wrap">
+              <div class="hero-number-box">
+                <strong id="criticalAlertCount">0</strong>
+              </div>
+              <div class="hero-text-box">
+                <p class="hero-label">Immediate Follow-up</p>
+                <p class="hero-subtext">Overdue Payments</p>
+              </div>
+            </div>
+            <div id="criticalAlertSummary" class="alert-side-panel"></div>
           </div>
         </div>
       </section>
@@ -410,15 +423,15 @@
                     <th><button class="sort-header" type="button" data-roster-sort="timeSlot" data-sort-label="Time slot">Time slot</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="jersey" data-sort-label="Jersey">Jersey</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="status" data-sort-label="Status">Status</button></th>
-                    <th><button class="sort-header" type="button" data-roster-sort="studentType" data-sort-label="Student type">Student type</button></th>
+                    <th><button class="sort-header" type="button" data-roster-sort="studentType" data-sort-label="Type">Type</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="tenure" data-sort-label="Tenure">Tenure</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="joinDate" data-sort-label="Join date">Join date</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="latestRenewal" data-sort-label="Latest renewal">Latest renewal</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="feesPaid" data-sort-label="Fees paid">Fees paid</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="amountPaid" data-sort-label="Amount paid">Amount paid</button></th>
                     <th><button class="sort-header" type="button" data-roster-sort="nextDue" data-sort-label="Next fee due">Next fee due</button></th>
-                    <th><button class="sort-header" type="button" data-roster-sort="updatedBy" data-sort-label="Last Updated">Last Updated</button></th>
                     <th id="actionHeader">Action</th>
+                    <th><button class="sort-header" type="button" data-roster-sort="updatedBy" data-sort-label="Last Updated">Last Updated</button></th>
                   </tr>
                 </thead>
                 <tbody id="kidsTableBody"></tbody>

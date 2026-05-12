@@ -2123,7 +2123,7 @@ const renderSummary = (alertKids) => {
   }
 
   mastheadBottom.hidden = false;
-  heroLabel.textContent = "Alert";
+  heroLabel.textContent = "Cockpit";
   const criticalKids = alertKids.filter((kid) => getReminderState(kid).isCritical);
   const standardAlertKids = alertKids.filter((kid) => !getReminderState(kid).isCritical);
   const totalAlerts = standardAlertKids.length;
@@ -2375,7 +2375,7 @@ const renderKids = () => {
           ${kid.discontinued ? "Discontinued" : "Active"}
         </span>
       </td>
-      <td data-label="Student type">
+      <td data-label="Type">
         <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
           ${studentType}
         </span>
@@ -2394,7 +2394,6 @@ const renderKids = () => {
           ${renewalStatus}
         </span>
       </td>
-      <td data-label="Last Updated"><span class="meta-text">${kid.updatedBy}</span></td>
       ${
         canEdit
           ? `<td data-label="Actions">
@@ -2415,28 +2414,25 @@ const renderKids = () => {
                   canRenew
                     ? `<button class="menu-item renew-item" data-action="renew-open" data-id="${kid.id}" type="button">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                        Mark Fee Paid
+                        Renew Payment
                       </button>`
                     : ""
                 }
-                ${
-                  reminderState.isDue
-                    ? `<button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        Send Reminder
-                      </button>`
-                    : ""
-                }
+                <button class="menu-item reminder-item" data-action="reminder" data-id="${kid.id}" type="button">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  Send Reminder
+                </button>
                 <div class="menu-divider"></div>
                 <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                  Delete Player
+                  Delete Record
                 </button>
               </div>
             </div>
           </td>`
           : ""
       }
+      <td data-label="Last Updated"><span class="meta-text small-meta">${kid.updatedBy.substring(0, 8)}...</span></td>
     `;
     kidsTableBody.appendChild(row);
   });

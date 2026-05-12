@@ -328,83 +328,111 @@ body.popup-open {
 
 .hero-card {
   width: min(560px, 100%);
-  padding: 32px;
-  background: #0f172a; /* Deep charcoal/blue */
-  color: white;
-  border-radius: 32px;
+  padding: 0;
+  background: white;
+  color: #1e293b;
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.5),
-    inset 0 0 40px rgba(255, 255, 255, 0.02);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 120px;
 }
 
-/* Neon Accent Line */
+/* Cockpit Indicator Block */
 .hero-card::before {
   content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: #3b82f6; /* Electric Blue */
-  box-shadow: 0 2px 15px rgba(59, 130, 246, 0.6);
+  width: 12px;
+  background: #3b82f6;
 }
 
 .critical-alert-card::before {
-  background: #ef4444; /* Electric Red */
-  box-shadow: 0 2px 15px rgba(239, 68, 68, 0.6);
+  background: #ef4444;
+}
+
+.hero-content-wrap {
+  display: flex;
+  padding: 24px;
+  gap: 20px;
+  align-items: center;
+  flex: 1;
+}
+
+.hero-number-box {
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  min-width: 80px;
+  text-align: center;
+}
+
+.hero-number-box strong {
+  display: block;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.hero-text-box {
+  flex: 1;
 }
 
 .hero-card .hero-label {
   text-transform: uppercase;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 800;
-  letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 4px;
-}
-
-.hero-card strong {
-  display: block;
-  font-size: 2.2rem;
-  font-weight: 900;
-  line-height: 1;
-  color: #f8fafc;
-  letter-spacing: -0.01em;
-}
-
-.critical-alert-card strong {
-  color: #fee2e2;
+  letter-spacing: 0.2em;
+  color: #64748b;
+  margin-bottom: 2px;
 }
 
 .hero-card .hero-subtext {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.6;
-  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
 }
 
-/* Roster Width Fixes */
-/* Roster Width Fixes */
+/* Roster Width Tightening */
 #rosterView .kids-table th:nth-child(1),
-#rosterView .kids-table td:nth-child(1) { width: 14%; min-width: 180px; } /* Player */
+#rosterView .kids-table td:nth-child(1) { width: 14%; min-width: 160px; } /* Player */
 #rosterView .kids-table th:nth-child(2),
-#rosterView .kids-table td:nth-child(2) { width: 3%; min-width: 65px; }  /* Age */
+#rosterView .kids-table td:nth-child(2) { width: 3%; min-width: 50px; }  /* Age */
 #rosterView .kids-table th:nth-child(3),
-#rosterView .kids-table td:nth-child(3) { width: 5%; min-width: 95px; }  /* Time Slot */
+#rosterView .kids-table td:nth-child(3) { width: 5%; min-width: 80px; }  /* Time Slot */
 #rosterView .kids-table th:nth-child(4),
-#rosterView .kids-table td:nth-child(4) { width: 4%; min-width: 80px; }  /* Jersey */
+#rosterView .kids-table td:nth-child(4) { width: 4%; min-width: 65px; }  /* Jersey */
 #rosterView .kids-table th:nth-child(5),
-#rosterView .kids-table td:nth-child(5) { width: 5%; min-width: 100px; } /* Status */
+#rosterView .kids-table td:nth-child(5) { width: 5%; min-width: 75px; }  /* Status */
 #rosterView .kids-table th:nth-child(6),
-#rosterView .kids-table td:nth-child(6) { width: 7%; min-width: 130px; } /* Student type */
+#rosterView .kids-table td:nth-child(6) { width: 6%; min-width: 85px; }  /* Type */
 #rosterView .kids-table th:nth-child(7),
-#rosterView .kids-table td:nth-child(7) { width: 5%; min-width: 100px; } /* Tenure */
+#rosterView .kids-table td:nth-child(7) { width: 4%; min-width: 65px; }  /* Tenure */
+#rosterView .kids-table th:nth-child(8),
+#rosterView .kids-table td:nth-child(8) { width: 7%; min-width: 90px; }  /* Join date */
+#rosterView .kids-table th:nth-child(9),
+#rosterView .kids-table td:nth-child(9) { width: 9%; min-width: 110px; } /* Latest renewal */
+#rosterView .kids-table th:nth-child(10),
+#rosterView .kids-table td:nth-child(10) { width: 7%; min-width: 85px; }  /* Fees paid */
+
+/* Compact Last Updated */
+#rosterView .kids-table th:last-child,
+#rosterView .kids-table td:last-child {
+  text-align: right;
+  min-width: 80px;
+  padding-right: 20px;
+}
+
+.small-meta {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  font-family: monospace;
+}
 
 /* Vertical List Styling */
 .alert-vertical-stack {
@@ -414,37 +442,46 @@ body.popup-open {
   margin-top: 12px;
 }
 
-.alert-player-link {
+.alert-side-panel {
+  background: #f8fafc;
+  border-left: 1px solid #e2e8f0;
+  padding: 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: #f1f5f9 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
-.alert-player-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #fff !important;
+.critical-alert-card .alert-side-panel {
+  background: #fff5f5;
+  border-left: 1px solid #fed7d7;
+}
+
+.alert-side-panel .alert-player-link {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569 !important;
+}
+
+.alert-side-panel .alert-player-link:hover {
+  background: #f1f5f9;
+  transform: translateX(4px);
+  color: #3b82f6 !important;
 }
 
 .critical-alert-card .alert-player-link {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.1);
+  background: white;
+  border-color: #feb2b2;
 }
 
 .critical-alert-card .alert-player-link:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #fecaca !important;
+  background: #fff5f5;
+  color: #ef4444 !important;
+  border-color: #f87171;
 }
 
 /* Critical Pulse Animation */
