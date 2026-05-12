@@ -2698,12 +2698,11 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
     return { success: false, message: paymentError.message };
   }
 
-  let updatePayload = {};
+  let updatePayload = { discontinued: false, discontinued_at: null, updated_by: getActiveManagerEmail() };
   if (isJoiningFee) {
-    updatePayload = { fees_paid: true, updated_by: getActiveManagerEmail() };
+    updatePayload.fees_paid = true;
   } else {
-    const renewals = [...new Set([...kid.renewals, cycleDate])];
-    updatePayload = { renewals, updated_by: getActiveManagerEmail() };
+    updatePayload.renewals = [...new Set([...kid.renewals, cycleDate])];
   }
 
   const { error: updateError } = await supabaseClient
@@ -3705,6 +3704,17 @@ kidsTableBody.addEventListener("click", async (event) => {
     document.getElementById("address").value = kidToEdit.address || "";
     document.getElementById("timeSlot").value = kidToEdit.timeSlot;
     joinDateInput.value = kidToEdit.joinDate;
+    
+    // Restriction: Cannot edit join date if player has already renewed or paid
+    const hasRenewals = kidToEdit.renewals && kidToEdit.renewals.length > 0;
+    joinDateInput.disabled = hasRenewals;
+    if (hasRenewals) {
+      joinDateInput.title = "Join date cannot be changed after renewals are recorded.";
+    } else {
+      joinDateInput.disabled = false;
+      joinDateInput.title = "";
+    }
+
     feesPaidSelect.value = kidToEdit.feesPaid;
     amountPaidInput.value = String(kidToEdit.amountPaid);
     jerseySizeSelect.value = kidToEdit.jerseySize || "";
@@ -3858,7 +3868,12 @@ renewalForm?.addEventListener("submit", async (event) => {
   }
   const { error: updateError } = await supabaseClient
     .from("students")
-    .update({ renewals, updated_by: getActiveManagerEmail() })
+    .update({ 
+      renewals, 
+      discontinued: false, 
+      discontinued_at: null, 
+      updated_by: getActiveManagerEmail() 
+    })
     .eq("id", kid.id);
   if (updateError) {
     renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}`;
