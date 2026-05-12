@@ -62,9 +62,12 @@ body {
 }
 
 .masthead-top,
-.masthead-bottom,
-.view-switcher {
+.masthead-bottom {
   justify-content: space-between;
+}
+
+.view-switcher {
+  justify-content: center;
 }
 
 .masthead-top {
@@ -107,7 +110,7 @@ body {
 
 .view-switcher-tabs {
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .view-tab {
