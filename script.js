@@ -3182,7 +3182,7 @@ const loadFinance = async () => {
       `;
     }).join("");
     if (financeNetTimeline) {
-      financeNetTimeline.innerHTML = monthBuckets.map((month) => {
+      financeNetTimeline.innerHTML = [...monthBuckets].reverse().map((month) => {
         const net = month.fees - month.expenses;
         return `
           <div class="finance-net-chip ${net < 0 ? "negative" : "positive"}">
