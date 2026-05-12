@@ -2163,9 +2163,12 @@ const renderSummary = (alertKids) => {
   criticalAlertCard.hidden = criticalKids.length === 0;
   criticalAlertCount.textContent =
     criticalKids.length === 1 ? "1 overdue player" : `${criticalKids.length} overdue players`;
-  criticalAlertSummary.innerHTML = criticalKids
-    .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
-    .join("");
+  criticalAlertSummary.innerHTML = `<div class="alert-vertical-stack">${criticalKids
+    .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      ${kid.name}
+    </button>`)
+    .join("")}</div>`;
 };
 
 const updateActiveView = () => {
@@ -2386,7 +2389,11 @@ const renderKids = () => {
         </span>
       </td>
       <td data-label="Amount paid">Rs ${Number(lastPaymentAmount).toFixed(2)}</td>
-      <td data-label="Next fee due"><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
+      <td data-label="Next fee due">
+        <span class="alert-pill ${renewalPending ? "" : "safe"} ${daysUntilDue < -7 ? "critical-pulse" : ""}">
+          ${renewalStatus}
+        </span>
+      </td>
       <td data-label="Last Updated"><span class="meta-text">${kid.updatedBy}</span></td>
       ${
         canEdit
