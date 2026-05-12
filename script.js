@@ -647,6 +647,7 @@ const getPlayerPaymentRows = (kid) => {
   payments.forEach((payment) => {
     const months = getPaymentMonthsCovered(payment);
     rows.push({
+      id: payment.id,
       date: payment.paid_on || payment.paidOn,
       title: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Joining payment" : "Renewal payment",
       plan: getPaymentPlanLabel(payment.plan_type || payment.planType, months),
@@ -2974,7 +2975,10 @@ const renderPlayerDetails = async (kid) => {
                   <strong>${payment.title}</strong>
                   <span>${formatDate(payment.date)} · ${payment.plan} · ${payment.months} month${payment.months === 1 ? "" : "s"}</span>
                 </div>
-                <b>${rupees(payment.amount)}</b>
+                <div class="payment-action-cell">
+                  <b>${rupees(payment.amount)}</b>
+                  ${isManagerLoggedIn && payment.id ? `<button class="delete-payment-btn" data-action="delete-payment" data-id="${payment.id}" data-kid-id="${kid.id}" title="Delete payment">✕</button>` : ""}
+                </div>
               </div>
             `).join("")}</div>`
           : `<p class="sub-copy">No paid fee records yet.</p>`
@@ -3982,6 +3986,15 @@ closePlayerDetailButton?.addEventListener("click", () => {
 });
 playerDetailContent?.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) return;
+  const deleteTarget = event.target.closest("[data-action=\"delete-payment\"]");
+  if (deleteTarget instanceof HTMLElement) {
+    const paymentId = deleteTarget.dataset.id;
+    const kidId = deleteTarget.dataset.kidId;
+    if (paymentId && kidId) {
+      deletePayment(paymentId, kidId);
+      return;
+    }
+  }
   const proofTarget = event.target.closest("[data-proof-url]");
   if (proofTarget) {
     openPaymentProofViewer(proofTarget.dataset.proofUrl || "");
@@ -4113,7 +4126,38 @@ rosterFeeDueFilterInput?.addEventListener("change", (event) => {
   rosterFeeDueFilter = event.target.value || "all";
   renderKids();
 });
-kidsTable?.addEventListener("click", (event) => {
+const deletePayment = async (paymentId, kidId) => {
+  if (!confirm("Are you sure you want to delete this payment record? This will affect the student's renewal date and total amount paid.")) return;
+  
+  try {
+    const { error } = await supabaseClient
+      .from("payments")
+      .delete()
+      .eq("id", paymentId);
+      
+    if (error) throw error;
+    
+    // Refresh student data
+    const refreshedKid = await loadSingleKid(kidId);
+    if (refreshedKid) {
+      kids = kids.map(k => k.id === kidId ? refreshedKid : k);
+      renderKids();
+      await renderPlayerDetails(refreshedKid);
+    }
+    
+    // Refresh finance if visible
+    if (!financeView.hidden) {
+      await loadFinance();
+    }
+    
+    alert("Payment record deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting payment:", error);
+    alert(`Failed to delete payment: ${error.message}`);
+  }
+};
+
+kidsTableBody?.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;
   const button = event.target.closest("[data-roster-sort]");
   if (!button) return;
