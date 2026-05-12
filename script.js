@@ -302,11 +302,13 @@ let activeView = "admission";
 
 const switchView = (view, push = true) => {
   const validViews = ["roster", "admission", "attendance", "finance"];
-  const viewToSet = validViews.includes(view) ? view : "admission";
+  const savedView = localStorage.getItem("activeView");
+  const viewToSet = validViews.includes(view) ? view : (validViews.includes(savedView) ? savedView : "admission");
   
   if (activeView === viewToSet && !push) return;
   
   activeView = viewToSet;
+  localStorage.setItem("activeView", activeView);
   updateActiveView();
   
   // Load data for specific views
@@ -4512,10 +4514,8 @@ const initializeApp = async () => {
   }
   initRealtimeSync();
 
-  if (window.location.hash) {
-    const initialView = window.location.hash.replace("#", "");
-    switchView(initialView, false);
-  }
+  const initialView = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "admission";
+  switchView(initialView, false);
 };
 
 initializeApp();
