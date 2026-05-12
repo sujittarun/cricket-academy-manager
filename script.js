@@ -162,6 +162,7 @@ const closeFinanceMonthPopupButton = document.getElementById("closeFinanceMonthP
 const financeRecent = document.getElementById("financeRecent");
 const expenseSearch = document.getElementById("expenseSearch");
 const financeExpensesTableBody = document.getElementById("financeExpensesTableBody");
+const financePaymentsBody = document.getElementById("financePaymentsBody");
 const sortExpenseType = document.getElementById("sortExpenseType");
 const sortExpenseAmount = document.getElementById("sortExpenseAmount");
 const sortExpenseDate = document.getElementById("sortExpenseDate");
@@ -3283,7 +3284,53 @@ const loadFinance = async () => {
     });
   };
 
+  const renderPaymentsTable = () => {
+    if (!financePaymentsBody) return;
+    
+    // Merge initial fees and renewal payments
+    const allRevenue = [
+      ...kids.filter((k) => k.feesPaid === "yes").map((k) => ({ 
+        paid_on: k.joinDate, 
+        amount: k.amountPaid, 
+        payment_type: "joining", 
+        isInitial: true,
+        student_id: k.id
+      })),
+      ...financePayments.map((p) => ({ 
+        paid_on: p.paid_on || p.paidOn, 
+        amount: p.amount, 
+        payment_type: p.payment_type || p.paymentType || "renewal", 
+        student_id: p.student_id || p.studentId,
+        isInitial: false
+      }))
+    ];
+
+    // Sort by date descending
+    allRevenue.sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
+
+    if (allRevenue.length === 0) {
+      financePaymentsBody.innerHTML = '<tr><td colspan="4" class="sub-copy" style="text-align:center;padding:20px;">No revenue recorded yet.</td></tr>';
+    } else {
+      financePaymentsBody.innerHTML = allRevenue
+        .slice(0, 50)
+        .map((payment) => {
+          const kid = kids.find((k) => k.id === payment.student_id);
+          const name = kid ? kid.name : "Unknown Player";
+          return `
+            <tr>
+              <td>${formatDate(payment.paid_on)}</td>
+              <td><strong>${name}</strong></td>
+              <td><span class="type-pill ${payment.isInitial ? "new" : "returning"}">${payment.payment_type}</span></td>
+              <td class="amount-cell">Rs ${Number(payment.amount).toFixed(2)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+  };
+
   renderExpensesTable();
+  renderPaymentsTable();
 
   // Attach events if not already attached
   if (expenseSearch && !expenseSearch.hasAttribute("data-bound")) {
@@ -3638,7 +3685,7 @@ admissionReviewList?.addEventListener("click", async (event) => {
 
   let error;
   if (approveButton) {
-    ({ error } = await supabaseClient.rpc(rpcName, {
+    ({ error } = await supabaseClient.rpc("approve_admission", {
       p_admission_id: admissionId,
       p_reviewed_by: getActiveManagerEmail(),
       p_review_notes: "",
@@ -3995,10 +4042,12 @@ renewalForm?.addEventListener("submit", async (event) => {
     renewalMessage.textContent = paymentError.message;
     return;
   }
+  const newTotalPaid = (Number(kid.amountPaid) || 0) + amount;
   const { error: updateError } = await supabaseClient
     .from("students")
     .update({ 
       renewals, 
+      amount_paid: newTotalPaid,
       discontinued: false, 
       discontinued_at: null, 
       updated_by: getActiveManagerEmail() 

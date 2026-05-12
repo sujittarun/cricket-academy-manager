@@ -1912,6 +1912,43 @@ body.popup-open {
 
 .fee-bar { background: linear-gradient(180deg, #10b981, #059669); }
 .expense-bar { background: linear-gradient(180deg, #ef4444, #dc2626); }
+.finance-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.finance-recent-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.type-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.type-pill.new {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+.type-pill.returning {
+  background: rgba(33, 150, 243, 0.2);
+  color: #64b5f6;
+}
+
+.amount-cell {
+  text-align: right;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
 
 /* Net Chip inside stack */
 .finance-net-chip {

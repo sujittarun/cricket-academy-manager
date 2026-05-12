@@ -537,31 +537,57 @@
             </div>
           </section>
           <div id="financeRecent" class="finance-recent" hidden>
-            <div class="slot-toolbar finance-toolbar">
-              <div class="slot-toolbar-copy">
-                <h3>Recent expenses</h3>
-                <p class="slot-helper">Sort and filter expenses</p>
+            <div class="finance-recent-grid">
+              <div class="finance-recent-section">
+                <div class="slot-toolbar finance-toolbar">
+                  <div class="slot-toolbar-copy">
+                    <h3>Recent revenue</h3>
+                    <p class="slot-helper">Fees and joining amounts</p>
+                  </div>
+                </div>
+                <div class="table-wrap finance-table-wrap">
+                  <table class="kids-table finance-payments-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Player</th>
+                        <th>Type</th>
+                        <th class="amount-cell">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody id="financePaymentsBody">
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <div class="slot-filters">
-                <button id="openExpensePopupButton" type="button" class="primary-btn">Add expense</button>
-                <input type="text" id="expenseSearch" class="search-input finance-search" placeholder="Search by name or type..." />
+              <div class="finance-recent-section">
+                <div class="slot-toolbar finance-toolbar">
+                  <div class="slot-toolbar-copy">
+                    <h3>Recent expenses</h3>
+                    <p class="slot-helper">Sort and filter expenses</p>
+                  </div>
+                  <div class="slot-filters">
+                    <button id="openExpensePopupButton" type="button" class="primary-btn">Add expense</button>
+                    <input type="text" id="expenseSearch" class="search-input finance-search" placeholder="Search by name or type..." />
+                  </div>
+                </div>
+                <div class="table-wrap finance-table-wrap">
+                  <table class="kids-table finance-expenses-table">
+                    <thead>
+                      <tr>
+                        <th style="cursor: pointer;" id="sortExpenseType">Type ↕</th>
+                        <th style="cursor: pointer;" id="sortExpenseAmount">Amount ↕</th>
+                        <th style="cursor: pointer;" id="sortExpenseDate">Date ↕</th>
+                        <th style="cursor: pointer;" id="sortExpensePaidBy">Paid By ↕</th>
+                        <th>Comment</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="financeExpensesTableBody">
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-            <div class="table-wrap finance-table-wrap">
-              <table class="kids-table finance-expenses-table">
-                <thead>
-                  <tr>
-                    <th style="cursor: pointer;" id="sortExpenseType">Type ↕</th>
-                    <th style="cursor: pointer;" id="sortExpenseAmount">Amount ↕</th>
-                    <th style="cursor: pointer;" id="sortExpenseDate">Date ↕</th>
-                    <th style="cursor: pointer;" id="sortExpensePaidBy">Paid By ↕</th>
-                    <th>Comment</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="financeExpensesTableBody">
-                </tbody>
-              </table>
             </div>
           </div>
         </section>
