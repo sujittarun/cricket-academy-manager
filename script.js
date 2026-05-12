@@ -36,7 +36,6 @@ const formPanel = document.getElementById("formPanel");
 const recordsHelper = document.getElementById("recordsHelper");
 const joinedCount = document.getElementById("joinedCount");
 const activeCount = document.getElementById("activeCount");
-const paidCount = document.getElementById("paidCount");
 const returningCount = document.getElementById("returningCount");
 const studentMovementChart = document.getElementById("studentMovementChart");
 const admissionReviewPanel = document.getElementById("admissionReviewPanel");
@@ -728,12 +727,12 @@ const getReminderState = (kid) => {
   const dueDate = isJoiningFee ? kid.joinDate : getPaidThroughDate(kid);
   const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
   return {
-    isDue: !isJoiningFee && isRenewalPending(kid),
+    isDue: isJoiningFee || isRenewalPending(kid),
     isJoiningFee,
     dueDate,
     overdueDays,
     isCritical: overdueDays > 10,
-    reminderType: "renewal",
+    reminderType: isJoiningFee ? "joining_fee" : "renewal",
   };
 };
 
@@ -1488,7 +1487,6 @@ const updateStats = () => {
   const activeKids = kids.filter(isActiveKid);
   joinedCount.textContent = String(kids.length);
   activeCount.textContent = String(activeKids.length);
-  paidCount.textContent = String(activeKids.filter((kid) => kid.feesPaid === "yes").length);
   returningCount.textContent = String(activeKids.filter((kid) => kid.renewals.length > 0).length);
 };
 
