@@ -5127,3 +5127,7 @@ if (attendanceDate) {
   attendanceDate.max = getTodayIso();
   attendanceDate.value = attendanceDateValue;
 }
+
+// RESTORE VIEW ON LOAD
+const initialView = window.location.hash.replace("#", "");
+switchView(initialView, false);
