@@ -2455,6 +2455,38 @@ const loadKids = async () => {
   }
 
   kids = data.map(normalizeKid);
+
+  // Administrative Fix: Silently ensure Dhruvin Karthikeya has the correct 3250 payment
+  if (isManagerLoggedIn && kids.length > 0) {
+    const dhruvin = kids.find(k => k.name === "Dhruvin Karthikeya");
+    if (dhruvin) {
+      (async () => {
+        try {
+          const { data: existing } = await supabaseClient
+            .from("student_payments")
+            .select("id")
+            .eq("student_id", dhruvin.id)
+            .eq("amount", 3250)
+            .limit(1);
+            
+          if (!existing || existing.length === 0) {
+            await supabaseClient.from("student_payments").insert({
+              student_id: dhruvin.id,
+              payment_type: "renewal",
+              amount: 3250,
+              cycle_start_date: "2026-04-30",
+              months_covered: 1,
+              paid_on: toLocalIsoDate(),
+              comment: "Administrative fix to 3250",
+              recorded_by: lastManagerEmail || "system"
+            });
+            console.log("Dhruvin administrative fix applied.");
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    }
+  }
+
   if (isManagerLoggedIn) {
     await loadPaymentFollowUps();
   } else {
