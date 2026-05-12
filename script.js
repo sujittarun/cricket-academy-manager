@@ -2391,22 +2391,36 @@ const renderKids = () => {
       ${
         canEdit
           ? `<td data-label="Actions">
-            <div class="action-group">
-              <button class="secondary-btn" data-action="edit" data-id="${kid.id}" type="button">Edit</button>
-              <button class="secondary-btn" data-action="toggle-status" data-id="${kid.id}" type="button">
-                ${kid.discontinued ? "Mark active" : "Discontinue"}
+            <div class="action-menu-container">
+              <button class="action-trigger-btn" type="button" title="Actions">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
-              ${
-                canRenew
-                  ? `<button class="renew-btn" data-action="renew-open" data-id="${kid.id}" type="button">Mark fee paid</button>`
-                  : ""
-              }
-              ${
-                reminderState.isDue
-                  ? `<button class="secondary-btn reminder-btn" data-action="send-reminder" data-id="${kid.id}" type="button">Send reminder</button>`
-                  : ""
-              }
-              <button class="danger-btn" data-action="delete" data-id="${kid.id}" type="button">Delete</button>
+              <div class="action-menu-dropdown">
+                <button class="menu-item" data-action="edit" data-id="${kid.id}" type="button">
+                  <i class="icon-edit"></i> Edit details
+                </button>
+                <button class="menu-item" data-action="toggle-status" data-id="${kid.id}" type="button">
+                  <i class="icon-status"></i> ${kid.discontinued ? "Mark as Active" : "Discontinue"}
+                </button>
+                ${
+                  canRenew
+                    ? `<button class="menu-item renew-item" data-action="renew-open" data-id="${kid.id}" type="button">
+                        <i class="icon-payment"></i> Mark fee paid
+                      </button>`
+                    : ""
+                }
+                ${
+                  reminderState.isDue
+                    ? `<button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">
+                        <i class="icon-bell"></i> Send reminder
+                      </button>`
+                    : ""
+                }
+                <div class="menu-divider"></div>
+                <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">
+                  <i class="icon-trash"></i> Delete player
+                </button>
+              </div>
             </div>
           </td>`
           : ""
@@ -5185,3 +5199,23 @@ if (attendanceDate) {
 // RESTORE VIEW ON LOAD
 const initialView = window.location.hash.replace("#", "");
 switchView(initialView, false);
+
+// GLOBAL ACTION MENU HANDLER
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest(".action-trigger-btn");
+  const container = event.target.closest(".action-menu-container");
+  
+  // Close all other menus
+  document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
+    if (menu !== container) {
+      menu.classList.remove("active");
+    }
+  });
+
+  if (trigger && container) {
+    container.classList.toggle("active");
+    event.stopPropagation();
+  } else if (!container) {
+    // Clicked outside, menus already closed above
+  }
+});

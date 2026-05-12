@@ -826,20 +826,88 @@ body.popup-open {
   font-size: clamp(0.58rem, 0.52vw, 0.68rem);
 }
 
-#rosterView .action-group {
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  white-space: normal;
+.action-menu-container {
+  position: relative;
+  display: inline-block;
 }
 
-#rosterView .action-group .secondary-btn,
-#rosterView .action-group .danger-btn,
-#rosterView .action-group .renew-btn {
-  min-height: 28px;
-  padding: 0 6px;
-  border-radius: 9px;
-  font-size: clamp(0.58rem, 0.52vw, 0.68rem);
+.action-trigger-btn {
+  background: rgba(26, 79, 157, 0.05);
+  border: 1px solid rgba(26, 79, 157, 0.1);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--accent);
+  transition: all 0.2s ease;
+}
+
+.action-trigger-btn:hover,
+.action-menu-container.active .action-trigger-btn {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.action-menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 180px;
+  padding: 8px 0;
+  animation: slideIn 0.2s ease;
+}
+
+.action-menu-container.active .action-menu-dropdown {
+  display: block;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.menu-item:hover {
+  background: rgba(26, 79, 157, 0.05);
+}
+
+.menu-item.delete-item {
+  color: #ef4444;
+}
+
+.menu-item.delete-item:hover {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.menu-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05);
+  margin: 4px 0;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 #rosterView .kids-table th,
