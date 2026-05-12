@@ -299,6 +299,36 @@ let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
 let activeView = "admission";
+
+const switchView = (view, push = true) => {
+  const validViews = ["roster", "admission", "attendance", "finance"];
+  const viewToSet = validViews.includes(view) ? view : "admission";
+  
+  if (activeView === viewToSet && !push) return;
+  
+  activeView = viewToSet;
+  updateActiveView();
+  
+  // Load data for specific views
+  if (activeView === "roster" || activeView === "admission") {
+    renderKids();
+  } else if (activeView === "finance") {
+    loadFinance();
+  } else if (activeView === "attendance") {
+    const date = attendanceDate?.value || toLocalIsoDate();
+    loadAttendance(date);
+  }
+  
+  if (push) {
+    history.pushState({ view: activeView }, "", `#${activeView}`);
+  }
+};
+
+window.addEventListener("popstate", (event) => {
+  const viewFromState = event.state?.view;
+  const viewFromHash = window.location.hash.replace("#", "");
+  switchView(viewFromState || viewFromHash || "admission", false);
+});
 let hasTriggeredServiceWorkerRefresh = false;
 let isEditMode = false;
 let admissionPaymentIntentId = "";
@@ -4014,11 +4044,7 @@ document.addEventListener("visibilitychange", () => {
     refreshPaymentReturnHint();
   }
 });
-rosterTabButton.addEventListener("click", () => {
-  activeView = "roster";
-  updateActiveView();
-  renderKids();
-});
+rosterTabButton.addEventListener("click", () => switchView("roster"));
 playerSearchInput?.addEventListener("input", (event) => {
   rosterSearchQuery = event.target.value || "";
   renderKids();
@@ -4085,18 +4111,10 @@ kidsTable?.addEventListener("click", (event) => {
   }
   renderKids();
 });
-financeTabButton?.addEventListener("click", () => {
-  activeView = "finance";
-  updateActiveView();
-  loadFinance();
-});
+financeTabButton?.addEventListener("click", () => switchView("finance"));
 exportCsvButton?.addEventListener("click", exportMonthlyCsv);
 exportPdfButton?.addEventListener("click", printMonthlyReport);
-admissionTabButton.addEventListener("click", () => {
-  activeView = "admission";
-  updateActiveView();
-  renderKids();
-});
+admissionTabButton.addEventListener("click", () => switchView("admission"));
 slotFilters.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) {
     return;
@@ -4370,6 +4388,11 @@ const initializeApp = async () => {
     await loadFinance();
   }
   initRealtimeSync();
+
+  if (window.location.hash) {
+    const initialView = window.location.hash.replace("#", "");
+    switchView(initialView, false);
+  }
 };
 
 initializeApp();
@@ -4542,12 +4565,7 @@ attendanceDate?.addEventListener("change", () => {
 });
 
 // Third tab — Attendance
-attendanceTabButton?.addEventListener("click", () => {
-  activeView = "attendance";
-  updateActiveView();
-  attendanceDate.value = attendanceDateValue;
-  loadAttendance(attendanceDateValue);
-});
+attendanceTabButton?.addEventListener("click", () => switchView("attendance"));
 
 expenseForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
