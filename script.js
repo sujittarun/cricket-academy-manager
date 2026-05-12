@@ -3865,6 +3865,7 @@ admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
   renewalAmount.value = renewalPlan.value === "custom" ? "" : String(plan.amount);
+  renewalAmount.readOnly = renewalPlan.value !== "custom";
 });
 closeRenewalButton?.addEventListener("click", closeRenewalPopup);
 renewalPopup?.addEventListener("click", (event) => {
@@ -3914,27 +3915,9 @@ renewalForm?.addEventListener("submit", async (event) => {
     financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
   }
   const renewalToDate = addMonthsIso(cycleDate, plan.months);
-  const accessToken = await getFreshManagerAccessToken();
-  let whatsappNotice = "";
-  if (accessToken) {
-    try {
-      const { functionResponse, functionBody } = await callRenewalVerifiedFunction({
-        kid,
-        planTitle: plan.title,
-        amount,
-        cycleDate,
-        toDate: renewalToDate,
-        accessToken,
-      });
-      if (!functionResponse.ok || functionBody?.success === false) {
-        whatsappNotice = ` WhatsApp confirmation not sent: ${functionBody?.error || "unknown error"}.`;
-      }
-    } catch (error) {
-      whatsappNotice = ` WhatsApp confirmation not sent: ${error.message || "unknown error"}.`;
-    }
-  }
+  
+  // 3. Show Receipt and Close Popup Instantly
   closeRenewalPopup();
-  formMessage.textContent = `${kid.name} renewed from ${formatDate(cycleDate)} to ${formatDate(renewalToDate)}.${whatsappNotice}`;
   latestAdmissionReceipt = buildRenewalReceiptFromKid(kid, {
     plan: renewalPlan.value,
     planTitle: plan.title,
@@ -3943,8 +3926,27 @@ renewalForm?.addEventListener("submit", async (event) => {
     cycleDate,
   });
   renderReceipt(latestAdmissionReceipt);
-  await loadKids();
-  await loadFinance();
+
+  // 4. Run Slow Tasks in Background (WhatsApp & Reload)
+  (async () => {
+    try {
+      const accessToken = await getFreshManagerAccessToken();
+      if (accessToken) {
+        await callRenewalVerifiedFunction({
+          kid,
+          planTitle: plan.title,
+          amount,
+          cycleDate,
+          toDate: renewalToDate,
+          accessToken,
+        });
+      }
+    } catch (err) {
+      console.error("Background WhatsApp trigger failed:", err);
+    }
+    await loadKids();
+    await loadFinance();
+  })();
 });
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
 closePaymentPopupButton.addEventListener("click", closePaymentPopup);
