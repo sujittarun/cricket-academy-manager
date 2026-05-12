@@ -4134,7 +4134,7 @@ const deletePayment = async (paymentId, kidId) => {
   try {
     // 1. Get payment details first to know which cycle date to roll back
     const { data: payment, error: fetchError } = await supabaseClient
-      .from("payments")
+      .from("student_payments")
       .select("*")
       .eq("id", paymentId)
       .single();
@@ -4144,7 +4144,7 @@ const deletePayment = async (paymentId, kidId) => {
 
     // 2. Delete the payment record
     const { error: deleteError } = await supabaseClient
-      .from("payments")
+      .from("student_payments")
       .delete()
       .eq("id", paymentId);
       
