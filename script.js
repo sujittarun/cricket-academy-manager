@@ -2140,19 +2140,19 @@ const renderSummary = (alertKids) => {
     return;
   }
 
-  if (totalAlerts === 0) {
-    alertSummary.textContent = criticalKids.length
+  const renderAlertPlayer = (kid) => `
+    <button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">
+      <span>${kid.name}</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>`;
+
+  if (standardAlertKids.length === 0) {
+    alertSummary.innerHTML = criticalKids.length
       ? "Regular alerts are clear. Immediate follow-up is shown separately."
       : "All current join fees and renewals are up to date.";
   } else {
     const feesPendingKids = standardAlertKids.filter(isFeesPending);
     const renewalPendingKids = standardAlertKids.filter(isRenewalPending);
-    const renderAlertPlayer = (kid) => `
-      <button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">
-        <span>${kid.name}</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </button>`;
-
     const renderAlertGroup = (title, students) => students.length
       ? `<div class="alert-group-wrap">
           <p class="alert-group-title">${title}</p>
