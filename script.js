@@ -2116,68 +2116,9 @@ const isSpecialTraining = (kid) => {
 };
 
 const renderSummary = (alertKids) => {
-  if (!isManagerLoggedIn) {
-    mastheadBottom.hidden = true;
-    if (criticalAlertCard) criticalAlertCard.hidden = true;
-    return;
-  }
-
-  mastheadBottom.hidden = false;
-  heroLabel.textContent = "Cockpit";
-  const criticalKids = alertKids.filter((kid) => getReminderState(kid).isCritical);
-  const standardAlertKids = alertKids.filter((kid) => !getReminderState(kid).isCritical);
-  const totalAlerts = standardAlertKids.length;
-
-  alertCount.textContent = totalAlerts === 0
-    ? "No regular alerts"
-    : totalAlerts === 1
-      ? "1 regular alert"
-      : `${totalAlerts} regular alerts`;
-
-  if (!isBackendReady) {
-    alertSummary.textContent = "Connect Supabase to load academy records.";
-    if (criticalAlertCard) criticalAlertCard.hidden = true;
-    return;
-  }
-
-  const renderAlertPlayer = (kid) => `
-    <button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">
-      <span>${kid.name}</span>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-    </button>`;
-
-  if (standardAlertKids.length === 0) {
-    alertSummary.innerHTML = criticalKids.length
-      ? "Regular alerts are clear. Immediate follow-up is shown separately."
-      : "All current join fees and renewals are up to date.";
-  } else {
-    const feesPendingKids = standardAlertKids.filter(isFeesPending);
-    const renewalPendingKids = standardAlertKids.filter(isRenewalPending);
-    const renderAlertGroup = (title, students) => students.length
-      ? `<div class="alert-group-wrap">
-          <p class="alert-group-title">${title}</p>
-          <div class="alert-vertical-stack">
-            ${students.map(renderAlertPlayer).join("")}
-          </div>
-        </div>`
-      : "";
-
-    alertSummary.innerHTML = [
-      renderAlertGroup("Fees Pending", feesPendingKids),
-      renderAlertGroup("Renewal Due", renewalPendingKids),
-    ].filter(Boolean).join("");
-  }
-
-  if (!criticalAlertCard || !criticalAlertCount || !criticalAlertSummary) return;
-  criticalAlertCard.hidden = criticalKids.length === 0;
-  criticalAlertCount.textContent = criticalKids.length;
-  criticalAlertSummary.innerHTML = `
-    <div class="alert-group-wrap">
-      <p class="alert-group-title">Critical Overdue</p>
-      <div class="alert-vertical-stack">
-        ${criticalKids.map(renderAlertPlayer).join("")}
-      </div>
-    </div>`;
+  // Alert cards have been removed in favor of in-table pulsing.
+  if (mastheadBottom) mastheadBottom.hidden = true;
+  if (criticalAlertCard) criticalAlertCard.hidden = true;
 };
 
 const updateActiveView = () => {
