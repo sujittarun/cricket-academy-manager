@@ -1298,7 +1298,13 @@ const buildStudentMovement = (students, monthCount = 6) => {
     const continuing = students.filter((kid) => {
       const joinDate = parseIsoDate(kid.joinDate);
       const discontinuedAt = parseIsoDate(kid.discontinuedAt);
-      return joinDate && joinDate <= previousMonthEnd && (!discontinuedAt || discontinuedAt >= monthStart);
+      const isDiscontinued = kid.discontinued === true || kid.discontinued === "true";
+      
+      // If joined before this month AND either:
+      // 1. Not discontinued at all
+      // 2. Discontinued in the future (after this month started)
+      return joinDate && joinDate <= previousMonthEnd && 
+             (!isDiscontinued || (discontinuedAt && discontinuedAt >= monthStart));
     }).length;
 
     const discontinued = students.filter((kid) => {
