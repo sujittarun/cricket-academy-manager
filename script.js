@@ -2349,6 +2349,10 @@ const renderKids = () => {
     const dueDate = getPaidThroughDate(kid);
     const daysUntilDue = -getDaysSinceDate(dueDate);
     const reminderState = getReminderState(kid);
+    const lastPaymentAmount = (() => {
+      const allPayments = getStudentPayments(kid).sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
+      return allPayments.length > 0 ? allPayments[0].amount : kid.amountPaid;
+    })();
 
     const row = document.createElement("tr");
     row.dataset.playerRowId = kid.id;
@@ -2381,7 +2385,7 @@ const renderKids = () => {
           ${feeDisplay.label}
         </span>
       </td>
-      <td data-label="Amount paid">Rs ${Number(kid.amountPaid).toFixed(2)}</td>
+      <td data-label="Amount paid">Rs ${Number(lastPaymentAmount).toFixed(2)}</td>
       <td data-label="Next fee due"><span class="alert-pill ${renewalPending ? "" : "safe"}">${renewalStatus}</span></td>
       <td data-label="Last Updated"><span class="meta-text">${kid.updatedBy}</span></td>
       ${
