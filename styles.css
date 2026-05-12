@@ -418,29 +418,32 @@ body.popup-open {
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   font-weight: 700;
   font-size: 0.88rem;
-  color: var(--primary) !important;
+  color: #f1f5f9 !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .alert-player-link:hover {
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
   transform: translateX(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #fff !important;
 }
 
 .critical-alert-card .alert-player-link {
-  background: rgba(220, 38, 38, 0.05);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.1);
 }
 
 .critical-alert-card .alert-player-link:hover {
-  border-color: rgba(220, 38, 38, 0.2);
-  color: #dc2626 !important;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fecaca !important;
 }
 
 /* Critical Pulse Animation */
