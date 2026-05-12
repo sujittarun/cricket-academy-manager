@@ -3695,6 +3695,11 @@ kidForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (payload.jerseySize && (!payload.jerseyPairs || payload.jerseyPairs < 1)) {
+    formMessage.textContent = "Please specify the number of jersey pairs.";
+    return;
+  }
+
   const wasEditing = Boolean(editingKidId);
   const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
   let error = null;
@@ -4371,6 +4376,13 @@ admissionForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  const jerseySize = String(formData.get("jerseySize") || "").trim();
+  const jerseyPairs = Number(formData.get("jerseyPairs") || 0);
+  if (jerseySize && jerseyPairs < 1) {
+    admissionMessage.textContent = "Please specify the number of jersey pairs if you select a size.";
+    return;
+  }
+
   submitAdmissionButton.disabled = true;
   admissionMessage.textContent = "Submitting admission form...";
   const paymentSubmittedForVerification = String(formData.get("feesPaid") || "no") === "yes";
@@ -4392,6 +4404,7 @@ admissionForm.addEventListener("submit", async (event) => {
     p_join_date: String(formData.get("joinDate") || "").trim(),
     p_fees_paid: false,
     p_amount_paid: paymentSubmittedForVerification ? getAdmissionAmount() : 0,
+    p_grade: String(formData.get("grade") || "").trim(),
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
     p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
@@ -4446,6 +4459,7 @@ admissionForm.addEventListener("submit", async (event) => {
         join_date: baseAdmissionPayload.p_join_date,
         fees_paid: baseAdmissionPayload.p_fees_paid,
         amount_paid: baseAdmissionPayload.p_amount_paid,
+        grade: baseAdmissionPayload.p_grade,
         jersey_size: baseAdmissionPayload.p_jersey_size,
         jersey_pairs: baseAdmissionPayload.p_jersey_pairs,
         payment_method: baseAdmissionPayload.p_payment_method || "UPI",
