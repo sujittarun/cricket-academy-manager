@@ -171,8 +171,8 @@ const sortExpensePaidBy = document.getElementById("sortExpensePaidBy");
 let expenseSortKey = "date";
 let expenseSortOrder = "desc";
 let expenseSearchQuery = "";
-let rosterSortKey = "joinDate";
-let rosterSortOrder = "desc";
+let rosterSortKey = "nextFeeDue";
+let rosterSortOrder = "asc";
 let rosterSearchQuery = "";
 let rosterStatusFilter = "active";
 let rosterJerseyFilter = "all";
@@ -974,7 +974,7 @@ const renderFinanceMonthPopup = (monthKey) => {
   const renderExpenseRows = () => expenseRows.length
     ? expenseRows.map((row) => `
         <tr>
-          <td>${row.expense_type || "-"}</td>
+          <td>${row.comment || "-"}</td>
           <td>${row.paid_by || "-"}</td>
           <td>${formatDate(row.expense_date)}</td>
           <td>${rupees(row.amount)}</td>
@@ -1013,7 +1013,7 @@ const renderFinanceMonthPopup = (monthKey) => {
       <section>
         <h4>Expenses</h4>
         <table class="mini-detail-table">
-          <thead><tr><th>Type</th><th>Paid by</th><th>Date</th><th>Amount</th></tr></thead>
+          <thead><tr><th>Comment</th><th>Paid by</th><th>Date</th><th>Amount</th></tr></thead>
           <tbody>${renderExpenseRows()}</tbody>
         </table>
       </section>
