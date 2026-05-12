@@ -2147,28 +2147,37 @@ const renderSummary = (alertKids) => {
   } else {
     const feesPendingKids = standardAlertKids.filter(isFeesPending);
     const renewalPendingKids = standardAlertKids.filter(isRenewalPending);
+    const renderAlertPlayer = (kid) => `
+      <button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">
+        <span>${kid.name}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>`;
+
     const renderAlertGroup = (title, students) => students.length
-      ? `<span class="alert-name-group"><strong>${title}</strong>${students
-          .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">${kid.name}</button>`)
-          .join("")}</span>`
+      ? `<div class="alert-group-wrap">
+          <p class="alert-group-title">${title}</p>
+          <div class="alert-vertical-stack">
+            ${students.map(renderAlertPlayer).join("")}
+          </div>
+        </div>`
       : "";
 
     alertSummary.innerHTML = [
-      renderAlertGroup("Fees to collect", feesPendingKids),
-      renderAlertGroup("Renewal follow-up", renewalPendingKids),
+      renderAlertGroup("Fees Pending", feesPendingKids),
+      renderAlertGroup("Renewal Due", renewalPendingKids),
     ].filter(Boolean).join("");
   }
 
   if (!criticalAlertCard || !criticalAlertCount || !criticalAlertSummary) return;
   criticalAlertCard.hidden = criticalKids.length === 0;
-  criticalAlertCount.textContent =
-    criticalKids.length === 1 ? "1 overdue player" : `${criticalKids.length} overdue players`;
-  criticalAlertSummary.innerHTML = `<div class="alert-vertical-stack">${criticalKids
-    .map((kid) => `<button class="player-link alert-player-link" type="button" data-alert-player-id="${kid.id}">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      ${kid.name}
-    </button>`)
-    .join("")}</div>`;
+  criticalAlertCount.textContent = criticalKids.length;
+  criticalAlertSummary.innerHTML = `
+    <div class="alert-group-wrap">
+      <p class="alert-group-title">Critical Overdue</p>
+      <div class="alert-vertical-stack">
+        ${criticalKids.map(renderAlertPlayer).join("")}
+      </div>
+    </div>`;
 };
 
 const updateActiveView = () => {
