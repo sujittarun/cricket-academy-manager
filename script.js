@@ -3417,14 +3417,14 @@ const buildMonthlyExportData = async () => {
         Status: "Present",
       };
     }),
-    paymentRows: [...initialFees, ...renewalFees].map((payment) => ({
+    paymentRows: [...initialFees, ...renewalFees].sort((a, b) => String(a.date).localeCompare(String(b.date))).map((payment) => ({
       Date: payment.date,
       Type: payment.type,
       Player: payment.player,
       Amount: payment.amount,
       Reference: payment.reference,
     })),
-    expenseRows: expenses.map((expense) => ({
+    expenseRows: expenses.sort((a, b) => String(a.expense_date).localeCompare(String(b.expense_date))).map((expense) => ({
       Date: expense.expense_date,
       Type: expense.expense_type,
       Amount: expense.amount,
