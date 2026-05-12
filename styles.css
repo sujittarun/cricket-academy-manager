@@ -1910,30 +1910,37 @@ body.popup-open {
 }
 
 .finance-recent-section {
-  flex: 1;
-  min-width: 500px;
+  flex: 1 1 600px; /* Allow growing but set a solid base */
+  min-width: 0; /* Allow shrinking below content size for flex */
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   padding: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow-x: auto;
 }
 
-/* Fix table overlaps and columns */
-.finance-expenses-table th:nth-child(1) { width: 15%; } /* Type */
-.finance-expenses-table th:nth-child(2) { width: 12%; } /* Amount */
-.finance-expenses-table th:nth-child(3) { width: 12%; } /* Date */
-.finance-expenses-table th:nth-child(4) { width: 15%; } /* Paid by */
-.finance-expenses-table th:nth-child(5) { width: 30%; } /* Comment */
-.finance-expenses-table th:nth-child(6) { width: 16%; } /* Action */
+/* Specific column widths to prevent overlaps */
+.finance-expenses-table th:nth-child(1) { width: 140px; } /* Type */
+.finance-expenses-table th:nth-child(2) { width: 100px; } /* Amount */
+.finance-expenses-table th:nth-child(3) { width: 100px; } /* Date */
+.finance-expenses-table th:nth-child(4) { width: 120px; } /* Paid by */
+.finance-expenses-table th:nth-child(6) { width: 100px; } /* Action */
 
-.finance-payments-table th:nth-child(1) { width: 20%; } /* Date */
-.finance-payments-table th:nth-child(2) { width: 40%; } /* Player */
-.finance-payments-table th:nth-child(3) { width: 20%; } /* Type */
-.finance-payments-table th:nth-child(4) { width: 20%; } /* Amount */
+.finance-payments-table th:nth-child(1) { width: 100px; } /* Date */
+.finance-payments-table th:nth-child(2) { min-width: 150px; } /* Player */
+.finance-payments-table th:nth-child(3) { width: 100px; } /* Type */
+.finance-payments-table th:nth-child(4) { width: 100px; } /* Amount */
+
+/* Handle long text gracefully */
+.finance-expenses-table td span.type-pill {
+  display: block;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .finance-comment {
-  max-width: 250px;
+  max-width: 200px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
