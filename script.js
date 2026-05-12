@@ -3191,11 +3191,12 @@ const loadFinance = async () => {
       };
     });
     const maxChartValue = Math.max(1, ...monthBuckets.flatMap((month) => [month.fees, month.expenses]));
-    financeMiniChart.innerHTML = monthBuckets.map((month) => {
+    financeMiniChart.innerHTML = monthBuckets.map((month, idx) => {
+      const isCurrent = idx === monthBuckets.length - 1;
       const feeHeight = Math.max(6, Math.round((month.fees / maxChartValue) * 76));
       const expenseHeight = Math.max(6, Math.round((month.expenses / maxChartValue) * 76));
       return `
-        <button class="finance-chart-month" type="button" data-finance-month="${month.key}">
+        <button class="finance-chart-month ${isCurrent ? "is-current" : ""}" type="button" data-finance-month="${month.key}">
           <div class="finance-bars">
             <span class="fee-bar" style="height:${feeHeight}px" data-label="Fees: ${rupees(month.fees)}"></span>
             <span class="expense-bar" style="height:${expenseHeight}px" data-label="Expenses: ${rupees(month.expenses)}"></span>
