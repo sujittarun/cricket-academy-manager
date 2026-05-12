@@ -1935,6 +1935,37 @@ body.popup-open {
   border-radius: 14px;
   border: 1px solid rgba(16, 48, 102, 0.16);
   padding: 0 12px;
+}
+
+.special-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #FFF9E6;
+  color: #8F6500;
+  border: 1px solid #F4BE2E;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+.special-tag.tiny {
+  padding: 1px 6px;
+  font-size: 0.55rem;
+}
+
+.player-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.finance-export-actions input {
   font: inherit;
   font-weight: 700;
   color: var(--ink);

@@ -2082,6 +2082,13 @@ const updateAuthPanel = () => {
     : "";
 };
 
+const isSpecialTraining = (kid) => {
+  const latest = getStudentPayments(kid)
+    .filter(p => p.payment_type === "renewal" || p.paymentType === "renewal")
+    .sort((a, b) => (b.cycle_start_date || b.cycleStartDate || "").localeCompare(a.cycle_start_date || a.cycleStartDate || ""))?.[0];
+  return latest?.plan_type === "special" || latest?.planType === "special";
+};
+
 const renderSummary = (alertKids) => {
   if (!isManagerLoggedIn) {
     mastheadBottom.hidden = true;
@@ -2321,7 +2328,12 @@ const renderKids = () => {
     row.dataset.playerRowId = kid.id;
     row.className = kid.discontinued ? "discontinued-row" : reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
     row.innerHTML = `
-      <td data-label="Player"><button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button></td>
+      <td data-label="Player">
+        <div class="player-name-cell">
+          <button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button>
+          ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special Training">★ SPECIAL</span>' : ''}
+        </div>
+      </td>
       <td data-label="Age">${kid.age}</td>
       <td data-label="Time slot"><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
       <td data-label="Jersey"><span class="meta-text">${formatJerseyDetails(kid)}</span></td>
