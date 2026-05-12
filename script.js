@@ -4142,7 +4142,7 @@ const deletePayment = async (paymentId, kidId) => {
   if (!confirm("Are you sure you want to delete this payment record? This will roll back the student's renewal date and total amount paid.")) return;
   
   try {
-    // 1. Get payment details first to know which cycle date to roll back
+    // 1. Get payment details first to know what we are rolling back
     const { data: payment, error: fetchError } = await supabaseClient
       .from("student_payments")
       .select("*")
@@ -4150,7 +4150,8 @@ const deletePayment = async (paymentId, kidId) => {
       .single();
       
     if (fetchError) throw fetchError;
-    const cycleDate = payment.cycle_start_date || payment.cycleStartDate;
+    const cycleDate = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on;
+    const isJoiningFee = payment.payment_type === "joining" || payment.paymentType === "joining";
 
     // 2. Delete the payment record
     const { error: deleteError } = await supabaseClient
@@ -4160,16 +4161,28 @@ const deletePayment = async (paymentId, kidId) => {
       
     if (deleteError) throw deleteError;
     
-    // 3. Roll back the 'renewals' array in the students table
+    // 3. Roll back student state
     const kid = await loadSingleKid(kidId);
-    if (kid && cycleDate) {
-      const updatedRenewals = (kid.renewals || []).filter(date => date !== cycleDate);
+    if (kid) {
+      const updates = { updated_by: lastManagerEmail };
+      
+      // If it was a joining fee, reset fees_paid status
+      if (isJoiningFee) {
+        updates.fees_paid = false;
+        updates.amount_paid = 0;
+      }
+      
+      // Remove from legacy renewals array if it exists
+      if (cycleDate) {
+        updates.renewals = (kid.renewals || []).filter(date => date !== cycleDate);
+      }
+      
       const { error: updateError } = await supabaseClient
         .from("students")
-        .update({ renewals: updatedRenewals, updated_by: lastManagerEmail })
+        .update(updates)
         .eq("id", kidId);
         
-      if (updateError) console.error("Error rolling back student renewals array:", updateError);
+      if (updateError) console.error("Error rolling back student state:", updateError);
     }
     
     // Refresh UI
@@ -4184,7 +4197,7 @@ const deletePayment = async (paymentId, kidId) => {
       await loadFinance();
     }
     
-    alert("Payment record deleted and renewal date rolled back successfully.");
+    alert("Payment record deleted and student status rolled back successfully.");
   } catch (error) {
     console.error("Error deleting payment:", error);
     alert(`Failed to delete payment: ${error.message}`);
