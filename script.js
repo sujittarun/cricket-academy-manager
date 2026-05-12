@@ -289,6 +289,19 @@ const toLocalIsoDate = (date = new Date()) => {
   ].join("-");
 };
 
+const normalizeDate = (dateStr) => {
+  if (!dateStr) return "0000-00-00";
+  const parts = String(dateStr).split(/[-/]/);
+  if (parts.length < 3) return String(dateStr);
+  let y, m, d;
+  if (parts[0].length === 4) {
+    [y, m, d] = parts;
+  } else {
+    [d, m, y] = parts;
+  }
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+};
+
 let kids = [];
 let pendingAdmissions = [];
 let isManagerLoggedIn = false;
@@ -298,7 +311,7 @@ let lastManagerEmail = localStorage.getItem(LAST_EMAIL_STORAGE_KEY) ?? "";
 let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
-let activeView = "admission";
+let activeView = "roster";
 
 const switchView = (view, push = true) => {
   const validViews = ["roster", "admission", "attendance", "finance"];
@@ -3222,6 +3235,13 @@ const loadFinance = async () => {
       
       if (valA < valB) return expenseSortOrder === "asc" ? -1 : 1;
       if (valA > valB) return expenseSortOrder === "asc" ? 1 : -1;
+      
+      // Secondary sort by normalized date to catch formatting edge cases
+      const normA = normalizeDate(a.expense_date);
+      const normB = normalizeDate(b.expense_date);
+      if (normA < normB) return expenseSortOrder === "asc" ? -1 : 1;
+      if (normA > normB) return expenseSortOrder === "asc" ? 1 : -1;
+      
       return 0;
     });
 
@@ -3417,14 +3437,14 @@ const buildMonthlyExportData = async () => {
         Status: "Present",
       };
     }),
-    paymentRows: [...initialFees, ...renewalFees].sort((a, b) => String(a.date).localeCompare(String(b.date))).map((payment) => ({
+    paymentRows: [...initialFees, ...renewalFees].sort((a, b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date))).map((payment) => ({
       Date: payment.date,
       Type: payment.type,
       Player: payment.player,
       Amount: payment.amount,
       Reference: payment.reference,
     })),
-    expenseRows: expenses.sort((a, b) => String(a.expense_date).localeCompare(String(b.expense_date))).map((expense) => ({
+    expenseRows: expenses.sort((a, b) => normalizeDate(a.expense_date).localeCompare(normalizeDate(b.expense_date))).map((expense) => ({
       Date: expense.expense_date,
       Type: expense.expense_type,
       Amount: expense.amount,

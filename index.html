@@ -23,7 +23,7 @@
     <script>
       (function() {
         // Prevent flicker by determining view early
-        const view = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "admission";
+        const view = window.location.hash.replace("#", "") || localStorage.getItem("activeView") || "roster";
         document.documentElement.setAttribute("data-starting-view", view);
       })();
     </script>
