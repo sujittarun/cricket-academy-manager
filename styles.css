@@ -3901,11 +3901,10 @@ body.popup-open {
 @media (max-width: 1080px) {
   .view-switcher {
     flex-direction: column;
-    gap: 20px;
-    padding: 20px !important;
+    gap: 16px;
+    padding: 16px !important;
     min-height: auto;
     align-items: center;
-    text-align: center;
   }
 
   .view-switcher-tabs {
@@ -3913,8 +3912,9 @@ body.popup-open {
     transform: none;
     order: 3;
     width: 100%;
-    flex-wrap: wrap;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .brand-lockup {
@@ -3930,24 +3930,6 @@ body.popup-open {
 
   .manager-actions {
     justify-content: center;
-    width: 100%;
-  }
-
-  .stats-grid {
-    gap: 10px;
-    padding: 0 10px;
-  }
-
-  .stat-card {
-    padding: 10px 12px !important;
-  }
-
-  .stat-card .stat-value {
-    font-size: 1.2rem !important;
-  }
-
-  .stat-card .section-kicker {
-    font-size: 0.55rem !important;
   }
 }
 
@@ -4522,52 +4504,96 @@ body.popup-open {
   }
 }
 
-/* Mobile Bottom Navigation Bar */
+/* Mobile Optimized Interface */
 @media (max-width: 720px) {
+  /* Header stays at top but simplified */
   .view-switcher {
-    position: fixed;
+    margin: 8px auto;
+    width: calc(100% - 16px);
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+    padding: 8px !important;
+  }
+
+  .brand-lockup {
+    transform: scale(0.9);
+  }
+
+  .manager-bar {
+    background: var(--panel);
+    padding: 12px;
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+  }
+
+  /* Navigation Tabs move to bottom bar */
+  .view-switcher-tabs {
+    position: fixed !important;
     bottom: 0;
     left: 0;
     right: 0;
     margin: 0;
-    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border-top: 1px solid rgba(15, 34, 64, 0.08);
     border-radius: 0;
-    z-index: 1000;
+    z-index: 2000;
     box-shadow: 0 -10px 30px rgba(11, 52, 112, 0.08);
-  }
-
-  .view-switcher-tabs {
-    width: 100%;
-    justify-content: space-between;
-    gap: 6px;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    order: 4;
   }
 
   .view-tab {
     flex: 1;
-    padding: 0 4px;
-    font-size: 0.68rem;
-    min-height: 46px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-radius: 14px;
-    border-color: transparent;
-    background: transparent;
-    color: var(--muted);
+    flex-direction: column !important;
+    padding: 8px 4px !important;
+    font-size: 0.65rem !important;
+    min-height: 54px !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    gap: 4px !important;
   }
 
   .view-tab.active {
-    background: rgba(26, 79, 157, 0.08);
-    color: var(--accent);
-    box-shadow: none;
+    background: rgba(26, 79, 157, 0.08) !important;
+    color: var(--accent) !important;
+    box-shadow: none !important;
+  }
+
+  /* Force metrics into single row with tiny fonts */
+  .stats-grid, .finance-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .stat-card, .finance-metric {
+    padding: 6px 4px !important;
+    min-height: 64px !important;
+    text-align: center;
+  }
+
+  .stat-value, .finance-metric strong {
+    font-size: 0.85rem !important;
+    letter-spacing: -0.02em;
+  }
+
+  .section-kicker, .stat-copy {
+    font-size: 0.5rem !important;
+    letter-spacing: 0;
   }
 
   .app-shell {
-    padding-bottom: 110px;
+    padding-bottom: 100px;
   }
 }
