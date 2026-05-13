@@ -446,7 +446,7 @@ body.popup-open {
   display: grid;
   grid-template-columns: repeat(3, 1fr) !important;
   gap: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
   padding: 0 20px; /* Safety margin for hover */
 }
 
