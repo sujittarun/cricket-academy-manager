@@ -648,7 +648,13 @@ body.popup-open {
 }
 
 .student-movement-panel {
-  padding-bottom: 40px !important; /* Spacing below the chart */
+  padding-bottom: 60px !important;
+}
+
+.manager-bar, .manager-actions {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .stat-card .section-kicker {
