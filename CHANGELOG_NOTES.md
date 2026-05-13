@@ -15,6 +15,19 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-13
 
+### Mobile Manager UI Annotation Fixes
+
+- Refined the mobile manager header with a compact badge/title/action layout and switched the dashboard logo to the cleaner favicon asset.
+- Simplified mobile roster rows into compact tap-to-profile summaries so large player lists need much less scrolling.
+- Fixed roster row/profile click behavior so tapping a mobile row reliably opens the player profile popup.
+- Aligned student movement colors across legend dots, trend lines, and monthly bars; added concise labels under the bars.
+- Improved the finance 6-month chart on phones by keeping the current-month border visible and showing compact revenue/expense values near the bars with net below.
+- Bumped the service-worker cache and CSS/JS asset versions to reduce stale mobile browser/PWA assets.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+  - `git diff --check` in `web-app-repo`
+  - local mobile browser preview checks for roster row popup and finance chart.
+
 ### Mobile Roster And Finance Layout Polish
 
 - Browser-only mobile UI pass; desktop roster/table layout intentionally preserved.

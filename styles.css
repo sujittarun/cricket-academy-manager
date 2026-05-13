@@ -4055,8 +4055,13 @@ body.popup-open {
   }
 
   .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    margin-bottom: 20px;
   }
   
   .stat-card {
@@ -4535,11 +4540,11 @@ body.popup-open {
   }
 
   .stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 12px !important;
   }
 
   .content-grid {
@@ -4557,9 +4562,20 @@ body.popup-open {
     margin: 0 -4px; /* Pull to edges slightly */
   }
 
-  /* Phone charts: keep the same compact swipe-card rhythm as finance mini chart. */
-  .finance-mini-chart, 
+  /* Phone charts: modern Sparkline approach for mobile */
   .student-movement-chart {
+    display: block !important;
+    width: 100% !important;
+    height: 120px !important;
+    padding: 10px 0 !important;
+    overflow: hidden !important;
+  }
+
+  .movement-bars {
+    display: none !important;
+  }
+
+  .finance-mini-chart {
     display: flex !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -4569,8 +4585,7 @@ body.popup-open {
     scrollbar-width: none !important;
   }
   
-  .finance-mini-chart::-webkit-scrollbar,
-  .student-movement-chart::-webkit-scrollbar {
+  .finance-mini-chart::-webkit-scrollbar {
     display: none;
   }
 
@@ -4580,40 +4595,138 @@ body.popup-open {
     scroll-snap-align: start;
   }
 
+  .student-movement-integrated {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .academy-pulse-box {
+    width: 100%;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 24px;
+    padding: 12px;
+    border: 1px solid rgba(26, 79, 157, 0.08);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+  }
+
+  .pulse-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .movement-scroll-wrapper {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory;
+    gap: 12px !important;
+    padding: 4px 4px 16px !important;
+    scrollbar-width: none;
+    margin: 0 -4px;
+  }
+
+  .movement-scroll-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .movement-month {
-    flex: 0 0 clamp(108px, 31vw, 126px) !important;
-    min-width: clamp(108px, 31vw, 126px) !important;
+    flex: 0 0 clamp(115px, 32vw, 135px) !important;
+    min-width: clamp(115px, 32vw, 135px) !important;
+    scroll-snap-align: center;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 8px !important;
-    padding: 12px 8px !important;
-    border: 1px solid rgba(26, 79, 157, 0.1) !important;
-    border-radius: 18px !important;
-    background:
-      radial-gradient(circle at top right, rgba(244, 191, 42, 0.13), transparent 46%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.86)) !important;
-    box-shadow: 0 10px 22px rgba(11, 52, 112, 0.07) !important;
-    scroll-snap-align: start;
+    padding: 14px 10px !important;
+    border: 1px solid rgba(26, 79, 157, 0.08) !important;
+    border-radius: 22px !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.92)) !important;
+    box-shadow: 0 8px 24px rgba(15, 34, 64, 0.06) !important;
   }
 
   .movement-month.is-current {
-    transform: none !important;
-    border-color: rgba(244, 191, 42, 0.72) !important;
-    box-shadow: 0 14px 26px rgba(244, 191, 42, 0.16) !important;
+    border-color: rgba(244, 191, 42, 0.5) !important;
+    background: linear-gradient(180deg, #fff, rgba(244, 191, 42, 0.04)) !important;
+    box-shadow: 0 12px 30px rgba(244, 191, 42, 0.12) !important;
   }
 
-  .movement-month:hover,
-  .movement-month.is-current:hover {
-    transform: none !important;
+  .movement-bars {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    height: 70px !important;
+    padding-bottom: 4px !important;
+    border-bottom: 1px dashed rgba(15, 34, 64, 0.1) !important;
+  }
+
+  .movement-bar {
+    width: 10px !important;
+    border-radius: 5px 5px 2px 2px !important;
+    transition: height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .movement-counts {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 4px !important;
+    margin-top: 4px !important;
+  }
+
+  .movement-counts button {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .movement-count-value {
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    color: var(--accent-dark) !important;
+  }
+
+  .movement-dot {
+    width: 5px !important;
+    height: 5px !important;
+    border-radius: 50% !important;
+    margin-bottom: 2px !important;
+  }
+
+  .movement-month-head strong {
+    font-size: 0.75rem !important;
+    letter-spacing: -0.01em;
+  }
+
+  .movement-trend-chip {
+    background: rgba(26, 79, 157, 0.05) !important;
+    padding: 2px 6px !important;
+    border-radius: 12px !important;
+    font-size: 0.6rem !important;
   }
 
   .student-movement-panel .finance-chart-card {
     background: white !important;
-    border-radius: 20px !important;
-    padding: 14px !important;
-    border: 1px solid rgba(15, 34, 64, 0.08) !important;
-    box-shadow: 0 12px 40px rgba(15, 34, 64, 0.05) !important;
+    border-radius: 28px !important;
+    padding: 18px !important;
+    border: 1px solid rgba(15, 34, 64, 0.06) !important;
+    box-shadow: 0 15px 45px rgba(15, 34, 64, 0.05) !important;
     margin: 0 !important;
   }
 
@@ -4986,46 +5099,75 @@ body.popup-open {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
     background: rgba(255, 255, 255, 0.98) !important;
     border-top: 1px solid var(--border) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
     z-index: 5000 !important;
     flex-direction: row !important;
     justify-content: space-around !important;
     box-sizing: border-box !important;
     border-radius: 0 !important;
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 -10px 40px rgba(15, 34, 64, 0.12) !important;
   }
 
   .view-tab {
     flex: 1 !important;
     flex-direction: column !important;
-    padding: 0 !important;
+    padding: 4px 0 !important;
     gap: 2px !important;
-    font-size: 0.65rem !important;
-    height: 52px !important;
+    font-size: 0.62rem !important;
+    height: 54px !important;
     background: transparent !important;
     border: none !important;
+    color: var(--text-light) !important;
+  }
+
+  .view-tab.active {
+    color: var(--accent) !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
 
   .view-tab span {
     display: block !important;
     font-weight: 700 !important;
+    opacity: 0.8;
   }
 
-  .stats-grid {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+  .view-tab.active span {
+    opacity: 1;
+  }
+
+  /* Global Fix for Zoom/Clipped UI */
+  html, body {
     width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
     padding: 0 !important;
+  }
+
+  .app-shell {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
     box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   #financeStats.finance-stats {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
     width: 100% !important;
     padding: 0 !important;
     box-sizing: border-box !important;
@@ -5080,5 +5222,946 @@ body.popup-open {
   .app-shell {
     padding-bottom: 110px !important;
     padding-top: 10px !important;
+  }
+}
+
+/* Final phone-only polish for manager roster and finance. Desktop/tablet rules stay above. */
+@media (max-width: 720px) {
+  #rosterView .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin: 0 0 10px !important;
+  }
+
+  #rosterView .stat-card {
+    min-height: clamp(68px, 19vw, 82px) !important;
+    padding: 9px 7px !important;
+    border-radius: 14px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    text-align: center !important;
+  }
+
+  #rosterView .stat-card .section-kicker {
+    max-width: 100%;
+    font-size: clamp(0.46rem, 1.75vw, 0.56rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0.045em !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  #rosterView .stat-card .stat-value {
+    font-size: clamp(1.45rem, 7vw, 2rem) !important;
+    line-height: 0.95 !important;
+    color: #0b3470 !important;
+    text-align: center !important;
+    text-shadow: 0 8px 18px rgba(26, 79, 157, 0.16);
+  }
+
+  #rosterView .stat-card .stat-copy {
+    display: none !important;
+  }
+
+  .student-movement-panel {
+    padding: 0 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .student-movement-panel .finance-chart-card {
+    padding: 12px !important;
+    border-radius: 18px !important;
+  }
+
+  .finance-chart-head {
+    gap: 8px !important;
+  }
+
+  .finance-chart-legend {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .finance-chart-legend .legend-item,
+  .finance-chart-legend span {
+    font-size: 0.64rem !important;
+    line-height: 1 !important;
+    white-space: nowrap;
+  }
+
+  .academy-pulse-box {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 8px 0 10px !important;
+    padding: 10px !important;
+    border: 1px solid rgba(15, 34, 64, 0.08) !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .pulse-svg {
+    width: 100% !important;
+    height: 112px !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .pulse-grid line {
+    stroke: rgba(15, 34, 64, 0.08);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .pulse-svg text {
+    fill: var(--muted);
+    font-size: 8px;
+    font-weight: 800;
+  }
+
+  .pulse-axis text {
+    fill: var(--accent-dark);
+    font-size: 8px;
+    font-weight: 900;
+  }
+
+  .student-movement-chart {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .student-movement-integrated {
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  .movement-scroll-wrapper {
+    margin: 0 -2px !important;
+    padding: 2px 2px 8px !important;
+    gap: 8px !important;
+  }
+
+  .movement-month-card {
+    flex: 0 0 min(76vw, 292px) !important;
+    min-height: 208px !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 22px rgba(15, 34, 64, 0.08) !important;
+    background: #fff !important;
+    border: 1px solid rgba(15, 34, 64, 0.08) !important;
+  }
+
+  .movement-mobile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .movement-mobile-head h3 {
+    margin: 0;
+    color: var(--accent-dark);
+    font-size: 0.94rem !important;
+    line-height: 1 !important;
+    white-space: nowrap;
+  }
+
+  .movement-mobile-head span {
+    padding: 4px 8px;
+    border-radius: 999px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    font-size: 0.66rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .movement-mobile-bars {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 14px;
+    min-height: 142px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15, 34, 64, 0.045) !important;
+  }
+
+  .movement-mobile-bar {
+    display: grid !important;
+    justify-items: center;
+    align-items: end;
+    gap: 8px;
+  }
+
+  .movement-mobile-bar div {
+    width: 100%;
+    max-width: 34px;
+    min-height: 8px;
+    border-radius: 10px 10px 4px 4px;
+    display: block !important;
+  }
+
+  .movement-mobile-bar strong {
+    display: block !important;
+    font-size: 1.05rem;
+    line-height: 1;
+    font-weight: 950;
+  }
+
+  .movement-mobile-bar.continuing div { background: #10b981 !important; }
+  .movement-mobile-bar.continuing strong { color: #059669 !important; }
+  .movement-mobile-bar.joined div { background: #f59e0b !important; }
+  .movement-mobile-bar.joined strong { color: #b45309 !important; }
+  .movement-mobile-bar.left div { background: #f43f5e !important; }
+  .movement-mobile-bar.left strong { color: #be123c !important; }
+
+  .finance-month-stack,
+  .finance-month-stack.is-current,
+  .finance-month-stack:hover,
+  .finance-month-stack.is-current:hover {
+    transform: none !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 20px rgba(15, 34, 64, 0.08) !important;
+  }
+
+  .fee-bar:hover,
+  .expense-bar:hover,
+  .movement-bar:hover {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .fee-bar::after,
+  .expense-bar::after,
+  .movement-bar::after,
+  .finance-net-chip::after {
+    display: none !important;
+  }
+
+  #financeStats.finance-stats {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin: 10px 0 12px !important;
+  }
+
+  #financeStats .finance-metric {
+    min-height: 74px !important;
+    padding: 9px 6px !important;
+    border-radius: 14px !important;
+  }
+
+  #financeStats .finance-metric p {
+    font-size: clamp(0.48rem, 1.8vw, 0.56rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0.035em !important;
+  }
+
+  #financeStats .finance-metric strong {
+    font-size: clamp(0.78rem, 3.2vw, 1rem) !important;
+    line-height: 1.05 !important;
+    word-break: keep-all;
+  }
+
+  #financeStats .finance-metric span {
+    display: none !important;
+  }
+
+  .finance-range-panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .finance-range-panel > div:first-child {
+    display: grid;
+    gap: 3px;
+  }
+
+  .finance-range-panel .section-kicker {
+    font-size: 0.56rem !important;
+  }
+
+  .finance-range-panel h3 {
+    margin: 0 !important;
+    font-size: 1rem !important;
+  }
+
+  #financeRangePeriod {
+    margin: 0 !important;
+    font-size: 0.68rem !important;
+  }
+
+  .finance-range-filters {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    justify-content: stretch !important;
+  }
+
+  .finance-range-filters button {
+    min-height: 34px !important;
+    padding: 0 6px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .finance-custom-range {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+  }
+
+  .finance-custom-range label {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+  }
+
+  .finance-custom-range input {
+    width: 100% !important;
+    min-height: 34px !important;
+    border-radius: 12px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .finance-recent {
+    padding: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .finance-recent-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 4px;
+    border-radius: 14px;
+    background: rgba(15, 34, 64, 0.06);
+  }
+
+  .finance-recent-switch button {
+    min-height: 34px;
+    border: 0;
+    border-radius: 11px;
+    color: var(--muted);
+    background: transparent;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 900;
+  }
+
+  #financeRecent[data-active-view="revenue"] [data-finance-recent-view="revenue"],
+  #financeRecent[data-active-view="expenses"] [data-finance-recent-view="expenses"] {
+    color: var(--accent-dark);
+    background: #fff;
+    box-shadow: 0 6px 14px rgba(15, 34, 64, 0.08);
+  }
+
+  #financeRecent[data-active-view="revenue"] .finance-recent-section:nth-child(2),
+  #financeRecent[data-active-view="expenses"] .finance-recent-section:nth-child(1) {
+    display: none !important;
+  }
+
+  .finance-recent-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .finance-recent-section {
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .finance-recent-section .slot-toolbar {
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .finance-recent-section .slot-toolbar-copy {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .finance-recent-section .slot-toolbar-copy h3 {
+    margin: 0;
+    font-size: 1rem !important;
+    line-height: 1.15;
+  }
+
+  .finance-recent-section .slot-toolbar-copy .slot-helper {
+    max-width: 130px;
+    font-size: 0.64rem !important;
+    line-height: 1.1;
+    text-align: right;
+  }
+
+  .finance-recent-section .slot-filters {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin-top: 8px;
+  }
+
+  .finance-table-wrap {
+    overflow-x: visible !important;
+    margin-top: 8px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .finance-payments-table,
+  .finance-expenses-table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-spacing: 0 8px !important;
+  }
+
+  .finance-payments-table thead,
+  .finance-expenses-table thead {
+    display: none !important;
+  }
+
+  .finance-payments-table tbody,
+  .finance-expenses-table tbody,
+  .finance-payments-table tr,
+  .finance-expenses-table tr {
+    display: block !important;
+  }
+
+  .finance-payments-table tr,
+  .finance-expenses-table tr {
+    margin-bottom: 8px !important;
+    padding: 9px 10px !important;
+    border: 1px solid rgba(15, 34, 64, 0.08) !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  .finance-payments-table td,
+  .finance-expenses-table td {
+    display: grid !important;
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 4px 0 !important;
+    border: 0 !important;
+    font-size: 0.75rem !important;
+    text-align: right !important;
+    white-space: normal !important;
+  }
+
+  .finance-payments-table td::before,
+  .finance-expenses-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.045em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .finance-payments-table td strong,
+  .finance-expenses-table td strong,
+  .finance-expenses-table .finance-comment {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .finance-expenses-table td[data-label="Action"] {
+    grid-template-columns: 1fr !important;
+    justify-items: end !important;
+  }
+
+  .finance-expenses-table td[data-label="Action"]::before {
+    display: none;
+  }
+
+  .finance-month-popup {
+    width: calc(100vw - 24px) !important;
+    max-width: 520px !important;
+    max-height: min(72dvh, 660px) !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+    margin-top: 42px !important;
+  }
+
+  #financeMonthPopup.player-popup-backdrop {
+    align-items: center !important;
+    justify-items: center !important;
+    padding: 12px !important;
+    z-index: 1000 !important;
+  }
+
+  .finance-month-detail {
+    max-height: calc(72dvh - 88px);
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .finance-month-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .finance-summary-card {
+    min-height: 64px !important;
+    padding: 8px 6px !important;
+    border-radius: 12px !important;
+  }
+
+  .finance-summary-card span {
+    font-size: 0.52rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .finance-summary-card strong {
+    font-size: clamp(0.76rem, 3.1vw, 0.95rem) !important;
+  }
+
+  .finance-summary-submetrics {
+    gap: 3px !important;
+  }
+
+  .finance-summary-submetrics small {
+    padding: 2px 4px !important;
+    font-size: 0.5rem !important;
+  }
+
+  .finance-month-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: start;
+  }
+
+  .finance-detail-list {
+    display: grid;
+    gap: 6px;
+  }
+
+  .finance-detail-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    align-items: start;
+    padding: 8px;
+    border: 1px solid rgba(15, 34, 64, 0.07);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.78);
+  }
+
+  .finance-detail-row div {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  .finance-detail-row strong {
+    overflow: hidden;
+    color: var(--accent-dark);
+    font-size: 0.68rem;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .finance-detail-row span {
+    color: var(--muted);
+    font-size: 0.56rem;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .finance-detail-row b {
+    color: var(--ink);
+    font-size: 0.72rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .finance-detail-row.expense b {
+    color: var(--danger);
+  }
+
+  .finance-month-columns h4 {
+    margin-bottom: 6px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .mini-detail-table tr {
+    padding: 8px 9px !important;
+    border: 1px solid rgba(15, 34, 64, 0.07) !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.78) !important;
+  }
+
+  .mini-detail-table td {
+    display: grid !important;
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+    padding: 3px 0 !important;
+    font-size: 0.72rem !important;
+    text-align: right !important;
+  }
+
+  .mini-detail-table td::before {
+    font-size: 0.6rem !important;
+    text-align: left !important;
+    text-transform: uppercase;
+  }
+}
+
+/* Phone roster/finance finishing pass. Keep desktop layout untouched. */
+@media (max-width: 720px) {
+  .view-switcher.panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin: 6px auto 12px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(26, 79, 157, 0.12) !important;
+    border-radius: 22px !important;
+    background:
+      radial-gradient(circle at 18% 0%, rgba(244, 191, 42, 0.16), transparent 38%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.94)) !important;
+    box-shadow: 0 16px 34px rgba(15, 34, 64, 0.1) !important;
+  }
+
+  .view-switcher .brand-lockup {
+    display: grid !important;
+    grid-template-columns: 50px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    justify-content: start !important;
+    transform: none !important;
+  }
+
+  .view-switcher .brand-badge {
+    width: 50px !important;
+    height: 50px !important;
+    padding: 4px !important;
+    border-radius: 15px !important;
+    object-fit: contain !important;
+    background: #0b3470 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 10px 20px rgba(11, 52, 112, 0.16) !important;
+    mix-blend-mode: normal !important;
+    filter: none !important;
+  }
+
+  .view-switcher .academy-main-title {
+    max-width: 16ch !important;
+    font-size: clamp(1.02rem, 5vw, 1.24rem) !important;
+    line-height: 0.95 !important;
+    letter-spacing: -0.055em !important;
+  }
+
+  .view-switcher .academy-tagline {
+    margin-top: 4px !important;
+    font-size: 0.52rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .view-switcher .manager-bar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 8px 0 0 !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(15, 34, 64, 0.08) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
+  .view-switcher .manager-identity {
+    min-width: 0;
+    overflow: hidden;
+    color: #6f86aa !important;
+    font-size: 0.58rem !important;
+    font-weight: 800 !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .view-switcher .manager-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    width: auto !important;
+  }
+
+  .view-switcher .top-link-button,
+  .view-switcher .top-edit-button,
+  .view-switcher .top-logout-button {
+    min-height: 34px !important;
+    padding: 0 10px !important;
+    border-radius: 13px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .joined-dot,
+  .movement-dot.joined,
+  .movement-mobile-bar.joined div {
+    background: #2563eb !important;
+  }
+
+  .continuing-dot,
+  .movement-dot.continuing,
+  .movement-mobile-bar.continuing div {
+    background: #059669 !important;
+  }
+
+  .left-dot,
+  .movement-dot.discontinued,
+  .movement-mobile-bar.left div {
+    background: #dc2626 !important;
+  }
+
+  .movement-mobile-bar.joined strong { color: #1d4ed8 !important; }
+  .movement-mobile-bar.continuing strong { color: #047857 !important; }
+  .movement-mobile-bar.left strong { color: #be123c !important; }
+
+  .movement-mobile-bars {
+    gap: 10px !important;
+    min-height: 138px !important;
+  }
+
+  .movement-mobile-bar::after {
+    color: var(--muted);
+    font-size: 0.56rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .movement-mobile-bar.continuing::after { content: "Cont."; }
+  .movement-mobile-bar.joined::after { content: "Joined"; }
+  .movement-mobile-bar.left::after { content: "Left"; }
+
+  #rosterView .kids-table {
+    border-spacing: 0 8px !important;
+  }
+
+  #rosterView .kids-table tr {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px 10px !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
+    cursor: pointer;
+  }
+
+  #rosterView .kids-table tr::after {
+    content: "Tap for profile";
+    position: absolute;
+    right: 10px;
+    bottom: 7px;
+    color: rgba(26, 79, 157, 0.62);
+    font-size: 0.54rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  #rosterView .kids-table td {
+    display: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  #rosterView .kids-table td::before {
+    display: none !important;
+  }
+
+  #rosterView .kids-table td[data-label="Player"] {
+    display: block !important;
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding: 0 74px 2px 0 !important;
+  }
+
+  #rosterView .player-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  #rosterView .player-link {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--accent-dark);
+    font-size: 0.94rem !important;
+    font-weight: 950 !important;
+    line-height: 1.12 !important;
+    text-decoration-thickness: 1px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #rosterView .kids-table td[data-label="Time slot"],
+  #rosterView .kids-table td[data-label="Status"],
+  #rosterView .kids-table td[data-label="Fees paid"],
+  #rosterView .kids-table td[data-label="Next fee due"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    min-width: 0;
+    font-size: 0.68rem !important;
+  }
+
+  #rosterView .kids-table td[data-label="Time slot"] {
+    grid-column: 1;
+  }
+
+  #rosterView .kids-table td[data-label="Status"] {
+    grid-column: 2;
+    justify-content: flex-end !important;
+  }
+
+  #rosterView .kids-table td[data-label="Fees paid"] {
+    grid-column: 1 / -1;
+    padding-right: 86px !important;
+  }
+
+  #rosterView .kids-table td[data-label="Next fee due"] {
+    grid-column: 1 / -1;
+    padding-right: 86px !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] {
+    display: block !important;
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    z-index: 2;
+  }
+
+  #rosterView .action-trigger-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+  }
+
+  #rosterView .slot-pill,
+  #rosterView .state-pill,
+  #rosterView .status-pill,
+  #rosterView .alert-pill {
+    max-width: 100%;
+    padding: 5px 8px !important;
+    font-size: 0.62rem !important;
+    line-height: 1 !important;
+    white-space: nowrap;
+  }
+
+  .player-popup-backdrop {
+    z-index: 7000 !important;
+    padding: 12px !important;
+  }
+
+  .player-popup {
+    width: min(100%, 540px) !important;
+    max-height: min(82dvh, 680px) !important;
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  .player-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .profile-stat,
+  .player-detail-section {
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .profile-stat span {
+    font-size: 0.56rem !important;
+  }
+
+  .profile-stat strong {
+    font-size: 0.82rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .player-detail-section h4 {
+    font-size: 0.86rem !important;
+  }
+
+  .player-detail-section p,
+  .timeline-list {
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .finance-month-stack,
+  .finance-month-stack.is-current,
+  .finance-month-stack:hover,
+  .finance-month-stack.is-current:hover {
+    border: 1px solid rgba(26, 79, 157, 0.14) !important;
+  }
+
+  .finance-month-stack.is-current,
+  .finance-month-stack.is-current:hover {
+    border: 2px solid var(--primary) !important;
+  }
+
+  .finance-bar-values {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    margin-top: -6px;
+    font-size: 0.5rem;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+  }
+
+  .finance-bar-values .fee-value {
+    color: #1d4ed8;
+  }
+
+  .finance-bar-values .expense-value {
+    color: #dc2626;
+  }
+
+  .finance-month-label strong {
+    font-size: 0.92rem !important;
   }
 }

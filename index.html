@@ -19,7 +19,8 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=26" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
       (function() {
         // Prevent flicker by determining view early
@@ -33,7 +34,7 @@
       <section id="viewSwitcher" class="view-switcher panel">
         <div class="brand-lockup">
           <img
-            src="./assets/og-image.jpg"
+            src="./assets/gen-alpha-favicon-512.png"
             alt="Gen Alpha Cricket Academy badge"
             class="brand-badge"
           />
@@ -138,7 +139,7 @@
       </section>
 
       <section id="rosterView" class="dashboard-view" hidden>
-        <section class="stats-grid">
+        <section class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <article class="panel stat-card">
             <p class="section-kicker">Players Joined</p>
             <strong id="joinedCount" class="stat-value">0</strong>
@@ -156,17 +157,6 @@
           </article>
         </section>
 
-        <section id="admissionReviewPanel" class="panel admission-review-panel" hidden>
-          <div class="panel-heading review-heading">
-            <div>
-              <p class="section-kicker">Parent Submission Review</p>
-              <h2>Admissions waiting for manager approval</h2>
-            </div>
-            <span id="admissionReviewCount" class="review-count-pill">0 pending</span>
-          </div>
-          <div id="admissionReviewList" class="admission-review-list"></div>
-        </section>
-
         <section id="studentMovementPanel" class="panel student-movement-panel">
           <div class="finance-chart-card">
             <div class="finance-chart-head">
@@ -180,8 +170,20 @@
                 <span class="legend-item"><i class="left-dot"></i> Left</span>
               </div>
             </div>
+            <div id="academyPulseChart"></div>
             <div id="studentMovementChart" class="student-movement-chart"></div>
           </div>
+        </section>
+
+        <section id="admissionReviewPanel" class="panel admission-review-panel" hidden>
+          <div class="panel-heading review-heading">
+            <div>
+              <p class="section-kicker">Parent Submission Review</p>
+              <h2>Admissions waiting for manager approval</h2>
+            </div>
+            <span id="admissionReviewCount" class="review-count-pill">0 pending</span>
+          </div>
+          <div id="admissionReviewList" class="admission-review-list"></div>
         </section>
 
         <section class="content-grid">
@@ -520,6 +522,10 @@
             </div>
           </section>
           <div id="financeRecent" class="finance-recent" hidden>
+            <div class="finance-recent-switch" role="tablist" aria-label="Recent finance records">
+              <button type="button" data-finance-recent-view="revenue" class="active">Revenue</button>
+              <button type="button" data-finance-recent-view="expenses">Expenses</button>
+            </div>
             <div class="finance-recent-grid">
               <div class="finance-recent-section">
                 <div class="slot-toolbar finance-toolbar">
@@ -1080,7 +1086,7 @@
             <h3 id="playerDetailTitle">Player details</h3>
           </div>
           <button id="closePlayerDetailButton" type="button" class="icon-button" aria-label="Close player details">
-            Close
+            &times;
           </button>
         </div>
         <div id="playerDetailContent" class="player-detail-content"></div>
@@ -1207,7 +1213,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
-    <script src="./supabase-config.js"></script>
-    <script src="./script.js"></script>
+    <script src="./supabase-config.js?v=26"></script>
+    <script src="./script.js?v=26"></script>
   </body>
 </html>

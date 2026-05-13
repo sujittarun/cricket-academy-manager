@@ -171,6 +171,7 @@ const sortExpensePaidBy = document.getElementById("sortExpensePaidBy");
 let expenseSortKey = "date";
 let expenseSortOrder = "desc";
 let expenseSearchQuery = "";
+let activeFinanceRecentView = "revenue";
 let rosterSortKey = "nextDue";
 let rosterSortOrder = "asc";
 let rosterSearchQuery = "";
@@ -326,6 +327,7 @@ const switchView = (view, push = true) => {
   
   // Load data for specific views
   if (activeView === "roster" || activeView === "admission") {
+    updateStats();
     renderKids();
   } else if (activeView === "finance") {
     loadFinance();
@@ -834,6 +836,12 @@ const getRenewalAmountForPlan = () => {
 };
 
 const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
+const compactRupees = (value) => {
+  const amount = Number(value || 0);
+  if (Math.abs(amount) >= 100000) return `Rs ${(amount / 100000).toFixed(1).replace(/\.0$/, "")}L`;
+  if (Math.abs(amount) >= 1000) return `Rs ${(amount / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+  return `Rs ${amount.toLocaleString("en-IN")}`;
+};
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -942,15 +950,38 @@ const isRowInFinanceRange = (row, range) => {
   return rowDate >= range.startDate && rowDate <= range.endDate;
 };
 
-const buildFinanceRevenueRows = () => {
-  const initialFees = kids
-    .filter((kid) => kid.feesPaid === "yes")
+const hasExplicitJoiningPaymentForKid = (kidId) =>
+  financePayments.some((payment) => {
+    const paymentKidId = payment.student_id || payment.studentId;
+    const paymentType = payment.payment_type || payment.paymentType;
+    return paymentKidId === kidId && paymentType === "joining";
+  });
+
+const buildLegacyJoiningRevenueRows = (predicate = () => true) =>
+  kids
+    .filter((kid) => kid.feesPaid === "yes" && Number(kid.amountPaid || 0) > 0)
+    .filter((kid) => !hasExplicitJoiningPaymentForKid(kid.id))
+    .filter((kid) => predicate(kid))
     .map((kid) => ({
       date: kid.joinDate,
+      paid_on: kid.joinDate,
       name: kid.name,
+      player: kid.name,
       type: "Joining",
       amount: Number(kid.amountPaid || 0),
+      reference: kid.paymentReference || "",
+      payment_type: "joining",
+      isInitial: true,
+      student_id: kid.id,
     }));
+
+const buildFinanceRevenueRows = () => {
+  const initialFees = buildLegacyJoiningRevenueRows().map((row) => ({
+    date: row.date,
+    name: row.name,
+    type: row.type,
+    amount: row.amount,
+  }));
   const renewalFees = financePayments.map((payment) => {
     const student = kids.find((kid) => kid.id === (payment.student_id || payment.studentId));
     return {
@@ -982,24 +1013,26 @@ const renderFinanceMonthPopup = (monthKey) => {
   const expenseTotal = expenseRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const renderRevenueRows = () => revenueRows.length
     ? revenueRows.map((row) => `
-        <tr>
-          <td data-label="Student">${row.name}</td>
-          <td data-label="Type">${row.type}</td>
-          <td data-label="Date">${formatDate(row.date)}</td>
-          <td data-label="Amount"><b>${rupees(row.amount)}</b></td>
-        </tr>
+        <article class="finance-detail-row revenue">
+          <div>
+            <strong>${row.name}</strong>
+            <span>${row.type} • ${formatDate(row.date)}</span>
+          </div>
+          <b>${rupees(row.amount)}</b>
+        </article>
       `).join("")
-    : `<tr><td colspan="4" class="sub-copy">No revenue recorded.</td></tr>`;
+    : `<p class="sub-copy">No revenue recorded.</p>`;
   const renderExpenseRows = () => expenseRows.length
     ? expenseRows.map((row) => `
-        <tr>
-          <td data-label="Comment">${row.comment || "-"}</td>
-          <td data-label="Paid by">${row.paid_by || "-"}</td>
-          <td data-label="Date">${formatDate(row.expense_date)}</td>
-          <td data-label="Amount"><b>${rupees(row.amount)}</b></td>
-        </tr>
+        <article class="finance-detail-row expense">
+          <div>
+            <strong>${row.comment || row.expense_type || "Expense"}</strong>
+            <span>${row.paid_by || "-"} • ${formatDate(row.expense_date)}</span>
+          </div>
+          <b>${rupees(row.amount)}</b>
+        </article>
       `).join("")
-    : `<tr><td colspan="4" class="sub-copy">No expenses recorded.</td></tr>`;
+    : `<p class="sub-copy">No expenses recorded.</p>`;
 
   financeMonthPopupTitle.textContent = range.label;
   financeMonthPopupContent.innerHTML = `
@@ -1022,24 +1055,22 @@ const renderFinanceMonthPopup = (monthKey) => {
       </div>
     </div>
     <div class="finance-month-columns">
-      <section>
+      <section class="finance-detail-list">
         <h4>Revenue</h4>
-        <table class="mini-detail-table">
-          <thead><tr><th>Student</th><th>Type</th><th>Date</th><th>Amount</th></tr></thead>
-          <tbody>${renderRevenueRows()}</tbody>
-        </table>
+        ${renderRevenueRows()}
       </section>
-      <section>
+      <section class="finance-detail-list">
         <h4>Expenses</h4>
-        <table class="mini-detail-table">
-          <thead><tr><th>Comment</th><th>Paid by</th><th>Date</th><th>Amount</th></tr></thead>
-          <tbody>${renderExpenseRows()}</tbody>
-        </table>
+        ${renderExpenseRows()}
       </section>
     </div>
   `;
   financeMonthPopup.hidden = false;
   document.body.classList.add("popup-open");
+  if (window.matchMedia("(max-width: 720px)").matches && !financeMonthPopup.dataset.historyOpen) {
+    financeMonthPopup.dataset.historyOpen = "true";
+    history.pushState({ financeMonthPopup: true }, "", window.location.href);
+  }
 };
 
 const downloadTextFile = (filename, content, type = "text/csv;charset=utf-8") => {
@@ -1493,10 +1524,109 @@ const getFilteredKids = () => {
 };
 
 const updateStats = () => {
+  if (!joinedCount) return;
   const activeKids = kids.filter(isActiveKid);
   joinedCount.textContent = String(kids.length);
   activeCount.textContent = String(activeKids.length);
   returningCount.textContent = String(activeKids.filter((kid) => kid.renewals.length > 0).length);
+};
+
+const renderAcademyPulse = (movement) => {
+  const container = document.getElementById("academyPulseChart");
+  if (!container) return;
+
+  if (!window.matchMedia("(max-width: 720px)").matches) {
+    const width = 400;
+    const height = 80;
+    const padding = 25;
+    const chronological = [...movement].reverse();
+    const data = chronological.map(m => m.continuing + m.joined - m.discontinued);
+    const max = Math.max(...data, 1);
+
+    const points = data.map((v, i) => {
+      const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
+      const y = height - ((v / (max * 1.2)) * (height - padding * 2) + padding);
+      return { x, y, val: v, label: chronological[i].label.split(' ')[0] };
+    });
+
+    const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(" L ")}`;
+
+    container.innerHTML = `
+      <div class="academy-pulse-box" style="height:120px; margin-bottom:16px; background:rgba(255,255,255,0.4); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:24px; padding:12px; border:1px solid rgba(26,79,157,0.08); box-shadow:inset 0 2px 10px rgba(0,0,0,0.02);">
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%; height:100%; display:block;">
+          <defs>
+            <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:var(--accent);stop-opacity:0.2" />
+              <stop offset="100%" style="stop-color:var(--accent);stop-opacity:0" />
+            </linearGradient>
+          </defs>
+          <path d="${pathD} L ${points[points.length-1].x},${height} L ${points[0].x},${height} Z" fill="url(#pulseGradient)" />
+          <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          ${points.map((p) => `
+            <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="white" stroke="var(--accent)" stroke-width="2" />
+            <text x="${p.x}" y="${height - 2}" font-size="8" font-weight="800" text-anchor="middle" fill="var(--accent-dark)" style="opacity:0.8;">${p.label}</text>
+          `).join('')}
+        </svg>
+      </div>
+    `;
+    return;
+  }
+
+  const width = 420;
+  const height = 118;
+  const paddingX = 22;
+  const axisX = width - 8;
+  const chartRight = width - 34;
+  const paddingY = 18;
+  const chronological = [...movement].reverse();
+  const max = Math.max(1, ...chronological.flatMap((m) => [m.continuing, m.joined, m.discontinued]));
+  const axisMax = Math.max(10, Math.ceil(max / 10) * 10);
+  const axisValues = Array.from({ length: 4 }, (_, index) => Math.round((axisMax / 3) * (3 - index)));
+
+  const makePoints = (key) => chronological.map((month, index) => {
+    const x = chronological.length === 1
+      ? width / 2
+      : (index / (chronological.length - 1)) * (chartRight - paddingX) + paddingX;
+    const y = height - paddingY - ((Number(month[key] || 0) / axisMax) * (height - paddingY * 2));
+    return { x, y, value: Number(month[key] || 0), label: month.label.split(" ")[0] };
+  });
+
+  const series = [
+    { key: "continuing", short: "Cont.", color: "#2563eb", points: makePoints("continuing") },
+    { key: "joined", short: "Join", color: "#059669", points: makePoints("joined") },
+    { key: "discontinued", short: "Left", color: "#dc2626", points: makePoints("discontinued") },
+  ];
+  const pathFor = (points) => `M ${points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" L ")}`;
+
+  container.innerHTML = `
+    <div class="academy-pulse-box">
+      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="pulse-svg" aria-label="Student movement trend">
+        <g class="pulse-grid">
+          <line x1="${paddingX}" y1="${paddingY}" x2="${chartRight}" y2="${paddingY}" />
+          <line x1="${paddingX}" y1="${height / 2}" x2="${chartRight}" y2="${height / 2}" />
+          <line x1="${paddingX}" y1="${height - paddingY}" x2="${chartRight}" y2="${height - paddingY}" />
+        </g>
+        <g class="pulse-axis">
+          ${axisValues.map((value, index) => {
+            const y = paddingY + (index / (axisValues.length - 1)) * (height - paddingY * 2);
+            return `<text x="${axisX}" y="${y.toFixed(1)}" text-anchor="end">${value}</text>`;
+          }).join("")}
+        </g>
+        ${series.map((item) => `
+          <path d="${pathFor(item.points)}" fill="none" stroke="${item.color}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+          ${item.points.map((point) => `
+            <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.4" fill="#fff" stroke="${item.color}" stroke-width="2.2" vector-effect="non-scaling-stroke" />
+          `).join("")}
+        `).join("")}
+        ${chronological.map((month, index) => {
+          const x = chronological.length === 1
+            ? width / 2
+            : (index / (chronological.length - 1)) * (chartRight - paddingX) + paddingX;
+          return `<text x="${x.toFixed(1)}" y="${height - 3}" text-anchor="middle">${month.label.split(" ")[0]}</text>`;
+        }).join("")}
+      </svg>
+    </div>
+  `;
 };
 
 const renderStudentMovement = () => {
@@ -1504,9 +1634,46 @@ const renderStudentMovement = () => {
   const movement = buildStudentMovement(kids, 6);
   const maxValue = Math.max(1, ...movement.flatMap((month) => [month.joined, month.continuing, month.discontinued]));
 
-  studentMovementChart.innerHTML = movement.map((month, idx) => {
-    const isCurrent = idx === 0; // Latest month is now first
+  renderAcademyPulse(movement);
+
+  const isMobile = window.innerWidth < 768;
+
+  const barsHtml = movement.map((month, idx) => {
     const activeTrend = Math.max(0, month.continuing + month.joined - month.discontinued);
+
+    if (isMobile) {
+      const barBaseHeight = 100;
+      const hCont = Math.max(8, Math.round((month.continuing / maxValue) * barBaseHeight));
+      const hJoined = Math.max(8, Math.round((month.joined / maxValue) * barBaseHeight));
+      const hLeft = Math.max(8, Math.round((month.discontinued / maxValue) * barBaseHeight));
+
+      return `
+      <article class="movement-month-card">
+        <div class="movement-mobile-head">
+          <h3>${month.label}</h3>
+          <span>${activeTrend} active</span>
+        </div>
+
+        <div class="movement-mobile-bars">
+          <div class="movement-mobile-bar continuing">
+             <div style="height:${hCont}px"></div>
+             <strong>${month.continuing}</strong>
+          </div>
+          <div class="movement-mobile-bar joined">
+             <div style="height:${hJoined}px"></div>
+             <strong>${month.joined}</strong>
+          </div>
+          <div class="movement-mobile-bar left">
+             <div style="height:${hLeft}px"></div>
+             <strong>${month.discontinued}</strong>
+          </div>
+        </div>
+      </article>
+      `;
+    }
+
+    // Desktop Layout (Preserved)
+    const isCurrent = idx === 0;
     return `
     <article class="movement-month ${isCurrent ? "is-current" : ""}">
       <div class="movement-month-head">
@@ -1517,29 +1684,34 @@ const renderStudentMovement = () => {
         </span>
       </div>
       <div class="movement-bars" aria-label="${month.label} student movement">
-        <span class="movement-bar continuing" style="height:${Math.max(8, Math.round((month.continuing / maxValue) * 82))}px" data-label="Continuing: ${month.continuing}"></span>
-        <span class="movement-bar joined" style="height:${Math.max(8, Math.round((month.joined / maxValue) * 82))}px" data-label="Joined: ${month.joined}"></span>
-        <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 82))}px" data-label="Left: ${month.discontinued}"></span>
+        <span class="movement-bar continuing" style="height:${Math.max(8, Math.round((month.continuing / maxValue) * 65))}px" data-label="Continuing: ${month.continuing}"></span>
+        <span class="movement-bar joined" style="height:${Math.max(8, Math.round((month.joined / maxValue) * 65))}px" data-label="Joined: ${month.joined}"></span>
+        <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 65))}px" data-label="Left: ${month.discontinued}"></span>
       </div>
       <div class="movement-counts">
-        <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}" aria-label="${month.continuing} continuing players in ${month.label}">
+        <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}">
           <i class="movement-dot continuing"></i>
           <span class="movement-count-value">${month.continuing}</span>
-          <span class="movement-count-label">Continuing</span>
         </button>
-        <button type="button" data-movement-filter="joined" data-movement-month="${month.key}" aria-label="${month.joined} joined players in ${month.label}">
+        <button type="button" data-movement-filter="joined" data-movement-month="${month.key}">
           <i class="movement-dot joined"></i>
           <span class="movement-count-value">${month.joined}</span>
-          <span class="movement-count-label">Joined</span>
         </button>
-        <button type="button" data-movement-filter="left" data-movement-month="${month.key}" aria-label="${month.discontinued} players left in ${month.label}">
+        <button type="button" data-movement-filter="left" data-movement-month="${month.key}">
           <i class="movement-dot discontinued"></i>
           <span class="movement-count-value">${month.discontinued}</span>
-          <span class="movement-count-label">Left</span>
         </button>
       </div>
     </article>
   `}).join("");
+
+  studentMovementChart.innerHTML = `
+    <div class="student-movement-integrated" style="display:flex; flex-direction:column; gap:20px; width:100%; overflow:visible; padding:0;">
+      <div class="movement-scroll-wrapper" style="display:flex; overflow-x:auto; scroll-snap-type: x mandatory; padding:4px 0 32px; -webkit-overflow-scrolling:touch; scrollbar-width:none; -ms-overflow-style:none;">
+        ${barsHtml}
+      </div>
+    </div>
+  `;
 };
 
 const renderRosterHelper = () => {
@@ -3138,9 +3310,10 @@ const loadFinance = async () => {
   const now = new Date();
   const localMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
   const selectedRange = financeRangeFromMode();
-  const initialFees = kids
-    .filter((kid) => kid.feesPaid === "yes")
-    .map((kid) => ({ amount: kid.amountPaid, paid_on: kid.joinDate }));
+  const initialFees = buildLegacyJoiningRevenueRows().map((row) => ({
+    amount: row.amount,
+    paid_on: row.paid_on,
+  }));
   const allFees = [...initialFees, ...financePayments];
   const sum = (rows, dateKey = "") =>
     rows
@@ -3193,6 +3366,10 @@ const loadFinance = async () => {
           <div class="finance-bars">
             <span class="fee-bar" style="height:${feeHeight}px" data-label="Fees: ${rupees(month.fees)}"></span>
             <span class="expense-bar" style="height:${expenseHeight}px" data-label="Expenses: ${rupees(month.expenses)}"></span>
+          </div>
+          <div class="finance-bar-values">
+            <span class="fee-value">${compactRupees(month.fees)}</span>
+            <span class="expense-value">${compactRupees(month.expenses)}</span>
           </div>
           <div class="finance-month-label">
             <strong>${month.label}</strong>
@@ -3280,12 +3457,12 @@ const loadFinance = async () => {
     
     // Merge initial fees and renewal payments
     const allRevenue = [
-      ...kids.filter((k) => k.feesPaid === "yes").map((k) => ({ 
-        paid_on: k.joinDate, 
-        amount: k.amountPaid, 
-        payment_type: "joining", 
-        isInitial: true,
-        student_id: k.id
+      ...buildLegacyJoiningRevenueRows().map((row) => ({
+        paid_on: row.paid_on,
+        amount: row.amount,
+        payment_type: row.payment_type,
+        isInitial: row.isInitial,
+        student_id: row.student_id,
       })),
       ...financePayments.map((p) => ({ 
         paid_on: p.paid_on || p.paidOn, 
@@ -3309,10 +3486,10 @@ const loadFinance = async () => {
           const name = kid ? kid.name : "Unknown Player";
           return `
             <tr>
-              <td>${formatDate(payment.paid_on)}</td>
-              <td><strong>${name}</strong></td>
-              <td><span class="type-pill ${payment.isInitial ? "new" : "returning"}">${payment.payment_type}</span></td>
-              <td class="amount-cell">Rs ${Number(payment.amount).toFixed(2)}</td>
+              <td data-label="Date">${formatDate(payment.paid_on)}</td>
+              <td data-label="Player"><strong>${name}</strong></td>
+              <td data-label="Type"><span class="type-pill ${payment.isInitial ? "new" : "returning"}">${payment.payment_type}</span></td>
+              <td data-label="Amount" class="amount-cell">Rs ${Number(payment.amount).toFixed(2)}</td>
             </tr>
           `;
         })
@@ -3322,6 +3499,7 @@ const loadFinance = async () => {
 
   renderExpensesTable();
   renderPaymentsTable();
+  financeRecent?.setAttribute("data-active-view", activeFinanceRecentView);
 
   // Attach events if not already attached
   if (expenseSearch && !expenseSearch.hasAttribute("data-bound")) {
@@ -3364,6 +3542,13 @@ financeRangeFilters?.addEventListener("click", (event) => {
   loadFinance();
 });
 
+financeRecent?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-finance-recent-view]");
+  if (!button) return;
+  activeFinanceRecentView = button.dataset.financeRecentView || "revenue";
+  financeRecent.setAttribute("data-active-view", activeFinanceRecentView);
+});
+
 financeExportMonth?.addEventListener("change", () => {
   financeRangeMode = "month-picker";
   loadFinance();
@@ -3398,9 +3583,14 @@ const closeExpensePopup = () => {
   document.body.classList.remove("popup-open");
 };
 
-const closeFinanceMonthPopup = () => {
+const closeFinanceMonthPopup = ({ fromPopState = false } = {}) => {
   if (!financeMonthPopup) return;
+  if (!fromPopState && financeMonthPopup.dataset.historyOpen === "true") {
+    history.back();
+    return;
+  }
   financeMonthPopup.hidden = true;
+  delete financeMonthPopup.dataset.historyOpen;
   document.body.classList.remove("popup-open");
 };
 
@@ -3411,6 +3601,11 @@ expensePopup?.addEventListener("click", (event) => {
 closeFinanceMonthPopupButton?.addEventListener("click", closeFinanceMonthPopup);
 financeMonthPopup?.addEventListener("click", (event) => {
   if (event.target === financeMonthPopup) closeFinanceMonthPopup();
+});
+window.addEventListener("popstate", () => {
+  if (financeMonthPopup && !financeMonthPopup.hidden && financeMonthPopup.dataset.historyOpen === "true") {
+    closeFinanceMonthPopup({ fromPopState: true });
+  }
 });
 
 const loadMonthlyAttendanceRows = async (range) => {
@@ -3433,19 +3628,19 @@ const buildMonthlyExportData = async () => {
   await loadFinance();
   const attendanceRows = await loadMonthlyAttendanceRows(range);
   const studentLookup = new Map(kids.map((kid) => [kid.id, kid]));
-  const initialFees = kids
-    .filter((kid) => kid.feesPaid === "yes" && String(kid.joinDate || "").startsWith(range.key))
-    .map((kid) => ({
-      type: "Admission",
-      player: kid.name,
-      date: kid.joinDate,
-      amount: kid.amountPaid,
-      reference: kid.paymentReference || "",
-    }));
+  const initialFees = buildLegacyJoiningRevenueRows(
+    (kid) => String(kid.joinDate || "").startsWith(range.key),
+  ).map((row) => ({
+    type: "Admission",
+    player: row.player,
+    date: row.date,
+    amount: row.amount,
+    reference: row.reference,
+  }));
   const renewalFees = financePayments
     .filter((payment) => String(payment.paid_on || payment.paidOn || "").startsWith(range.key))
     .map((payment) => ({
-      type: "Renewal",
+      type: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Admission" : "Renewal",
       player: studentLookup.get(payment.student_id || payment.studentId)?.name || payment.student_id || payment.studentId || "",
       date: payment.paid_on || payment.paidOn || "",
       amount: Number(payment.amount || 0),
@@ -3609,33 +3804,56 @@ loginForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  const submitButton = loginForm.querySelector('button[type="submit"]');
   const formData = new FormData(loginForm);
   const email = formData.get("email").toString().trim();
   const password = formData.get("password").toString();
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    loginMessage.textContent = error.message;
+  if (!email || !password) {
+    loginMessage.textContent = "Enter manager email and password.";
     return;
   }
 
-  lastManagerEmail = email;
-  lastManagerPassword = password;
-  localStorage.setItem(LAST_EMAIL_STORAGE_KEY, lastManagerEmail);
-  localStorage.setItem(LAST_PASSWORD_STORAGE_KEY, lastManagerPassword);
-  loginForm.reset();
-  loginMessage.textContent = "";
-  isAuthPanelOpen = false;
-  isEditMode = false;
-  activeView = "roster";
-  await refreshSession();
-  await loadKids();
-  await loadPendingAdmissions();
-  await loadFinance();
+  loginMessage.textContent = "Logging in...";
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.dataset.originalText = submitButton.textContent;
+    submitButton.textContent = "Logging in...";
+  }
+
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      loginMessage.textContent = error.message;
+      return;
+    }
+
+    lastManagerEmail = email;
+    lastManagerPassword = password;
+    localStorage.setItem(LAST_EMAIL_STORAGE_KEY, lastManagerEmail);
+    localStorage.setItem(LAST_PASSWORD_STORAGE_KEY, lastManagerPassword);
+    loginForm.reset();
+    loginMessage.textContent = "";
+    isAuthPanelOpen = false;
+    isEditMode = false;
+    activeView = "roster";
+    await refreshSession();
+    await loadKids();
+    await loadPendingAdmissions();
+    await loadFinance();
+  } catch (error) {
+    loginMessage.textContent = error.message || "Unable to login. Check internet and try again.";
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = submitButton.dataset.originalText || "Login";
+      delete submitButton.dataset.originalText;
+    }
+  }
 });
 
 const handleLogout = async () => {
@@ -3823,7 +4041,14 @@ kidsTableBody.addEventListener("click", async (event) => {
   }
   const target = event.target.closest("[data-action]");
 
-  if (!(target instanceof HTMLButtonElement)) return;
+  if (!(target instanceof HTMLButtonElement)) {
+    const row = event.target.closest("[data-player-row-id]");
+    if (row instanceof HTMLElement) {
+      const kid = kids.find((item) => item.id === row.dataset.playerRowId);
+      await renderPlayerDetails(kid);
+    }
+    return;
+  }
 
   const { id, action } = target.dataset;
 
@@ -4035,12 +4260,10 @@ renewalForm?.addEventListener("submit", async (event) => {
     renewalMessage.textContent = paymentError.message;
     return;
   }
-  const newTotalPaid = (Number(kid.amountPaid) || 0) + amount;
   const { error: updateError } = await supabaseClient
     .from("students")
     .update({ 
       renewals, 
-      amount_paid: newTotalPaid,
       discontinued: false, 
       discontinued_at: null, 
       updated_by: getActiveManagerEmail() 
