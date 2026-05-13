@@ -1229,6 +1229,7 @@ const printReceipt = () => {
           .receipt-brand { position: relative; display: flex; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e9f5; }
           .receipt-logo-lockup { display: flex; align-items: center; gap: 15px; }
           .receipt-logo-lockup img { width: 74px; height: 74px; object-fit: contain; border-radius: 20px; background: #edf5ff; padding: 8px; }
+          .brand-badge { width: 80px; height: auto; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.1) brightness(1.05); }
           .receipt-logo-lockup span { display: block; text-transform: uppercase; letter-spacing: .1em; font-size: 11px; font-weight: 800; color: #1f5fbf; }
           .receipt-logo-lockup strong { display: block; margin-top: 4px; font-size: 24px; color: #10264f; }
           .receipt-logo-lockup small { display: block; margin-top: 3px; color: #6a7890; font-weight: 700; }
@@ -4179,7 +4180,6 @@ document.addEventListener("visibilitychange", () => {
     refreshPaymentReturnHint();
   }
 });
-// Removed redundant listener
 playerSearchInput?.addEventListener("input", (event) => {
   rosterSearchQuery = event.target.value || "";
   renderKids();
@@ -4312,7 +4312,7 @@ kidsTable?.addEventListener("click", (event) => {
   }
   renderKids();
 });
-// Event listeners moved to DOMContentLoaded at top
+
 admissionReviewList.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) return;
   const remindBtn = event.target.closest("[data-remind-admission]");
@@ -4558,96 +4558,7 @@ admissionForm.addEventListener("submit", async (event) => {
   }
 });
 
-// Reset is handled in the payment verify section below to also unlock fees field.
-
-const initializeApp = async () => {
-  // 1. Instantly determine and set the correct starting view to prevent any flicker
-  const startingView = document.documentElement.getAttribute("data-starting-view") || 
-                       window.location.hash.replace("#", "") || 
-                       localStorage.getItem("activeView") || 
-                       "admission";
-  
-  switchView(startingView, false);
-
-  populateAdmissionSelectors();
-  setJoinDateLimit();
-  admissionJoinDate.value = toLocalIsoDate();
-  if (financeExportMonth) financeExportMonth.value = currentMonthKey();
-  admissionPaymentIntentId = buildPaymentIntentId();
-  updateActiveView();
-  updateAccessUI();
-  if (rosterStatusFilterInput) rosterStatusFilterInput.value = rosterStatusFilter;
-  renderKids();
-  syncAdmissionAmountState();
-  syncAdmissionStyleState();
-  updatePaymentAssist();
-
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("./sw.js", { updateViaCache: "none" })
-        .then((registration) => {
-          const activateWaitingWorker = (worker) => {
-            if (!worker) {
-              return;
-            }
-
-            worker.postMessage({ type: "SKIP_WAITING" });
-          };
-
-          if (registration.waiting) {
-            activateWaitingWorker(registration.waiting);
-          }
-
-          registration.addEventListener("updatefound", () => {
-            const nextWorker = registration.installing;
-
-            if (!nextWorker) {
-              return;
-            }
-
-            nextWorker.addEventListener("statechange", () => {
-              if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
-                activateWaitingWorker(registration.waiting || nextWorker);
-              }
-            });
-          });
-
-          navigator.serviceWorker.addEventListener("controllerchange", () => {
-            if (hasTriggeredServiceWorkerRefresh) {
-              return;
-            }
-
-            hasTriggeredServiceWorkerRefresh = true;
-            window.location.reload();
-          });
-
-          registration.update().catch(() => {});
-        })
-        .catch(() => {});
-    });
-  }
-
-  if (!isBackendReady) {
-    await loadAdmissionRegNo();
-    return;
-  }
-
-  initializeAuthListener();
-  // Fetch next reg no before session/roster — those calls can be slow or stall; reg no must not wait on them.
-  await loadAdmissionRegNo();
-  await refreshSession();
-  if (isManagerLoggedIn) {
-    await loadReminderSettings();
-  }
-  await loadKids();
-  if (isManagerLoggedIn) {
-    await loadFinance();
-  }
-  initRealtimeSync();
-};
-
-initializeApp();
+// initializeApp and Service Worker logic consolidated to bottom of file
 
 // ── Attendance Tracker ───────────────────────────────────────────────────────
 
@@ -5150,7 +5061,7 @@ if (attendanceDate) {
 }
 
 // --- INITIALIZATION ---
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   rosterTabButtons = document.querySelectorAll(".view-tab[data-view-target='roster']");
   admissionTabButtons = document.querySelectorAll(".view-tab[data-view-target='admission']");
   attendanceTabButtons = document.querySelectorAll(".view-tab[data-view-target='attendance']");
@@ -5163,13 +5074,79 @@ document.addEventListener("DOMContentLoaded", () => {
   exportCsvButton?.addEventListener("click", exportMonthlyCsv);
   exportPdfButton?.addEventListener("click", printMonthlyReport);
 
-  // Restore view on load
-  const initialView = window.location.hash.replace("#", "");
-  switchView(initialView || "admission", false);
+  // 1. Instantly determine and set the correct starting view to prevent any flicker
+  const startingView = document.documentElement.getAttribute("data-starting-view") || 
+                       window.location.hash.replace("#", "") || 
+                       localStorage.getItem("activeView") || 
+                       "admission";
+  switchView(startingView, false);
   
-  // Refresh UI
+  // 2. Setup Admission Form Defaults
+  populateAdmissionSelectors();
+  setJoinDateLimit();
+  if (admissionJoinDate) admissionJoinDate.value = toLocalIsoDate();
+  if (financeExportMonth) financeExportMonth.value = currentMonthKey();
+  admissionPaymentIntentId = buildPaymentIntentId();
+  if (rosterStatusFilterInput) rosterStatusFilterInput.value = rosterStatusFilter;
+  
+  // 3. UI States
+  syncAdmissionAmountState();
+  syncAdmissionStyleState();
+  updatePaymentAssist();
   updateAccessUI();
-  updateAuthPanel(); // Ensure auth panel state is correct
+  updateAuthPanel();
+
+  // 4. Service Worker
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("./sw.js", { updateViaCache: "none" })
+        .then((registration) => {
+          const activateWaitingWorker = (worker) => {
+            if (!worker) return;
+            worker.postMessage({ type: "SKIP_WAITING" });
+          };
+
+          if (registration.waiting) activateWaitingWorker(registration.waiting);
+
+          registration.addEventListener("updatefound", () => {
+            const nextWorker = registration.installing;
+            if (!nextWorker) return;
+            nextWorker.addEventListener("statechange", () => {
+              if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
+                activateWaitingWorker(registration.waiting || nextWorker);
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (hasTriggeredServiceWorkerRefresh) return;
+            hasTriggeredServiceWorkerRefresh = true;
+            window.location.reload();
+          });
+
+          registration.update().catch(() => {});
+        })
+        .catch(() => {});
+    });
+  }
+
+  // 5. Backend Data Initialization
+  if (!isBackendReady) {
+    await loadAdmissionRegNo();
+    renderKids();
+    return;
+  }
+
+  initializeAuthListener();
+  await loadAdmissionRegNo();
+  await refreshSession();
+  if (isManagerLoggedIn) {
+    await loadReminderSettings();
+    await loadFinance();
+  }
+  await loadKids();
+  initRealtimeSync();
 });
 
 // GLOBAL ACTION MENU HANDLER
