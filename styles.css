@@ -4426,22 +4426,82 @@ body.popup-open {
   .slot-toolbar {
     flex-direction: column;
     align-items: stretch;
-    padding: 16px;
-    gap: 12px;
+    padding: 12px;
+    gap: 10px;
+    border-radius: 20px;
   }
 
   .slot-toolbar-copy {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .slot-toolbar-copy .slot-helper {
+    margin: 0;
+    max-width: 160px;
+    font-size: 0.68rem;
+    line-height: 1.25;
+    text-align: right;
   }
 
   .roster-tools {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     align-items: stretch;
+    gap: 9px;
+    width: 100%;
   }
 
   .roster-search {
     width: 100%;
-    margin-bottom: 8px;
+    min-height: 36px;
+    margin: 0;
+    border-radius: 14px;
+    font-size: 0.82rem;
+    box-shadow: inset 0 0 0 1px rgba(15, 34, 64, 0.08);
+  }
+
+  .roster-filter-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .roster-filter {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    align-items: start;
+    min-height: auto;
+    padding: 8px 9px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.82);
+    letter-spacing: 0.035em;
+  }
+
+  .roster-filter span {
+    overflow: hidden;
+    font-size: 0.58rem;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .roster-filter select {
+    width: 100%;
+    min-height: 28px;
+    padding: 0 18px 0 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+  }
+
+  .roster-filter select:focus {
+    outline: 2px solid rgba(26, 79, 157, 0.24);
+    outline-offset: 1px;
   }
 
   .stats-grid {
@@ -4465,14 +4525,15 @@ body.popup-open {
     margin: 0 -4px; /* Pull to edges slightly */
   }
 
-  /* MOBILE EXPERIMENTS: Horizontal Scroll for Charts */
+  /* Phone charts: keep the same compact swipe-card rhythm as finance mini chart. */
   .finance-mini-chart, 
   .student-movement-chart {
     display: flex !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    gap: 12px !important;
-    padding: 10px 4px 24px !important;
+    scroll-snap-type: x proximity !important;
+    gap: 10px !important;
+    padding: 8px 2px 16px !important;
     scrollbar-width: none !important;
   }
   
@@ -4481,23 +4542,44 @@ body.popup-open {
     display: none;
   }
 
-  .finance-chart-month {
-    flex: 0 0 80px !important;
-    min-width: 80px !important;
+  .finance-month-stack {
+    flex: 0 0 clamp(98px, 29vw, 120px) !important;
+    min-width: clamp(98px, 29vw, 120px) !important;
+    scroll-snap-align: start;
   }
 
   .movement-month {
-    flex: 0 0 130px !important;
-    min-width: 130px !important;
-    background: transparent !important;
-    border: 0 !important;
-    padding: 0 !important;
+    flex: 0 0 clamp(108px, 31vw, 126px) !important;
+    min-width: clamp(108px, 31vw, 126px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 12px 8px !important;
+    border: 1px solid rgba(26, 79, 157, 0.1) !important;
+    border-radius: 18px !important;
+    background:
+      radial-gradient(circle at top right, rgba(244, 191, 42, 0.13), transparent 46%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.86)) !important;
+    box-shadow: 0 10px 22px rgba(11, 52, 112, 0.07) !important;
+    scroll-snap-align: start;
+  }
+
+  .movement-month.is-current {
+    transform: none !important;
+    border-color: rgba(244, 191, 42, 0.72) !important;
+    box-shadow: 0 14px 26px rgba(244, 191, 42, 0.16) !important;
+  }
+
+  .movement-month:hover,
+  .movement-month.is-current:hover {
+    transform: none !important;
   }
 
   .student-movement-panel .finance-chart-card {
     background: white !important;
     border-radius: 20px !important;
-    padding: 20px !important;
+    padding: 14px !important;
     border: 1px solid rgba(15, 34, 64, 0.08) !important;
     box-shadow: 0 12px 40px rgba(15, 34, 64, 0.05) !important;
     margin: 0 !important;
@@ -4518,12 +4600,65 @@ body.popup-open {
   }
 
   .movement-month-head strong {
-    font-size: 0.85rem !important;
+    overflow: hidden;
+    color: var(--accent-dark);
+    font-size: 0.82rem !important;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .movement-month-head span {
-    font-size: 0.65rem !important;
+    align-self: center;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(26, 79, 157, 0.08);
+    color: var(--muted);
+    font-size: 0.58rem !important;
+    line-height: 1;
+    text-align: center;
     white-space: nowrap !important;
+  }
+
+  .movement-month-head {
+    display: grid;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .movement-bars {
+    width: 100%;
+    height: 80px !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    gap: 4px !important;
+    border-radius: 12px !important;
+    background: rgba(15, 34, 64, 0.04) !important;
+  }
+
+  .movement-bar {
+    width: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .movement-counts {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .movement-counts button {
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.63rem !important;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .movement-dot {
+    width: 6px;
+    height: 6px;
   }
 
   .student-movement-panel {
@@ -4675,6 +4810,43 @@ body.popup-open {
   }
 }
 
+@media (max-width: 380px) {
+  .slot-toolbar-copy .slot-helper {
+    display: none;
+  }
+
+  .roster-filter-row {
+    gap: 6px;
+  }
+
+  .roster-filter {
+    padding: 7px;
+  }
+
+  #financeStats.finance-stats {
+    gap: 6px !important;
+  }
+
+  #financeStats .finance-metric {
+    min-height: 60px !important;
+    padding: 7px 3px !important;
+  }
+
+  #financeStats .finance-metric p {
+    font-size: 0.54rem !important;
+    letter-spacing: 0.045em;
+  }
+
+  #financeStats .finance-metric strong {
+    margin: 5px 0 0;
+    font-size: 0.78rem !important;
+  }
+
+  #financeStats .finance-metric span {
+    display: none;
+  }
+}
+
 /* Premium Tab Styling & Animations */
 .view-tab {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4781,10 +4953,19 @@ body.popup-open {
     font-weight: 700 !important;
   }
 
-  .stats-grid, #financeStats.finance-stats {
+  .stats-grid {
     display: grid !important;
     grid-template-columns: 1fr !important;
     gap: 10px !important;
+    width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  #financeStats.finance-stats {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
     width: 100% !important;
     padding: 0 !important;
     box-sizing: border-box !important;

@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-09
+Last updated: 2026-05-13
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,17 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-13
+
+### Mobile Roster And Finance Layout Polish
+
+- Browser-only mobile UI pass; desktop roster/table layout intentionally preserved.
+- Roster student movement now uses the same compact horizontal swipe-card rhythm as the finance mini chart on small screens.
+- Roster tools/search/filters now use a cleaner mobile control panel instead of cramped wrapped pills.
+- Finance stats stay as side-by-side compact tiles on phones, including very small screens, without horizontal scrolling.
+- Verification done:
+  - `node --check web-app-repo/script.js`
 
 ## 2026-05-09
 
