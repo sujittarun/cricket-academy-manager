@@ -4519,26 +4519,27 @@ body.popup-open {
   .view-switcher {
     display: flex !important;
     flex-direction: column !important;
-    margin: 12px auto !important;
-    width: calc(100% - 24px) !important;
+    margin: 8px auto !important;
+    width: calc(100% - 16px) !important;
     background: var(--panel) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     box-shadow: var(--shadow) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 20px !important;
-    padding: 16px !important;
+    border-radius: 16px !important;
+    padding: 10px !important;
     min-height: auto !important;
     align-items: center !important;
-    gap: 16px !important;
+    gap: 8px !important;
     box-sizing: border-box !important;
     position: relative !important;
     z-index: 100 !important;
   }
 
   .brand-lockup {
-    transform: scale(0.85);
+    transform: scale(0.75);
     justify-content: center !important;
     width: 100% !important;
+    margin-bottom: 4px !important;
   }
 
   .manager-bar {
@@ -4546,17 +4547,17 @@ body.popup-open {
     flex-direction: column !important;
     width: 100% !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
 
   .manager-actions {
     display: flex !important;
     justify-content: center !important;
-    gap: 10px !important;
+    gap: 8px !important;
     width: 100% !important;
   }
 
-  .view-switcher-tabs {
+  .view-switcher-tabs.mobile-tabs {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -4566,8 +4567,8 @@ body.popup-open {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
-    background: white !important;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
     border-top: 1px solid var(--border) !important;
     z-index: 5000 !important;
     display: flex !important;
@@ -4575,57 +4576,64 @@ body.popup-open {
     justify-content: space-around !important;
     box-sizing: border-box !important;
     border-radius: 0 !important;
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.06) !important;
   }
 
   .view-tab {
     flex: 1 !important;
     flex-direction: column !important;
-    height: 56px !important;
-    min-height: 56px !important;
+    height: 50px !important;
+    min-height: 50px !important;
     padding: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
     color: var(--muted) !important;
-    gap: 4px !important;
-    font-size: 0.65rem !important;
+    gap: 2px !important;
+    font-size: 0.6rem !important;
   }
 
-  .view-tab.active {
-    background: transparent !important;
-    color: var(--accent) !important;
-    box-shadow: none !important;
+  .view-tab span {
+    display: block !important;
+    font-weight: 700 !important;
   }
 
   .view-tab svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 18px !important;
+    height: 18px !important;
   }
 
   .stats-grid, #financeStats.finance-stats {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 8px !important;
-    margin: 0 0 24px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin: 0 0 20px !important;
     width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .stat-card, .finance-metric {
-    padding: 8px 4px !important;
-    min-height: 70px !important;
+    padding: 6px 2px !important;
+    min-height: 60px !important;
     text-align: center;
+    border-radius: 12px;
+    box-sizing: border-box !important;
+    width: 100% !important;
   }
 
   .stat-value, .finance-metric strong {
-    font-size: 0.95rem !important;
+    font-size: 0.8rem !important;
+    letter-spacing: -0.01em;
   }
 
   .section-kicker, .stat-copy, .finance-metric p, .finance-metric span {
-    font-size: 0.55rem !important;
+    font-size: 0.48rem !important;
     letter-spacing: 0;
+    line-height: 1.1;
   }
 
   .app-shell {
-    padding-bottom: 120px !important;
+    padding-bottom: 100px !important;
+    padding-top: 10px !important;
   }
 }
