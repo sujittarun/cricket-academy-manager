@@ -1919,20 +1919,17 @@ body.popup-open {
 }
 
 .student-movement-chart {
-  display: flex;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
   align-items: stretch;
-  padding: 10px 4px 24px;
-  scrollbar-width: thin;
 }
 
 .movement-month {
-  flex: 0 0 160px; /* Wider cards on mobile */
-  padding: 14px;
+  min-width: 0;
+  padding: 13px;
   border: 1px solid rgba(26, 79, 157, 0.1);
-  border-radius: 20px;
+  border-radius: 18px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.72));
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2670,26 +2667,23 @@ body.popup-open {
 }
 
 .finance-mini-chart {
-  display: flex;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
   align-items: end;
-  min-height: 140px;
-  padding: 10px 4px 20px;
-  scrollbar-width: thin;
+  min-height: 116px;
 }
 
 .finance-chart-month {
-  flex: 0 0 100px; /* Giving each month plenty of room */
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
   display: grid;
-  gap: 8px;
+  gap: 7px;
   justify-items: center;
+  min-width: 0;
   position: relative;
 }
 
@@ -4453,6 +4447,32 @@ body.popup-open {
   .slot-filters {
     padding: 2px 0 10px;
     margin: 0 -4px; /* Pull to edges slightly */
+  }
+
+  /* MOBILE EXPERIMENTS: Horizontal Scroll for Charts */
+  .finance-mini-chart, 
+  .student-movement-chart {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 12px !important;
+    padding: 10px 4px 24px !important;
+    scrollbar-width: none !important;
+  }
+  
+  .finance-mini-chart::-webkit-scrollbar,
+  .student-movement-chart::-webkit-scrollbar {
+    display: none;
+  }
+
+  .finance-chart-month {
+    flex: 0 0 90px !important;
+    min-width: 90px !important;
+  }
+
+  .movement-month {
+    flex: 0 0 160px !important;
+    min-width: 160px !important;
   }
 
   .finance-month-columns {

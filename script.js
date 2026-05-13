@@ -1290,7 +1290,8 @@ const monthLabelFromDate = (date) =>
 const buildStudentMovement = (students, monthCount = 6) => {
   const now = new Date();
   return Array.from({ length: monthCount }, (_, index) => {
-    const monthDate = new Date(now.getFullYear(), now.getMonth() - (monthCount - 1 - index), 1);
+    // Generate months in REVERSE order (0 = latest, 5 = oldest)
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - index, 1);
     const monthStart = startOfMonth(monthDate);
     const monthEnd = endOfMonth(monthDate);
     const previousMonthEnd = new Date(monthStart.getTime() - 1);
@@ -1305,9 +1306,6 @@ const buildStudentMovement = (students, monthCount = 6) => {
       const discontinuedAt = parseIsoDate(kid.discontinuedAt);
       const isDiscontinued = kid.discontinued === true || kid.discontinued === "true";
       
-      // If joined before this month AND either:
-      // 1. Not discontinued at all
-      // 2. Discontinued in the future (after this month started)
       return joinDate && joinDate <= previousMonthEnd && 
              (!isDiscontinued || (discontinuedAt && discontinuedAt >= monthStart));
     }).length;
@@ -1507,7 +1505,7 @@ const renderStudentMovement = () => {
   const maxValue = Math.max(1, ...movement.flatMap((month) => [month.joined, month.continuing, month.discontinued]));
 
   studentMovementChart.innerHTML = movement.map((month, idx) => {
-    const isCurrent = idx === movement.length - 1;
+    const isCurrent = idx === 0; // Latest month is now first
     return `
     <article class="movement-month ${isCurrent ? "is-current" : ""}">
       <div class="movement-month-head">
@@ -3157,7 +3155,8 @@ const loadFinance = async () => {
 
   if (financeMiniChart) {
     const monthBuckets = Array.from({ length: 6 }, (_, index) => {
-      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+      // REVERSE order (0 = latest, 5 = oldest)
+      const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
       const key = localMonthKey(date);
       return {
         key,
@@ -3169,7 +3168,7 @@ const loadFinance = async () => {
     });
     const maxChartValue = Math.max(1, ...monthBuckets.flatMap((month) => [month.fees, month.expenses]));
     financeMiniChart.innerHTML = monthBuckets.map((month, idx) => {
-      const isCurrent = idx === monthBuckets.length - 1;
+      const isCurrent = idx === 0; // Latest month is now first
       const feeHeight = Math.max(6, Math.round((month.fees / maxChartValue) * 76));
       const expenseHeight = Math.max(6, Math.round((month.expenses / maxChartValue) * 76));
       const net = month.fees - month.expenses;
