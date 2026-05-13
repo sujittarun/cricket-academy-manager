@@ -3822,7 +3822,7 @@ body.popup-open {
   }
 
   .finance-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   .finance-range-panel {
@@ -4003,7 +4003,20 @@ body.popup-open {
   }
 
   .finance-stats {
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+  
+  .finance-metric {
+    padding: 8px !important;
+  }
+  
+  .finance-metric strong {
+    font-size: 0.9rem !important;
+  }
+  
+  .finance-metric .section-kicker {
+    font-size: 0.5rem !important;
   }
 
   .student-movement-chart {
@@ -4369,6 +4382,20 @@ body.popup-open {
 /* Roster mobile rescue layer.
    Keep laptops as a real table; only phones get stacked cards. */
 @media (max-width: 720px) {
+  .view-switcher-tabs {
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+    position: static !important;
+    transform: none !important;
+  }
+  
+  .view-tab {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+  }
+
   .finance-month-columns {
     grid-template-columns: 1fr;
   }
