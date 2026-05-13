@@ -287,7 +287,8 @@ body.popup-open {
   box-shadow: var(--shadow);
   backdrop-filter: blur(20px) saturate(180%);
   padding: 32px !important;
-  margin-bottom: 32px;
+  margin: 0 auto 32px;
+  width: min(1400px, 98%);
   box-sizing: border-box;
 }
 
@@ -311,6 +312,7 @@ body.popup-open {
   border: none !important;
   border-radius: 24px;
   box-shadow: var(--shadow);
+  box-sizing: border-box;
 }
 
 .view-switcher-tabs {
@@ -445,9 +447,11 @@ body.popup-open {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 20px;
-  margin-bottom: 16px;
-  padding: 0 20px; /* Safety margin for hover */
+  gap: 16px;
+  margin: 0 auto 16px;
+  width: min(1400px, 98%);
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .stat-card {
@@ -648,6 +652,8 @@ body.popup-open {
 }
 
 .student-movement-panel {
+  width: min(1400px, 98%);
+  margin: 0 auto 32px;
   padding-bottom: 60px !important;
 }
 
@@ -3892,59 +3898,56 @@ body.popup-open {
   }
 }
 
-@media (max-width: 980px) {
-  .slot-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .slot-filters {
-    justify-content: flex-start;
-  }
-
-  .roster-tools,
-  .roster-filter-row {
-    justify-content: flex-start;
-  }
-
-  .finance-toolbar .slot-filters,
-  .finance-search {
-    width: 100%;
-    max-width: none;
-  }
-
-  .masthead-top,
-  .masthead-bottom,
+@media (max-width: 1080px) {
   .view-switcher {
     flex-direction: column;
-    align-items: stretch;
-  }
-
-  .masthead-top {
-    gap: 14px;
-  }
-
-  .manager-bar,
-  .hero-card {
-    min-width: 0;
-  }
-
-  .global-toast {
-    right: 16px;
-    bottom: 16px;
+    gap: 20px;
+    padding: 20px !important;
+    min-height: auto;
+    align-items: center;
+    text-align: center;
   }
 
   .view-switcher-tabs {
-    justify-content: flex-start;
+    position: static;
+    transform: none;
+    order: 3;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
-  .review-heading,
-  .review-main {
-    flex-direction: column;
+  .brand-lockup {
+    order: 1;
+    justify-content: center;
   }
 
-  .review-details {
-    grid-template-columns: 1fr;
+  .manager-bar {
+    order: 2;
+    align-items: center;
+    width: 100%;
+  }
+
+  .manager-actions {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .stats-grid {
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .stat-card {
+    padding: 10px 12px !important;
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.2rem !important;
+  }
+
+  .stat-card .section-kicker {
+    font-size: 0.55rem !important;
   }
 }
 
@@ -3983,7 +3986,20 @@ body.popup-open {
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px;
+  }
+  
+  .stat-card {
+    padding: 6px 8px !important;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 1rem !important;
+  }
+  
+  .stat-card .stat-copy {
+    font-size: 0.6rem !important;
   }
 
   .finance-stats {
@@ -3996,9 +4012,9 @@ body.popup-open {
 
   .movement-month {
     display: grid;
-    grid-template-columns: minmax(92px, 0.7fr) minmax(116px, 1fr) minmax(130px, 1fr);
+    grid-template-columns: minmax(70px, 0.5fr) minmax(100px, 1fr) minmax(100px, 1fr);
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .movement-bars {
@@ -4139,62 +4155,36 @@ body.popup-open {
   }
 
   .finance-table-wrap {
-    overflow: visible;
+    overflow-x: auto;
     margin: 10px 0 0;
-    padding-bottom: 0;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
   }
 
+  .finance-payments-table,
   .finance-expenses-table {
-    width: 100%;
-    min-width: 0;
-    border-collapse: separate;
-    border-spacing: 0 10px;
+    min-width: 800px;
+    display: table !important;
   }
 
+  .finance-payments-table thead,
   .finance-expenses-table thead {
-    display: none;
+    display: table-header-group !important;
   }
 
-  .finance-expenses-table,
-  .finance-expenses-table tbody,
-  .finance-expenses-table tr,
-  .finance-expenses-table td {
-    display: block;
+  .finance-payments-table tbody,
+  .finance-expenses-table tbody {
+    display: table-row-group !important;
   }
 
+  .finance-payments-table tr,
   .finance-expenses-table tr {
-    padding: 12px;
-    border: 1px solid rgba(15, 34, 64, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.88);
+    display: table-row !important;
   }
 
+  .finance-payments-table td,
   .finance-expenses-table td {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 7px 0;
-    border-bottom: 1px solid rgba(15, 34, 64, 0.06);
-    white-space: normal;
-  }
-
-  .finance-expenses-table td:last-child {
-    border-bottom: 0;
-  }
-
-  .finance-expenses-table td::before {
-    content: attr(data-label);
-    flex: 0 0 86px;
-    color: var(--muted);
-    font-size: 0.7rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .finance-comment {
-    max-width: none;
-    text-align: right;
+    display: table-cell !important;
   }
 
   .attendance-panel {
