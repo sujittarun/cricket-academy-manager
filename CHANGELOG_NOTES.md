@@ -21,6 +21,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Roster student movement now uses the same compact horizontal swipe-card rhythm as the finance mini chart on small screens.
 - Roster tools/search/filters now use a cleaner mobile control panel instead of cramped wrapped pills.
 - Finance stats stay as side-by-side compact tiles on phones, including very small screens, without horizontal scrolling.
+- Roster stat tiles now stay side by side on phones with a more compact metric treatment, and roster panel spacing was tightened to remove the oversized gap between stacked sections.
+- Student movement cards now use shorter structured labels so the trend chip, count text, and bars do not bleed outside the cards on narrow screens.
 - Verification done:
   - `node --check web-app-repo/script.js`
 

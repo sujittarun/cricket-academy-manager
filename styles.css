@@ -470,6 +470,7 @@ body.popup-open {
   justify-content: center;
   min-height: 90px !important;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .stat-card:hover {
@@ -1932,6 +1933,7 @@ body.popup-open {
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.72));
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
 }
 
 .movement-month.is-current {
@@ -1964,6 +1966,30 @@ body.popup-open {
   text-align: right;
 }
 
+.movement-trend-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(26, 79, 157, 0.08);
+  white-space: nowrap;
+}
+
+.movement-trend-chip b {
+  color: var(--accent-dark);
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.movement-trend-chip small {
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .movement-bars {
   display: flex;
   align-items: flex-end;
@@ -1975,6 +2001,7 @@ body.popup-open {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.62);
   position: relative;
+  overflow: hidden;
 }
 
 .movement-bar {
@@ -2053,10 +2080,23 @@ body.popup-open {
   line-height: 1.15;
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .movement-counts button:hover {
   color: var(--accent-dark);
+}
+
+.movement-count-value {
+  flex: 0 0 auto;
+  color: var(--accent-dark);
+  font-weight: 900;
+}
+
+.movement-count-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .movement-dot {
@@ -2179,6 +2219,7 @@ body.popup-open {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
 }
 
 .finance-month-stack:hover {
@@ -2207,6 +2248,7 @@ body.popup-open {
   gap: 7px;
   height: 96px;
   position: relative;
+  overflow: hidden;
 }
 
 .fee-bar, .expense-bar {
@@ -4047,19 +4089,7 @@ body.popup-open {
   }
 
   .student-movement-chart {
-    grid-template-columns: 1fr;
-  }
-
-  .movement-month {
-    display: grid;
-    grid-template-columns: minmax(70px, 0.5fr) minmax(100px, 1fr) minmax(100px, 1fr);
-    align-items: center;
-    gap: 8px;
-  }
-
-  .movement-bars {
-    height: 74px;
-    margin: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .finance-net-timeline {
@@ -4505,19 +4535,21 @@ body.popup-open {
   }
 
   .stats-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    margin-bottom: 8px !important;
   }
 
   .content-grid {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 16px 12px !important;
+    padding: 8px 12px 12px !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    gap: 10px !important;
   }
 
   .slot-filters {
@@ -4611,13 +4643,6 @@ body.popup-open {
 
   .movement-month-head span {
     align-self: center;
-    padding: 3px 7px;
-    border-radius: 999px;
-    background: rgba(26, 79, 157, 0.08);
-    color: var(--muted);
-    font-size: 0.58rem !important;
-    line-height: 1;
-    text-align: center;
     white-space: nowrap !important;
   }
 
@@ -4625,6 +4650,19 @@ body.popup-open {
     display: grid;
     justify-content: center;
     gap: 5px;
+  }
+
+  .movement-trend-chip {
+    gap: 3px;
+    padding: 3px 6px;
+  }
+
+  .movement-trend-chip b {
+    font-size: 0.7rem;
+  }
+
+  .movement-trend-chip small {
+    font-size: 0.54rem;
   }
 
   .movement-bars {
@@ -4661,14 +4699,19 @@ body.popup-open {
     height: 6px;
   }
 
+  .movement-count-label {
+    display: none;
+  }
+
   .student-movement-panel {
     background: transparent !important;
-    padding: 0 12px 24px !important;
+    padding: 0 12px 10px !important;
     border: 0 !important;
     box-shadow: none !important;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    margin: 0 auto 8px !important;
   }
 
   #rosterView .table-wrap {
@@ -4845,6 +4888,23 @@ body.popup-open {
   #financeStats .finance-metric span {
     display: none;
   }
+
+  .stats-grid {
+    gap: 6px !important;
+  }
+
+  .stat-card {
+    min-height: 60px !important;
+    padding: 8px 6px !important;
+  }
+
+  .stat-card .section-kicker {
+    font-size: 0.5rem !important;
+  }
+
+  .stat-card .stat-value {
+    font-size: 0.92rem !important;
+  }
 }
 
 /* Premium Tab Styling & Animations */
@@ -4955,8 +5015,8 @@ body.popup-open {
 
   .stats-grid {
     display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
     width: 100% !important;
     padding: 0 !important;
     box-sizing: border-box !important;
@@ -4974,18 +5034,42 @@ body.popup-open {
   .stat-card, .finance-metric {
     flex: 1 !important;
     min-width: 0 !important;
-    padding: 8px 4px !important;
-    min-height: 65px !important;
-    border-radius: 12px !important;
+    padding: 10px 8px !important;
+    min-height: 72px !important;
+    border-radius: 16px !important;
   }
 
   .stat-value, .finance-metric strong {
-    font-size: 0.85rem !important;
+    font-size: 0.95rem !important;
   }
 
   .section-kicker, .stat-copy, .finance-metric p, .finance-metric span {
-    font-size: 0.65rem !important;
+    font-size: 0.62rem !important;
     line-height: 1.2;
+  }
+
+  .stat-card {
+    justify-content: flex-start !important;
+    gap: 4px;
+    background:
+      radial-gradient(circle at top right, rgba(244, 191, 42, 0.16), transparent 40%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.94)) !important;
+  }
+
+  .stat-card .section-kicker {
+    font-size: 0.54rem !important;
+    letter-spacing: 0.08em;
+    margin: 0 !important;
+  }
+
+  .stat-card .stat-value {
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+    line-height: 1;
+  }
+
+  .stat-card .stat-copy {
+    display: none;
   }
 
   .finance-month-columns {

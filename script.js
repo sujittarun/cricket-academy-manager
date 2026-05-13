@@ -1506,11 +1506,15 @@ const renderStudentMovement = () => {
 
   studentMovementChart.innerHTML = movement.map((month, idx) => {
     const isCurrent = idx === 0; // Latest month is now first
+    const activeTrend = Math.max(0, month.continuing + month.joined - month.discontinued);
     return `
     <article class="movement-month ${isCurrent ? "is-current" : ""}">
       <div class="movement-month-head">
         <strong>${month.label}</strong>
-        <span>${month.continuing + month.joined - month.discontinued} active trend</span>
+        <span class="movement-trend-chip">
+          <b>${activeTrend}</b>
+          <small>active</small>
+        </span>
       </div>
       <div class="movement-bars" aria-label="${month.label} student movement">
         <span class="movement-bar continuing" style="height:${Math.max(8, Math.round((month.continuing / maxValue) * 82))}px" data-label="Continuing: ${month.continuing}"></span>
@@ -1518,9 +1522,21 @@ const renderStudentMovement = () => {
         <span class="movement-bar discontinued" style="height:${Math.max(8, Math.round((month.discontinued / maxValue) * 82))}px" data-label="Left: ${month.discontinued}"></span>
       </div>
       <div class="movement-counts">
-        <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}"><i class="movement-dot continuing"></i>${month.continuing} continuing</button>
-        <button type="button" data-movement-filter="joined" data-movement-month="${month.key}"><i class="movement-dot joined"></i>${month.joined} joined</button>
-        <button type="button" data-movement-filter="left" data-movement-month="${month.key}"><i class="movement-dot discontinued"></i>${month.discontinued} left</button>
+        <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}" aria-label="${month.continuing} continuing players in ${month.label}">
+          <i class="movement-dot continuing"></i>
+          <span class="movement-count-value">${month.continuing}</span>
+          <span class="movement-count-label">Continuing</span>
+        </button>
+        <button type="button" data-movement-filter="joined" data-movement-month="${month.key}" aria-label="${month.joined} joined players in ${month.label}">
+          <i class="movement-dot joined"></i>
+          <span class="movement-count-value">${month.joined}</span>
+          <span class="movement-count-label">Joined</span>
+        </button>
+        <button type="button" data-movement-filter="left" data-movement-month="${month.key}" aria-label="${month.discontinued} players left in ${month.label}">
+          <i class="movement-dot discontinued"></i>
+          <span class="movement-count-value">${month.discontinued}</span>
+          <span class="movement-count-label">Left</span>
+        </button>
       </div>
     </article>
   `}).join("");
