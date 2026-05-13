@@ -1536,39 +1536,7 @@ const renderAcademyPulse = (movement) => {
   if (!container) return;
 
   if (!window.matchMedia("(max-width: 720px)").matches) {
-    const width = 400;
-    const height = 80;
-    const padding = 25;
-    const chronological = [...movement].reverse();
-    const data = chronological.map(m => m.continuing + m.joined - m.discontinued);
-    const max = Math.max(...data, 1);
-
-    const points = data.map((v, i) => {
-      const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
-      const y = height - ((v / (max * 1.2)) * (height - padding * 2) + padding);
-      return { x, y, val: v, label: chronological[i].label.split(' ')[0] };
-    });
-
-    const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(" L ")}`;
-
-    container.innerHTML = `
-      <div class="academy-pulse-box" style="height:120px; margin-bottom:16px; background:rgba(255,255,255,0.4); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:24px; padding:12px; border:1px solid rgba(26,79,157,0.08); box-shadow:inset 0 2px 10px rgba(0,0,0,0.02);">
-        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%; height:100%; display:block;">
-          <defs>
-            <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:var(--accent);stop-opacity:0.2" />
-              <stop offset="100%" style="stop-color:var(--accent);stop-opacity:0" />
-            </linearGradient>
-          </defs>
-          <path d="${pathD} L ${points[points.length-1].x},${height} L ${points[0].x},${height} Z" fill="url(#pulseGradient)" />
-          <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-          ${points.map((p) => `
-            <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="white" stroke="var(--accent)" stroke-width="2" />
-            <text x="${p.x}" y="${height - 2}" font-size="8" font-weight="800" text-anchor="middle" fill="var(--accent-dark)" style="opacity:0.8;">${p.label}</text>
-          `).join('')}
-        </svg>
-      </div>
-    `;
+    container.innerHTML = "";
     return;
   }
 
@@ -1592,8 +1560,8 @@ const renderAcademyPulse = (movement) => {
   });
 
   const series = [
-    { key: "continuing", short: "Cont.", color: "#2563eb", points: makePoints("continuing") },
-    { key: "joined", short: "Join", color: "#059669", points: makePoints("joined") },
+    { key: "continuing", short: "Cont.", color: "#059669", points: makePoints("continuing") },
+    { key: "joined", short: "Join", color: "#2563eb", points: makePoints("joined") },
     { key: "discontinued", short: "Left", color: "#dc2626", points: makePoints("discontinued") },
   ];
   const pathFor = (points) => `M ${points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" L ")}`;

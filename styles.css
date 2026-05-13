@@ -2013,8 +2013,8 @@ body.popup-open {
   position: relative;
 }
 
-.movement-bar.continuing { background: linear-gradient(180deg, #6366f1, #4f46e5); }
-.movement-bar.joined { background: linear-gradient(180deg, #10b981, #059669); }
+.movement-bar.continuing { background: linear-gradient(180deg, #10b981, #059669); }
+.movement-bar.joined { background: linear-gradient(180deg, #2563eb, #1d4ed8); }
 .movement-bar.discontinued { background: linear-gradient(180deg, #ef4444, #dc2626); }
 
 .movement-month:hover {
@@ -2104,8 +2104,8 @@ body.popup-open {
   height: 8px;
   border-radius: 99px;
 }
-.movement-dot.continuing { background: #6366f1; }
-.movement-dot.joined { background: #10b981; }
+.movement-dot.continuing { background: #10b981; }
+.movement-dot.joined { background: #2563eb; }
 .movement-dot.discontinued { background: #ef4444; }
 
 .finance-metric {
@@ -6022,13 +6022,21 @@ body.popup-open {
   #rosterView .player-link {
     max-width: 100%;
     overflow: hidden;
-    color: var(--accent-dark);
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #0f2d62;
+    background: rgba(255, 255, 255, 0.92);
     font-size: 0.94rem !important;
     font-weight: 950 !important;
     line-height: 1.12 !important;
+    text-decoration-color: rgba(15, 45, 98, 0.45);
     text-decoration-thickness: 1px;
     text-overflow: ellipsis;
     white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(15, 34, 64, 0.06);
   }
 
   #rosterView .kids-table td[data-label="Time slot"],
@@ -6082,7 +6090,8 @@ body.popup-open {
   #rosterView .alert-pill {
     max-width: 100%;
     padding: 5px 8px !important;
-    font-size: 0.62rem !important;
+    font-size: 0.64rem !important;
+    font-weight: 900 !important;
     line-height: 1 !important;
     white-space: nowrap;
   }
@@ -6093,10 +6102,33 @@ body.popup-open {
   }
 
   .player-popup {
+    position: relative;
     width: min(100%, 540px) !important;
     max-height: min(82dvh, 680px) !important;
     padding: 14px !important;
     border-radius: 20px !important;
+  }
+
+  #playerDetailPopup .payment-popup-header {
+    position: relative;
+    padding-right: 44px;
+  }
+
+  #closePlayerDetailButton {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(15, 34, 64, 0.1) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    color: var(--accent-dark) !important;
+    font-size: 1.45rem !important;
+    line-height: 1 !important;
+    box-shadow: 0 8px 18px rgba(15, 34, 64, 0.12) !important;
   }
 
   .player-profile-grid {
