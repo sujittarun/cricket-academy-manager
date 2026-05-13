@@ -45,8 +45,11 @@ const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
 const rosterView = document.getElementById("rosterView");
 const admissionView = document.getElementById("admissionView");
-const rosterTabButton = document.getElementById("rosterTabButton");
-const admissionTabButton = document.getElementById("admissionTabButton");
+const rosterTabButtons = document.querySelectorAll(".view-tab[data-view-target='roster']");
+const admissionTabButtons = document.querySelectorAll(".view-tab[data-view-target='admission']");
+const attendanceTabButtons = document.querySelectorAll(".view-tab[data-view-target='attendance']");
+const financeTabButtons = document.querySelectorAll(".view-tab[data-view-target='finance']");
+const allViewTabs = document.querySelectorAll(".view-tab");
 const viewSwitcher = document.getElementById("viewSwitcher");
 const mastheadBottom = document.getElementById("mastheadBottom");
 const heroLabel = document.getElementById("heroLabel");
@@ -2129,22 +2132,21 @@ const updateActiveView = () => {
   const isAttendance = activeView === "attendance";
   const isFinance = activeView === "finance";
   const isAdmission = !isRoster && !isAttendance && !isFinance;
+  
   rosterView.hidden = !isRoster;
   admissionView.hidden = !isAdmission;
   if (attendanceView) attendanceView.hidden = !isAttendance;
   if (financeView) financeView.hidden = !isFinance;
-  rosterTabButton.classList.toggle("active", isRoster);
-  rosterTabButton.setAttribute("aria-selected", String(isRoster));
-  admissionTabButton.classList.toggle("active", isAdmission);
-  admissionTabButton.setAttribute("aria-selected", String(isAdmission));
-  if (attendanceTabButton) {
-    attendanceTabButton.classList.toggle("active", isAttendance);
-    attendanceTabButton.setAttribute("aria-selected", String(isAttendance));
-  }
-  if (financeTabButton) {
-    financeTabButton.classList.toggle("active", isFinance);
-    financeTabButton.setAttribute("aria-selected", String(isFinance));
-  }
+  
+  allViewTabs.forEach(tab => {
+    const target = tab.dataset.viewTarget;
+    const isActive = (target === "roster" && isRoster) ||
+                     (target === "admission" && isAdmission) ||
+                     (target === "attendance" && isAttendance) ||
+                     (target === "finance" && isFinance);
+    tab.classList.toggle("active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+  });
 };
 
 const updateAccessUI = () => {
@@ -2190,11 +2192,11 @@ const updateAccessUI = () => {
     activeView = "admission";
   }
 
-  if (rosterTabButton) {
-    rosterTabButton.hidden = !managerReady;
+  if (rosterTabButtons.length > 0) {
+    rosterTabButtons.forEach(btn => btn.hidden = !managerReady);
   }
-  if (financeTabButton) {
-    financeTabButton.hidden = !managerReady;
+  if (financeTabButtons.length > 0) {
+    financeTabButtons.forEach(btn => btn.hidden = !managerReady);
   }
 
   if (managerReady && activeView === "admission") {
@@ -4312,10 +4314,11 @@ kidsTable?.addEventListener("click", (event) => {
   }
   renderKids();
 });
-financeTabButton?.addEventListener("click", () => switchView("finance"));
+allViewTabs.forEach(tab => {
+  tab.addEventListener("click", () => switchView(tab.dataset.viewTarget));
+});
 exportCsvButton?.addEventListener("click", exportMonthlyCsv);
 exportPdfButton?.addEventListener("click", printMonthlyReport);
-admissionTabButton.addEventListener("click", () => switchView("admission"));
 admissionReviewList.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) return;
   const remindBtn = event.target.closest("[data-remind-admission]");
