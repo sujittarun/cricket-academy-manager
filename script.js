@@ -45,6 +45,13 @@ const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
 const rosterView = document.getElementById("rosterView");
 const admissionView = document.getElementById("admissionView");
+const viewSwitcher = document.getElementById("viewSwitcher");
+const mastheadBottom = document.getElementById("mastheadBottom");
+const heroLabel = document.getElementById("heroLabel");
+const actionHeader = document.getElementById("actionHeader");
+const exportCsvButton = document.getElementById("exportCsvButton");
+const exportPdfButton = document.getElementById("exportPdfButton");
+
 let rosterTabButtons, admissionTabButtons, attendanceTabButtons, financeTabButtons, allViewTabs;
 
 document.addEventListener("DOMContentLoaded", () => {
