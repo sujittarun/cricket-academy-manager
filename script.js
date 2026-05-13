@@ -45,11 +45,22 @@ const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
 const rosterView = document.getElementById("rosterView");
 const admissionView = document.getElementById("admissionView");
-const rosterTabButtons = document.querySelectorAll(".view-tab[data-view-target='roster']");
-const admissionTabButtons = document.querySelectorAll(".view-tab[data-view-target='admission']");
-const attendanceTabButtons = document.querySelectorAll(".view-tab[data-view-target='attendance']");
-const financeTabButtons = document.querySelectorAll(".view-tab[data-view-target='finance']");
-const allViewTabs = document.querySelectorAll(".view-tab");
+let rosterTabButtons, admissionTabButtons, attendanceTabButtons, financeTabButtons, allViewTabs;
+
+document.addEventListener("DOMContentLoaded", () => {
+  rosterTabButtons = document.querySelectorAll(".view-tab[data-view-target='roster']");
+  admissionTabButtons = document.querySelectorAll(".view-tab[data-view-target='admission']");
+  attendanceTabButtons = document.querySelectorAll(".view-tab[data-view-target='attendance']");
+  financeTabButtons = document.querySelectorAll(".view-tab[data-view-target='finance']");
+  allViewTabs = document.querySelectorAll(".view-tab");
+  
+  allViewTabs.forEach(tab => {
+    tab.addEventListener("click", () => switchView(tab.dataset.viewTarget));
+  });
+  exportCsvButton?.addEventListener("click", exportMonthlyCsv);
+  exportPdfButton?.addEventListener("click", printMonthlyReport);
+});
+
 const viewSwitcher = document.getElementById("viewSwitcher");
 const mastheadBottom = document.getElementById("mastheadBottom");
 const heroLabel = document.getElementById("heroLabel");
@@ -2138,7 +2149,8 @@ const updateActiveView = () => {
   if (attendanceView) attendanceView.hidden = !isAttendance;
   if (financeView) financeView.hidden = !isFinance;
   
-  allViewTabs.forEach(tab => {
+  const tabs = document.querySelectorAll(".view-tab");
+  tabs.forEach(tab => {
     const target = tab.dataset.viewTarget;
     const isActive = (target === "roster" && isRoster) ||
                      (target === "admission" && isAdmission) ||
@@ -4314,11 +4326,7 @@ kidsTable?.addEventListener("click", (event) => {
   }
   renderKids();
 });
-allViewTabs.forEach(tab => {
-  tab.addEventListener("click", () => switchView(tab.dataset.viewTarget));
-});
-exportCsvButton?.addEventListener("click", exportMonthlyCsv);
-exportPdfButton?.addEventListener("click", printMonthlyReport);
+// Event listeners moved to DOMContentLoaded at top
 admissionReviewList.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) return;
   const remindBtn = event.target.closest("[data-remind-admission]");
