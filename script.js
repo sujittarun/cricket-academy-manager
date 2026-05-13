@@ -132,9 +132,8 @@ const renewalCycleInfo = document.getElementById("renewalCycleInfo");
 const renewalMessage = document.getElementById("renewalMessage");
 
 // Attendance
-const attendanceTabButton = document.getElementById("attendanceTabButton");
+// Attendance
 const attendanceView = document.getElementById("attendanceView");
-const financeTabButton = document.getElementById("financeTabButton");
 const financeView = document.getElementById("financeView");
 const financeLock = document.getElementById("financeLock");
 const financeExportPanel = document.getElementById("financeExportPanel");
@@ -4193,7 +4192,7 @@ document.addEventListener("visibilitychange", () => {
     refreshPaymentReturnHint();
   }
 });
-rosterTabButton.addEventListener("click", () => switchView("roster"));
+// Removed redundant listener
 playerSearchInput?.addEventListener("input", (event) => {
   rosterSearchQuery = event.target.value || "";
   renderKids();
@@ -4830,9 +4829,7 @@ attendanceDate?.addEventListener("change", () => {
   loadAttendance(attendanceDateValue);
 });
 
-// Third tab — Attendance
-attendanceTabButton?.addEventListener("click", () => switchView("attendance"));
-
+// Removed redundant listener
 expenseForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(expenseForm);
