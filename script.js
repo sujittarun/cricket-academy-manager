@@ -983,20 +983,20 @@ const renderFinanceMonthPopup = (monthKey) => {
   const renderRevenueRows = () => revenueRows.length
     ? revenueRows.map((row) => `
         <tr>
-          <td>${row.name}</td>
-          <td>${row.type}</td>
-          <td>${formatDate(row.date)}</td>
-          <td>${rupees(row.amount)}</td>
+          <td data-label="Student">${row.name}</td>
+          <td data-label="Type">${row.type}</td>
+          <td data-label="Date">${formatDate(row.date)}</td>
+          <td data-label="Amount"><b>${rupees(row.amount)}</b></td>
         </tr>
       `).join("")
     : `<tr><td colspan="4" class="sub-copy">No revenue recorded.</td></tr>`;
   const renderExpenseRows = () => expenseRows.length
     ? expenseRows.map((row) => `
         <tr>
-          <td>${row.comment || "-"}</td>
-          <td>${row.paid_by || "-"}</td>
-          <td>${formatDate(row.expense_date)}</td>
-          <td>${rupees(row.amount)}</td>
+          <td data-label="Comment">${row.comment || "-"}</td>
+          <td data-label="Paid by">${row.paid_by || "-"}</td>
+          <td data-label="Date">${formatDate(row.expense_date)}</td>
+          <td data-label="Amount"><b>${rupees(row.amount)}</b></td>
         </tr>
       `).join("")
     : `<tr><td colspan="4" class="sub-copy">No expenses recorded.</td></tr>`;
