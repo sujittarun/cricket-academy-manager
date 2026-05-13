@@ -484,15 +484,21 @@ body.popup-open {
 }
 
 .stat-card .stat-value {
-  font-size: 1.6rem !important;
+  font-size: 1.8rem !important;
+  font-weight: 850 !important;
   line-height: 1;
-  margin: 4px 0 !important;
+  margin: 6px 0 !important;
+  background: linear-gradient(135deg, var(--accent-dark) 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
 }
 
 .stat-card .stat-copy {
-  font-size: 0.7rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 600;
   margin: 0 !important;
-  opacity: 0.8;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1082,15 +1088,15 @@ body.popup-open {
 }
 
 #rosterView .kids-table th:nth-child(1),
-#rosterView .kids-table td:nth-child(1) { width: 14%; min-width: 160px; } /* Player */
+#rosterView .kids-table td:nth-child(1) { width: 18%; min-width: 180px; } /* Increased player width to absorb gap */
 #rosterView .kids-table th:nth-child(2),
-#rosterView .kids-table td:nth-child(2) { width: 3%; min-width: 50px; }  /* Age */
+#rosterView .kids-table td:nth-child(2) { width: 4%; min-width: 50px; }  /* Age */
 #rosterView .kids-table th:nth-child(3),
-#rosterView .kids-table td:nth-child(3) { width: 5%; min-width: 75px; }  /* Time Slot */
+#rosterView .kids-table td:nth-child(3) { width: 6%; min-width: 80px; }  /* Time Slot */
 #rosterView .kids-table th:nth-child(4),
-#rosterView .kids-table td:nth-child(4) { width: 5%; min-width: 65px; }  /* Jersey */
+#rosterView .kids-table td:nth-child(4) { width: 4%; min-width: 60px; }  /* Jersey - tightened */
 #rosterView .kids-table th:nth-child(5),
-#rosterView .kids-table td:nth-child(5) { width: 5%; min-width: 75px; }  /* Status */
+#rosterView .kids-table td:nth-child(5) { width: 4%; min-width: 70px; }  /* Status - tightened */
 #rosterView .kids-table th:nth-child(6),
 #rosterView .kids-table td:nth-child(6) { width: 5%; min-width: 75px; }  /* Student type */
 #rosterView .kids-table th:nth-child(7),
@@ -1112,19 +1118,21 @@ body.popup-open {
 
 .slot-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
-  margin-bottom: 16px;
-  padding: 14px 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
   border: 1px solid rgba(15, 34, 64, 0.08);
-  border-radius: 18px;
-  background: rgba(26, 79, 157, 0.03);
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(15, 34, 64, 0.03);
 }
 
 .slot-toolbar-copy {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .slot-helper {
@@ -1134,9 +1142,15 @@ body.popup-open {
 
 .slot-filters {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 8px;
+  padding: 4px 0;
+  scrollbar-width: none;
+}
+
+.slot-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .roster-tools {
@@ -1905,17 +1919,20 @@ body.popup-open {
 }
 
 .student-movement-chart {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 16px;
   align-items: stretch;
+  padding: 10px 4px 24px;
+  scrollbar-width: thin;
 }
 
 .movement-month {
-  min-width: 0;
-  padding: 13px;
+  flex: 0 0 160px; /* Wider cards on mobile */
+  padding: 14px;
   border: 1px solid rgba(26, 79, 157, 0.1);
-  border-radius: 18px;
+  border-radius: 20px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.72));
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2213,10 +2230,16 @@ body.popup-open {
 .fee-bar { background: linear-gradient(180deg, #10b981, #059669); }
 .expense-bar { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .finance-recent-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 24px;
   align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .finance-recent-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .finance-recent-section {
@@ -2647,23 +2670,26 @@ body.popup-open {
 }
 
 .finance-mini-chart {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 12px;
   align-items: end;
-  min-height: 116px;
+  min-height: 140px;
+  padding: 10px 4px 20px;
+  scrollbar-width: thin;
 }
 
 .finance-chart-month {
+  flex: 0 0 100px; /* Giving each month plenty of room */
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
   display: grid;
-  gap: 7px;
+  gap: 8px;
   justify-items: center;
-  min-width: 0;
   position: relative;
 }
 
@@ -4401,6 +4427,32 @@ body.popup-open {
     width: 100% !important;
     justify-content: center !important;
     min-height: 44px !important;
+  }
+
+  .slot-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .slot-toolbar-copy {
+    text-align: center;
+  }
+
+  .roster-tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .roster-search {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .slot-filters {
+    padding: 2px 0 10px;
+    margin: 0 -4px; /* Pull to edges slightly */
   }
 
   .finance-month-columns {
