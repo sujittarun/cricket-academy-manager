@@ -4473,6 +4473,14 @@ body.popup-open {
   .movement-month {
     flex: 0 0 160px !important;
     min-width: 160px !important;
+    background: rgba(26, 79, 157, 0.04) !important;
+    border: 1px solid rgba(26, 79, 157, 0.08) !important;
+  }
+
+  .movement-bars {
+    background: rgba(15, 34, 64, 0.04) !important;
+    border-radius: 12px !important;
+    padding: 0 4px !important;
   }
 
   .finance-month-columns {
@@ -4489,9 +4497,11 @@ body.popup-open {
   }
 
   #rosterView .table-wrap {
-    overflow: visible;
+    overflow: hidden;
     margin: 0;
     padding-bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   #rosterView .kids-table {
@@ -4565,6 +4575,30 @@ body.popup-open {
 
   #rosterView .action-group {
     justify-content: flex-end;
+  }
+
+  .finance-month-summary {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .finance-month-popup {
+    max-height: 85vh !important;
+    margin: auto !important;
+  }
+
+  .close-popup-btn {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    background: rgba(15, 34, 64, 0.05) !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
   }
 }
 
