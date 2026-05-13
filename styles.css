@@ -1870,6 +1870,53 @@ body.popup-open {
   box-sizing: border-box;
 }
 
+.finance-metric {
+  margin-bottom: 0;
+  background: var(--panel);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 24px;
+  padding: 20px 24px !important;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 90px !important;
+  box-sizing: border-box;
+}
+
+.finance-metric:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(11, 52, 112, 0.2);
+  z-index: 20;
+}
+
+.finance-metric p {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px !important;
+}
+
+.finance-metric strong {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1.1;
+  display: block;
+}
+
+.finance-metric span {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .student-movement-panel {
   width: min(1400px, 98%);
   margin: 0 auto 32px;
@@ -4508,94 +4555,116 @@ body.popup-open {
 
 /* Mobile Optimized Interface */
 @media (max-width: 720px) {
-  /* Header stays at top but simplified */
+  /* Header stays at top with clean panel style */
   .view-switcher {
-    margin: 8px auto;
-    width: calc(100% - 16px);
-    background: transparent;
-    backdrop-filter: none;
-    box-shadow: none;
-    padding: 8px !important;
+    margin: 12px auto;
+    width: calc(100% - 24px);
+    background: var(--panel);
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border) !important;
+    border-radius: 20px;
+    padding: 12px !important;
+    min-height: auto;
   }
 
   .brand-lockup {
-    transform: scale(0.9);
+    transform: scale(0.85);
+    justify-content: center;
+    width: 100%;
   }
 
   .manager-bar {
-    background: var(--panel);
-    padding: 12px;
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    border: none;
+    width: 100%;
+    align-items: center;
   }
 
-  /* Navigation Tabs move to bottom bar */
+  .manager-actions {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Navigation Tabs move to bottom-right floating pill */
   .view-switcher-tabs {
     position: fixed !important;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 24px;
+    right: 24px;
+    left: auto;
+    width: auto !important;
+    max-width: 280px;
     margin: 0;
-    padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border-top: 1px solid rgba(15, 34, 64, 0.04);
-    border-radius: 0;
-    z-index: 2000;
-    box-shadow: 0 -4px 20px rgba(11, 52, 112, 0.04);
+    padding: 8px !important;
+    background: rgba(15, 34, 64, 0.9);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 40px;
+    z-index: 3000;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
     display: flex !important;
     flex-direction: row !important;
-    justify-content: space-between !important;
     gap: 4px !important;
     order: 4;
   }
 
   .view-tab {
-    flex: 1;
+    flex: 0 0 auto;
+    width: 50px !important;
+    height: 50px !important;
+    min-height: 50px !important;
     flex-direction: column !important;
-    padding: 4px 2px !important;
-    font-size: 0.6rem !important;
-    min-height: 44px !important;
-    border-radius: 12px !important;
+    padding: 0 !important;
+    border-radius: 25px !important;
     background: transparent !important;
-    color: var(--muted) !important;
-    gap: 2px !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    gap: 0 !important;
+  }
+  
+  .view-tab span {
+    display: none; /* Hide text in floating pill for subtleness */
+  }
+  
+  .view-tab svg {
+    width: 20px;
+    height: 20px;
   }
 
   .view-tab.active {
-    background: rgba(26, 79, 157, 0.05) !important;
-    color: var(--accent) !important;
-    box-shadow: none !important;
+    background: var(--accent) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(26, 79, 157, 0.4);
   }
 
-  /* Force metrics into single row with tiny fonts */
+  /* Force metrics into single row with scaled fonts */
   .stats-grid, .finance-stats {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 6px !important;
+    gap: 8px !important;
     width: 100% !important;
     padding: 0 !important;
   }
 
   .stat-card, .finance-metric {
-    padding: 6px 4px !important;
-    min-height: 64px !important;
+    padding: 8px 4px !important;
+    min-height: 70px !important;
     text-align: center;
+    border-radius: 16px;
   }
 
   .stat-value, .finance-metric strong {
-    font-size: 0.85rem !important;
+    font-size: 0.9rem !important;
     letter-spacing: -0.02em;
   }
 
-  .section-kicker, .stat-copy {
-    font-size: 0.5rem !important;
+  .section-kicker, .stat-copy, .finance-metric p, .finance-metric span {
+    font-size: 0.52rem !important;
     letter-spacing: 0;
   }
 
   .app-shell {
-    padding-bottom: 100px;
+    padding-bottom: 80px;
   }
 }
