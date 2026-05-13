@@ -327,36 +327,25 @@ body.popup-open {
 }
 
 .masthead {
-  position: sticky;
-  top: 16px;
+  position: relative; /* Remove stickiness */
   z-index: 1000;
-  margin: 0 auto 32px;
-  width: min(1300px, 96%);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 32px;
-  padding: 16px 32px !important;
+  margin: 32px auto;
+  width: min(1350px, 98%);
+  padding: 0 20px !important;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.02);
-}
-
-.masthead-top {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .brand-badge {
@@ -376,43 +365,43 @@ body.popup-open {
 }
 
 .academy-main-title {
-  font-size: 1.4rem !important;
-  font-weight: 900 !important;
+  font-size: 1.6rem !important;
+  font-weight: 950 !important;
   color: #0f172a;
   margin: 0 !important;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 .academy-tagline {
-  font-size: 0.7rem !important;
-  font-weight: 800;
+  font-size: 0.75rem !important;
+  font-weight: 850;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin: 0 !important;
+  letter-spacing: 0.2em;
+  margin: 4px 0 0 !important;
 }
 
 .manager-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .manager-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .top-link-button, .top-edit-button, .top-logout-button {
-  padding: 10px 18px !important;
-  font-size: 0.8rem !important;
-  border-radius: 14px !important;
-  font-weight: 700 !important;
+  padding: 12px 24px !important;
+  font-size: 0.85rem !important;
+  border-radius: 16px !important;
+  font-weight: 800 !important;
   background: white !important;
   border: 1px solid #e2e8f0 !important;
   color: #1e293b !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   transition: all 0.2s ease !important;
 }
 
@@ -420,14 +409,15 @@ body.popup-open {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
   color: #3b82f6 !important;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 .top-logout-button:hover {
   background: #fff5f5 !important;
   border-color: #feb2b2 !important;
   color: #ef4444 !important;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 /* Reset view switcher margin */
