@@ -59,58 +59,58 @@ body {
 }
 
 .view-switcher {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin: 16px auto;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin: 16px auto !important;
   padding: 12px 24px !important;
-  width: min(1400px, 98%);
-  min-height: 80px;
-  background: var(--panel);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  box-sizing: border-box;
-  z-index: 100;
-  position: relative;
-  gap: 20px;
+  width: min(1400px, 98%) !important;
+  min-height: 80px !important;
+  background: var(--panel) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--shadow) !important;
+  box-sizing: border-box !important;
+  z-index: 100 !important;
+  position: relative !important;
+  gap: 20px !important;
 }
 
 .brand-lockup {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
 }
 
 .desktop-tabs {
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: center;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  justify-content: center !important;
 }
 
 .view-switcher-tabs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(15, 34, 64, 0.04);
-  padding: 6px;
-  border-radius: 24px;
-  border: 1px solid rgba(15, 34, 64, 0.08);
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: rgba(15, 34, 64, 0.04) !important;
+  padding: 6px !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(15, 34, 64, 0.08) !important;
 }
 
 .manager-bar {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 4px !important;
 }
 
 .mobile-tabs {
-  display: none;
+  display: none !important;
 }
 
 .view-tab {

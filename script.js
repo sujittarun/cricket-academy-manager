@@ -5171,6 +5171,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Refresh UI
   updateAccessUI();
+  updateAuthPanel(); // Ensure auth panel state is correct
 });
 
 // GLOBAL ACTION MENU HANDLER
