@@ -54,24 +54,6 @@ const exportPdfButton = document.getElementById("exportPdfButton");
 
 let rosterTabButtons, admissionTabButtons, attendanceTabButtons, financeTabButtons, allViewTabs;
 
-document.addEventListener("DOMContentLoaded", () => {
-  rosterTabButtons = document.querySelectorAll(".view-tab[data-view-target='roster']");
-  admissionTabButtons = document.querySelectorAll(".view-tab[data-view-target='admission']");
-  attendanceTabButtons = document.querySelectorAll(".view-tab[data-view-target='attendance']");
-  financeTabButtons = document.querySelectorAll(".view-tab[data-view-target='finance']");
-  allViewTabs = document.querySelectorAll(".view-tab");
-  
-  allViewTabs.forEach(tab => {
-    tab.addEventListener("click", () => switchView(tab.dataset.viewTarget));
-  });
-  exportCsvButton?.addEventListener("click", exportMonthlyCsv);
-  exportPdfButton?.addEventListener("click", printMonthlyReport);
-});
-
-const viewSwitcher = document.getElementById("viewSwitcher");
-const mastheadBottom = document.getElementById("mastheadBottom");
-const heroLabel = document.getElementById("heroLabel");
-const actionHeader = document.getElementById("actionHeader");
 const admissionForm = document.getElementById("admissionForm");
 const admissionApplicantName = document.getElementById("admissionApplicantName");
 const admissionRegNo = document.getElementById("admissionRegNo");
@@ -5169,9 +5151,27 @@ if (attendanceDate) {
   attendanceDate.value = attendanceDateValue;
 }
 
-// RESTORE VIEW ON LOAD
-const initialView = window.location.hash.replace("#", "");
-switchView(initialView, false);
+// --- INITIALIZATION ---
+document.addEventListener("DOMContentLoaded", () => {
+  rosterTabButtons = document.querySelectorAll(".view-tab[data-view-target='roster']");
+  admissionTabButtons = document.querySelectorAll(".view-tab[data-view-target='admission']");
+  attendanceTabButtons = document.querySelectorAll(".view-tab[data-view-target='attendance']");
+  financeTabButtons = document.querySelectorAll(".view-tab[data-view-target='finance']");
+  allViewTabs = document.querySelectorAll(".view-tab");
+  
+  allViewTabs.forEach(tab => {
+    tab.addEventListener("click", () => switchView(tab.dataset.viewTarget));
+  });
+  exportCsvButton?.addEventListener("click", exportMonthlyCsv);
+  exportPdfButton?.addEventListener("click", printMonthlyReport);
+
+  // Restore view on load
+  const initialView = window.location.hash.replace("#", "");
+  switchView(initialView || "admission", false);
+  
+  // Refresh UI
+  updateAccessUI();
+});
 
 // GLOBAL ACTION MENU HANDLER
 document.addEventListener("click", (event) => {
