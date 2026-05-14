@@ -7133,3 +7133,435 @@ body.popup-open {
     height: 32px !important;
   }
 }
+
+/* v34: responsive roster/finance/admission polish from annotation pass. */
+@media (max-width: 720px) {
+  #rosterView .records-panel {
+    width: min(100%, calc(100vw - 20px)) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 18px 14px calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  #rosterView .records-helper {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    align-items: center !important;
+    font-size: 0.78rem !important;
+  }
+
+  #rosterView .movement-filter-note {
+    display: inline-flex;
+    max-width: 100%;
+    min-height: 30px;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(21, 81, 173, 0.08);
+    color: var(--accent-dark);
+    font-weight: 800;
+  }
+
+  #rosterView .slot-chip {
+    min-height: 36px !important;
+    gap: 7px !important;
+    padding: 0 8px 0 12px !important;
+    border-radius: 999px !important;
+  }
+
+  #rosterView .slot-chip span {
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+  }
+
+  #rosterView .slot-chip strong {
+    display: inline-grid;
+    min-width: 24px;
+    height: 24px;
+    place-items: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(21, 81, 173, 0.1);
+    color: var(--accent-dark);
+    font-size: 0.72rem;
+  }
+
+  #rosterView .slot-chip.active strong {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+
+  #rosterView .kids-table tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "name status"
+      "slot status"
+      "fee due"
+      "actions actions" !important;
+    gap: 8px 10px !important;
+    padding: 14px 14px 32px !important;
+    overflow: visible !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr {
+    padding-bottom: 14px !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr::after {
+    display: none !important;
+  }
+
+  #rosterView .kids-table tr.alert-row {
+    background: linear-gradient(135deg, rgba(255, 253, 246, 0.86), rgba(255, 255, 255, 0.96)) !important;
+  }
+
+  #rosterView .kids-table tr.critical-row {
+    background: linear-gradient(135deg, rgba(255, 249, 249, 0.92), rgba(255, 255, 255, 0.96)) !important;
+    box-shadow: inset 3px 0 0 rgba(239, 68, 68, 0.48), 0 8px 20px rgba(15, 34, 64, 0.07) !important;
+  }
+
+  #rosterView .kids-table td[data-label="Player"] {
+    grid-area: name !important;
+    display: flex !important;
+    min-width: 0 !important;
+    padding: 0 12px 1px 0 !important;
+  }
+
+  #rosterView .player-card-title {
+    display: block !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    color: #0c2f66 !important;
+    font-size: clamp(0.86rem, 3.25vw, 0.98rem) !important;
+    font-weight: 950 !important;
+    line-height: 1.16 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  #rosterView .kids-table td[data-label="Time slot"] {
+    grid-area: slot !important;
+  }
+
+  #rosterView .kids-table td[data-label="Status"] {
+    grid-area: status !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    justify-content: flex-end !important;
+    align-self: start !important;
+    padding: 0 !important;
+  }
+
+  #rosterView .kids-table td[data-label="Fees paid"] {
+    grid-area: fee !important;
+    padding: 0 !important;
+  }
+
+  #rosterView .kids-table td[data-label="Next fee due"] {
+    grid-area: due !important;
+    justify-content: flex-end !important;
+    padding: 0 !important;
+  }
+
+  #rosterView .slot-pill,
+  #rosterView .state-pill,
+  #rosterView .status-pill,
+  #rosterView .alert-pill {
+    min-height: 28px !important;
+    max-width: min(100%, 152px) !important;
+    padding: 0 10px !important;
+    font-size: clamp(0.58rem, 2.45vw, 0.68rem) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  #rosterView .alert-pill:not(.safe):not(.critical-pulse) {
+    color: #b45309 !important;
+    border-color: rgba(217, 119, 6, 0.3) !important;
+    background: rgba(255, 247, 214, 0.96) !important;
+  }
+
+  #rosterView .alert-pill.critical-pulse {
+    position: relative !important;
+    overflow: visible !important;
+    color: #dc2626 !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    background: rgba(254, 242, 242, 0.98) !important;
+    animation: mobile-overdue-pulse 1.25s infinite ease-in-out !important;
+  }
+
+  #rosterView .alert-pill.critical-pulse::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    z-index: -1;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.11);
+    animation: mobile-overdue-halo 1.25s infinite ease-out;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] {
+    grid-area: actions !important;
+    position: static !important;
+    display: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 8px 0 0 !important;
+    border-top: 1px solid rgba(15, 34, 64, 0.08) !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] {
+    display: block !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .action-menu-container,
+  #rosterView .kids-table td[data-label="Actions"] .action-menu-dropdown {
+    width: 100% !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .action-menu-dropdown {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .menu-item {
+    min-height: 34px !important;
+    padding: 0 8px !important;
+    border-radius: 999px !important;
+    font-size: clamp(0.58rem, 2.2vw, 0.66rem) !important;
+  }
+
+  .finance-payments-table .type-pill,
+  .finance-expenses-table .type-pill {
+    display: inline-flex !important;
+    width: auto !important;
+    max-width: max-content !important;
+    min-height: 24px !important;
+    padding: 0 10px !important;
+    font-size: 0.68rem !important;
+    line-height: 1 !important;
+  }
+
+  .finance-recent-section .finance-toolbar {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 10px !important;
+    align-items: center !important;
+    padding: 12px !important;
+  }
+
+  .finance-recent-section .finance-toolbar .slot-toolbar-copy {
+    min-width: 0;
+  }
+
+  .finance-recent-section .finance-toolbar .slot-filters {
+    display: contents !important;
+  }
+
+  .finance-recent-section .finance-toolbar #openExpensePopupButton {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+  }
+
+  .finance-recent-section .finance-toolbar .finance-search {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    max-width: none !important;
+    width: 100% !important;
+    min-height: 38px !important;
+  }
+
+  .finance-expenses-table tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 4px 12px !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+  }
+
+  .finance-expenses-table td {
+    display: block !important;
+    width: auto !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  .finance-expenses-table td::before {
+    display: none !important;
+  }
+
+  .finance-expenses-table td[data-label="Type"] {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .finance-expenses-table td[data-label="Amount"] {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    color: var(--accent-dark) !important;
+    font-size: 0.92rem !important;
+    font-weight: 950 !important;
+    text-align: right !important;
+  }
+
+  .finance-expenses-table td[data-label="Date"],
+  .finance-expenses-table td[data-label="Paid by"],
+  .finance-expenses-table td[data-label="Comment"] {
+    color: rgba(11, 52, 112, 0.74) !important;
+    font-size: 0.74rem !important;
+    font-weight: 750 !important;
+  }
+
+  .finance-expenses-table td[data-label="Date"] {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .finance-expenses-table td[data-label="Paid by"] {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    text-align: right !important;
+  }
+
+  .finance-expenses-table td[data-label="Comment"] {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+  }
+
+  .finance-expenses-table td[data-label="Action"] {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+    justify-self: end !important;
+    padding-top: 4px !important;
+  }
+
+  .finance-expenses-table .expense-delete-btn {
+    min-height: 30px !important;
+    padding: 0 12px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .admission-panel {
+    background:
+      radial-gradient(circle at top left, rgba(255, 199, 46, 0.14), transparent 34%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(244, 248, 255, 0.96)) !important;
+  }
+
+  .admission-group {
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.86) !important;
+    box-shadow: 0 8px 20px rgba(15, 34, 64, 0.05) !important;
+  }
+}
+
+@keyframes mobile-overdue-halo {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@media (min-width: 721px) {
+  #rosterView .kids-table {
+    min-width: 1120px !important;
+    table-layout: fixed !important;
+  }
+
+  #rosterView .kids-table th,
+  #rosterView .kids-table td {
+    padding: 9px 5px !important;
+    font-size: 0.74rem !important;
+  }
+
+  #rosterView .kids-table th:nth-child(1),
+  #rosterView .kids-table td:nth-child(1) { width: 14.5% !important; min-width: 145px !important; }
+  #rosterView .kids-table th:nth-child(3),
+  #rosterView .kids-table td:nth-child(3) { width: 4.6% !important; min-width: 58px !important; }
+  #rosterView .kids-table th:nth-child(4),
+  #rosterView .kids-table td:nth-child(4) { width: 3.8% !important; min-width: 48px !important; }
+  #rosterView .kids-table th:nth-child(8),
+  #rosterView .kids-table td:nth-child(8) { width: 6.2% !important; min-width: 76px !important; }
+  #rosterView .kids-table th:nth-child(9),
+  #rosterView .kids-table td:nth-child(9) { width: 7.1% !important; min-width: 94px !important; }
+  #rosterView .kids-table th:nth-child(10),
+  #rosterView .kids-table td:nth-child(10) { width: 6.4% !important; min-width: 82px !important; }
+  #rosterView .kids-table th:nth-child(11),
+  #rosterView .kids-table td:nth-child(11) { width: 6.4% !important; min-width: 86px !important; }
+  #rosterView .kids-table th:nth-child(12),
+  #rosterView .kids-table td:nth-child(12) { width: 7.4% !important; min-width: 98px !important; }
+  #rosterView .kids-table.edit-mode th:nth-child(13),
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] { width: 3.2% !important; min-width: 42px !important; padding-left: 2px !important; padding-right: 2px !important; }
+  #rosterView .kids-table.edit-mode th:nth-child(14),
+  #rosterView .kids-table.edit-mode td[data-label="Last Updated"] { width: 5.6% !important; min-width: 78px !important; }
+
+  #rosterView .kids-table .player-link,
+  #rosterView .kids-table .sub-copy,
+  #rosterView .kids-table .meta-text {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  #rosterView .kids-table.edit-mode .action-menu-dropdown {
+    right: 0 !important;
+  }
+
+  .finance-payments-table .type-pill {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: max-content !important;
+    padding: 0 10px !important;
+  }
+
+  .admission-panel {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .admission-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 116px;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 12% 20%, rgba(255, 199, 46, 0.18), transparent 28%),
+      linear-gradient(90deg, rgba(21, 81, 173, 0.08), rgba(255, 255, 255, 0));
+  }
+
+  .admission-panel > * {
+    position: relative;
+  }
+
+  .admission-form input,
+  .admission-form select,
+  .admission-form textarea {
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .admission-group {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 255, 0.88)) !important;
+    box-shadow: 0 10px 24px rgba(15, 34, 64, 0.05) !important;
+  }
+}

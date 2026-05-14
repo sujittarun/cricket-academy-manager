@@ -1694,7 +1694,7 @@ const renderRosterHelper = () => {
 
   if (movementLabel) {
     recordsHelper.innerHTML = `
-      <span>Roster filtered by <strong>${movementLabel}</strong>.</span>
+      <span class="movement-filter-note">Roster filtered by <strong>${movementLabel}</strong>.</span>
       <button type="button" class="inline-clear-btn" data-clear-movement-filter>Clear</button>
     `;
     return;

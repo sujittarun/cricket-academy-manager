@@ -39,6 +39,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Bumped web cache assets to `v32`.
 - Added mobile edit-mode action strips to roster cards, restored amber-vs-red overdue threshold styling, and tightened desktop roster table spacing around the action column.
 - Bumped web cache assets to `v33`.
+- Reworked phone roster edit actions into a reserved card tray so edit/delete/reminder buttons no longer overlay player details.
+- Gave roster slot filter counts a separate mini-badge treatment and made active filter chips clearer on small screens.
+- Strengthened the phone overdue/joining-fee pulse with a subtle halo while keeping amber for early overdue and red for 7+ days.
+- Tightened desktop roster table widths again so the action trigger is visible without making the core columns feel oversized.
+- Refined finance mobile pills, expense search/add controls, and expense cards so recent expenses use less vertical whitespace.
+- Added a light visual refresh to the admission form panels and fields without changing the form flow.
+- Bumped web cache assets to `v34`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`
