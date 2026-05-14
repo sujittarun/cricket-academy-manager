@@ -2465,7 +2465,7 @@ body.popup-open {
     transition: opacity 180ms ease, transform 180ms ease, filter 180ms ease;
   }
 
-  #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]) {
+  #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]):not([data-label="Player"]) {
     opacity: 0.1;
     transform: rotateY(10deg) scale(0.98);
     filter: blur(1px);
@@ -7968,7 +7968,7 @@ body.popup-open {
     transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 150ms ease !important;
   }
 
-  #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]) {
+  #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]):not([data-label="Player"]) {
     opacity: 0 !important;
     transform: rotateY(104deg) scale(0.94) !important;
     pointer-events: none !important;
@@ -8314,7 +8314,15 @@ body.popup-open {
   #rosterView .kids-table.edit-mode tr.is-flipped > td[data-label="Player"] {
     opacity: 1 !important;
     pointer-events: auto !important;
+    filter: none !important;
     transform: none !important;
+  }
+
+  #rosterView table.kids-table.edit-mode > tbody#kidsTableBody > tr.is-flipped > td[data-label="Player"] {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    pointer-events: auto !important;
   }
 
   #rosterView .kids-table.edit-mode .player-name-cell {
@@ -8324,14 +8332,17 @@ body.popup-open {
   #rosterView .mobile-edit-card-shell {
     display: block !important;
     perspective: 1200px;
+    isolation: isolate;
   }
 
   #rosterView .mobile-edit-card-inner {
     position: relative;
     min-height: 170px;
-    transform-style: preserve-3d;
-    transition: transform 360ms cubic-bezier(0.2, 0.75, 0.2, 1);
-    will-change: transform;
+    transform: none !important;
+    -webkit-transform: none !important;
+    transform-style: flat;
+    -webkit-transform-style: flat;
+    transition: none;
   }
 
   #rosterView .kids-table.edit-mode tr.has-renew-footer .mobile-edit-card-inner {
@@ -8343,7 +8354,8 @@ body.popup-open {
   }
 
   #rosterView .kids-table.edit-mode tr.is-flipped .mobile-edit-card-inner {
-    transform: rotateY(180deg) translateZ(0);
+    transform: none !important;
+    -webkit-transform: none !important;
   }
 
   #rosterView .mobile-edit-card-face {
@@ -8352,12 +8364,21 @@ body.popup-open {
     display: grid;
     overflow: hidden;
     border-radius: 24px;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
     box-shadow: 0 10px 22px rgba(13, 46, 91, 0.08);
+    transform-style: flat;
+    -webkit-transform-style: flat;
+    transform-origin: center;
+    will-change: transform, opacity;
   }
 
   #rosterView .mobile-edit-card-front {
+    z-index: 2;
+    opacity: 1;
+    pointer-events: auto;
+    transform: perspective(1000px) rotateY(0deg) translateZ(0) scale(1);
+    -webkit-transform: perspective(1000px) rotateY(0deg) translateZ(0) scale(1);
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "name status"
@@ -8369,6 +8390,18 @@ body.popup-open {
     padding: 22px;
     border: 1px solid rgba(13, 46, 91, 0.12);
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.9));
+    transition:
+      transform 260ms cubic-bezier(0.22, 0.82, 0.22, 1),
+      opacity 120ms ease 80ms;
+  }
+
+  #rosterView .kids-table.edit-mode tr.is-flipped .mobile-edit-card-front {
+    opacity: 0 !important;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 1;
+    transform: perspective(1000px) rotateY(88deg) translateZ(-10px) scale(0.98);
+    -webkit-transform: perspective(1000px) rotateY(88deg) translateZ(-10px) scale(0.98);
   }
 
   #rosterView tr.critical-row .mobile-edit-card-front {
@@ -8441,11 +8474,41 @@ body.popup-open {
     background:
       radial-gradient(circle at 14% 8%, rgba(255, 199, 46, 0.16), transparent 30%),
       linear-gradient(145deg, rgba(247, 251, 255, 0.98), rgba(226, 239, 255, 0.96));
-    transform: rotateY(180deg);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+    transform: perspective(1000px) rotateY(-88deg) translateZ(-10px) scale(0.98);
+    -webkit-transform: perspective(1000px) rotateY(-88deg) translateZ(-10px) scale(0.98);
+    transition:
+      transform 260ms cubic-bezier(0.22, 0.82, 0.22, 1) 80ms,
+      opacity 120ms ease 90ms;
+  }
+
+  #rosterView .kids-table.edit-mode tr.is-flipped .mobile-edit-card-back {
+    display: grid !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    pointer-events: auto !important;
+    z-index: 4;
+    transform: perspective(1000px) rotateY(0deg) translateZ(0) scale(1);
+    -webkit-transform: perspective(1000px) rotateY(0deg) translateZ(0) scale(1);
+  }
+
+  #rosterView table.kids-table.edit-mode > tbody#kidsTableBody > tr.is-flipped .mobile-edit-card-back,
+  #rosterView table.kids-table.edit-mode > tbody#kidsTableBody > tr.is-flipped .mobile-edit-card-back .menu-item {
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    color: #0b3470;
   }
 
   #rosterView .mobile-edit-card-back .menu-item {
+    position: relative !important;
+    z-index: 5 !important;
     display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     min-width: 0 !important;
     min-height: 48px !important;
     align-items: center !important;

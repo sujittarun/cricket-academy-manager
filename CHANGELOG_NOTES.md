@@ -73,6 +73,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Bumped web cache assets to `v40`.
 - Fixed the phone roster flip back face by keeping the player cell visible after flip, so the management buttons can render.
 - Bumped web cache assets to `v41`.
+- Reworked the phone roster edit flip so the front and back faces animate independently, narrowed the legacy flipped-row fade rule so it cannot dim the phone player card, and forced a new `v44` asset load.
+- Bumped web cache assets to `v44`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`
