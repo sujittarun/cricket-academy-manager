@@ -37,6 +37,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Bumped web cache assets to `v31`.
 - Restored mobile fee-due pulse behavior and corrected joining-fee-pending pills so they use the overdue state instead of the safe state.
 - Bumped web cache assets to `v32`.
+- Added mobile edit-mode action strips to roster cards, restored amber-vs-red overdue threshold styling, and tightened desktop roster table spacing around the action column.
+- Bumped web cache assets to `v33`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

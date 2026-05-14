@@ -2403,6 +2403,7 @@ const renderKids = () => {
 
   const canEdit = isBackendReady && isManagerLoggedIn && isEditMode;
   const visibleKids = getFilteredKids();
+  kidsTable.classList.toggle("edit-mode", canEdit);
 
   if (kids.length === 0) {
     emptyState.hidden = false;
@@ -2460,7 +2461,7 @@ const renderKids = () => {
     const feeDisplay = getFeeDisplayState(kid);
     const reminderState = getReminderState(kid);
     const feeDueIsSafe = !feesPending && !renewalPending;
-    const shouldPulseDuePill = reminderState.overdueDays > 7;
+    const shouldPulseDuePill = reminderState.overdueDays >= 7;
     const lastPaymentAmount = (() => {
       const allPayments = getStudentPayments(kid).sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
       return allPayments.length > 0 ? allPayments[0].amount : kid.amountPaid;
@@ -2528,7 +2529,7 @@ const renderKids = () => {
                       </button>`
                     : ""
                 }
-                <button class="menu-item reminder-item" data-action="reminder" data-id="${kid.id}" type="button">
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   Send Reminder
                 </button>

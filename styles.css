@@ -6982,17 +6982,154 @@ body.popup-open {
     color: rgba(26, 79, 157, 0.52) !important;
   }
 
-  #rosterView .alert-pill:not(.safe) {
-    color: #dc2626 !important;
-    border-color: rgba(239, 68, 68, 0.24) !important;
-    background: rgba(254, 242, 242, 0.92) !important;
+  #rosterView .alert-pill:not(.safe):not(.critical-pulse) {
+    color: #b45309 !important;
+    border-color: rgba(217, 119, 6, 0.26) !important;
+    background: rgba(255, 251, 235, 0.94) !important;
   }
 
   #rosterView .alert-pill.critical-pulse {
-    animation: extreme-pulse 1.5s infinite ease-in-out !important;
+    animation: mobile-overdue-pulse 1.2s infinite ease-in-out !important;
     color: #dc2626 !important;
     border-color: #fee2e2 !important;
     background: #fef2f2 !important;
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35) !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] {
+    display: flex !important;
+    flex: 1 1 100% !important;
+    order: 5 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 4px 0 0 !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .action-menu-container {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .action-trigger-btn {
+    display: none !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .action-menu-dropdown {
+    position: static !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 6px 0 0 !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(13, 46, 91, 0.08) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    animation: none !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .menu-item {
+    display: inline-flex !important;
+    flex: 1 1 calc(50% - 4px) !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    min-height: 30px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    border: 1px solid rgba(26, 79, 157, 0.12) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: var(--accent-dark) !important;
+    font-size: 0.58rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .menu-item svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .renew-item {
+    color: #047857 !important;
+    border-color: rgba(16, 185, 129, 0.18) !important;
+    background: rgba(236, 253, 245, 0.88) !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .reminder-item {
+    color: #b45309 !important;
+    border-color: rgba(217, 119, 6, 0.18) !important;
+    background: rgba(255, 251, 235, 0.9) !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .delete-item {
+    color: #dc2626 !important;
+    border-color: rgba(239, 68, 68, 0.18) !important;
+    background: rgba(254, 242, 242, 0.9) !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] .menu-divider {
+    display: none !important;
+  }
+}
+
+@keyframes mobile-overdue-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3);
+  }
+  55% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 7px rgba(220, 38, 38, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+@media (min-width: 721px) {
+  #rosterView .kids-table th,
+  #rosterView .kids-table td {
+    padding: 10px 7px !important;
+  }
+
+  #rosterView .kids-table th:nth-child(1),
+  #rosterView .kids-table td:nth-child(1) { width: 16% !important; min-width: 160px !important; }
+  #rosterView .kids-table th:nth-child(2),
+  #rosterView .kids-table td:nth-child(2) { width: 3.5% !important; min-width: 46px !important; }
+  #rosterView .kids-table th:nth-child(3),
+  #rosterView .kids-table td:nth-child(3) { width: 5% !important; min-width: 68px !important; }
+  #rosterView .kids-table th:nth-child(4),
+  #rosterView .kids-table td:nth-child(4) { width: 4% !important; min-width: 52px !important; }
+  #rosterView .kids-table th:nth-child(5),
+  #rosterView .kids-table td:nth-child(5) { width: 4% !important; min-width: 62px !important; }
+  #rosterView .kids-table th:nth-child(6),
+  #rosterView .kids-table td:nth-child(6) { width: 4.5% !important; min-width: 66px !important; }
+  #rosterView .kids-table th:nth-child(7),
+  #rosterView .kids-table td:nth-child(7) { width: 3.5% !important; min-width: 52px !important; }
+  #rosterView .kids-table th:nth-child(8),
+  #rosterView .kids-table td:nth-child(8) { width: 6.5% !important; min-width: 82px !important; }
+  #rosterView .kids-table th:nth-child(9),
+  #rosterView .kids-table td:nth-child(9) { width: 8% !important; min-width: 112px !important; }
+  #rosterView .kids-table th:nth-child(10),
+  #rosterView .kids-table td:nth-child(10) { width: 7% !important; min-width: 96px !important; }
+  #rosterView .kids-table th:nth-child(11),
+  #rosterView .kids-table td:nth-child(11) { width: 7% !important; min-width: 100px !important; }
+  #rosterView .kids-table th:nth-child(12),
+  #rosterView .kids-table td:nth-child(12) { width: 8% !important; min-width: 120px !important; }
+  #rosterView .kids-table.edit-mode th:nth-child(13),
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] { width: 4% !important; min-width: 54px !important; text-align: center !important; }
+  #rosterView .kids-table.edit-mode th:nth-child(14),
+  #rosterView .kids-table.edit-mode td[data-label="Last Updated"] { width: 6.5% !important; min-width: 96px !important; }
+
+  #rosterView .action-trigger-btn {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
