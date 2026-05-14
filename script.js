@@ -178,7 +178,6 @@ let rosterSearchQuery = "";
 let rosterStatusFilter = "active";
 let rosterJerseyFilter = "all";
 let rosterTypeFilter = "all";
-let rosterFeePaidFilter = "all";
 let rosterFeeDueFilter = "all";
 let rosterMovementFilter = null;
 let attendanceSearchQuery = "";
@@ -199,7 +198,6 @@ const playerSearchInput = document.getElementById("playerSearchInput");
 const rosterStatusFilterInput = document.getElementById("rosterStatusFilter");
 const rosterJerseyFilterInput = document.getElementById("rosterJerseyFilter");
 const rosterTypeFilterInput = document.getElementById("rosterTypeFilter");
-const rosterFeePaidFilterInput = document.getElementById("rosterFeePaidFilter");
 const rosterFeeDueFilterInput = document.getElementById("rosterFeeDueFilter");
 
 // Payment verify
@@ -1401,13 +1399,11 @@ const resetRosterDetailFilters = () => {
   rosterStatusFilter = "active";
   rosterJerseyFilter = "all";
   rosterTypeFilter = "all";
-  rosterFeePaidFilter = "all";
   rosterFeeDueFilter = "all";
   if (playerSearchInput) playerSearchInput.value = "";
   if (rosterStatusFilterInput) rosterStatusFilterInput.value = "active";
   if (rosterJerseyFilterInput) rosterJerseyFilterInput.value = "all";
   if (rosterTypeFilterInput) rosterTypeFilterInput.value = "all";
-  if (rosterFeePaidFilterInput) rosterFeePaidFilterInput.value = "all";
   if (rosterFeeDueFilterInput) rosterFeeDueFilterInput.value = "all";
 };
 
@@ -1457,8 +1453,8 @@ const matchesRosterFilters = (kid) => {
   if (rosterJerseyFilter === "not-set" && jerseySize) return false;
   if (rosterJerseyFilter !== "all" && rosterJerseyFilter !== "not-set" && jerseySize !== rosterJerseyFilter) return false;
   if (rosterTypeFilter !== "all" && getStudentType(kid).toLowerCase() !== rosterTypeFilter) return false;
-  if (rosterFeePaidFilter === "paid" && kid.feesPaid !== "yes") return false;
-  if (rosterFeePaidFilter === "not-paid" && kid.feesPaid === "yes") return false;
+  if (rosterFeeDueFilter === "paid" && kid.feesPaid !== "yes") return false;
+  if (rosterFeeDueFilter === "not-paid" && kid.feesPaid === "yes") return false;
   if (rosterFeeDueFilter === "joining-pending" && !isFeesPending(kid)) return false;
   if (rosterFeeDueFilter === "overdue" && !isRenewalOverdue(kid)) return false;
   if (!matchesMovementFilter(kid)) return false;
@@ -1469,7 +1465,6 @@ const hasRosterDetailFilters = () =>
   rosterStatusFilter !== "all" ||
   rosterJerseyFilter !== "all" ||
   rosterTypeFilter !== "all" ||
-  rosterFeePaidFilter !== "all" ||
   rosterFeeDueFilter !== "all" ||
   Boolean(rosterMovementFilter);
 const getRosterSortValue = (kid, key) => {
@@ -2474,7 +2469,6 @@ const renderKids = () => {
       <td data-label="Player">
         <div class="player-name-cell">
           <button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button>
-          <span class="player-card-title">${kid.name}</span>
           ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special Training">★ SPECIAL</span>' : ''}
         </div>
       </td>
@@ -2538,6 +2532,12 @@ const renderKids = () => {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   Delete Record
                 </button>
+              </div>
+              <div class="mobile-card-back-actions">
+                <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
+                <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
+                <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
               </div>
             </div>
           </td>`
@@ -3198,24 +3198,29 @@ const renderPlayerDetails = async (kid) => {
           </div>`
         : ""
     }
-    ${
-      isManagerLoggedIn && reminderState.isDue
-        ? `<div class="player-detail-section reminder-action-panel">
-            <h4>WhatsApp reminder</h4>
-            <p class="meta-text">Manual reminder only. Parent receives WhatsApp with payment options.</p>
-            <button class="primary-btn" type="button" data-profile-reminder-id="${kid.id}">Send WhatsApp reminder</button>
-          </div>`
-        : ""
-    }
-    <div class="player-detail-section">
+    <div class="player-detail-section timeline-section">
       <h4>Timeline</h4>
       ${
         timeline.length > 0
-          ? `<ol class="timeline-list">${timeline.map((item) => `
-              <li>
-                <strong>${item.title || item.event_type}</strong>
-                <span>${formatDate(item.event_date)} · ${item.changed_by || "System"}</span>
-                ${item.details ? `<p>${item.details}</p>` : ""}
+          ? `<ol class="timeline-list">${timeline.map((item) => {
+              const eventType = String(item.event_type || "").toLowerCase();
+              const tone = eventType.includes("reminder")
+                ? "reminder"
+                : eventType.includes("payment") || eventType.includes("renew")
+                  ? "payment"
+                  : eventType.includes("admission")
+                    ? "admission"
+                    : "default";
+              return `
+              <li class="timeline-event ${tone}">
+                <span class="timeline-dot" aria-hidden="true"></span>
+                <div class="timeline-card">
+                  <div class="timeline-card-head">
+                    <strong>${item.title || item.event_type}</strong>
+                    <time>${formatDate(item.event_date)}</time>
+                  </div>
+                  <span class="timeline-actor">${item.changed_by || "System"}</span>
+                  ${item.details ? `<p>${item.details}</p>` : ""}
                 ${
                   item.proofUrl
                     ? `<button class="proof-thumb" type="button" data-proof-url="${escapeHtml(item.proofUrl)}">
@@ -3224,8 +3229,9 @@ const renderPlayerDetails = async (kid) => {
                       </button>`
                     : ""
                 }
+                </div>
               </li>
-            `).join("")}</ol>`
+            `}).join("")}</ol>`
           : `<p class="sub-copy">No timeline records yet. Run the player profile timeline SQL migration to start capturing changes.</p>`
       }
     </div>
@@ -4014,12 +4020,29 @@ kidsTableBody.addEventListener("click", async (event) => {
   if (!(event.target instanceof Element)) {
     return;
   }
+  const rowForClick = event.target.closest("[data-player-row-id]");
+  const isPhoneEditCard =
+    isEditMode &&
+    isManagerLoggedIn &&
+    rowForClick instanceof HTMLElement &&
+    window.matchMedia("(max-width: 720px)").matches;
   const target = event.target.closest("[data-action]");
 
+  if (
+    isPhoneEditCard &&
+    !(event.target.closest("[data-action]") instanceof HTMLButtonElement) &&
+    !(event.target.closest("select, input, textarea, a"))
+  ) {
+    kidsTableBody.querySelectorAll(".is-flipped").forEach((row) => {
+      if (row !== rowForClick) row.classList.remove("is-flipped");
+    });
+    rowForClick.classList.toggle("is-flipped");
+    return;
+  }
+
   if (!(target instanceof HTMLButtonElement)) {
-    const row = event.target.closest("[data-player-row-id]");
-    if (row instanceof HTMLElement) {
-      const kid = kids.find((item) => item.id === row.dataset.playerRowId);
+    if (rowForClick instanceof HTMLElement) {
+      const kid = kids.find((item) => item.id === rowForClick.dataset.playerRowId);
       await renderPlayerDetails(kid);
     }
     return;
@@ -4028,6 +4051,10 @@ kidsTableBody.addEventListener("click", async (event) => {
   const { id, action } = target.dataset;
 
   if (action === "details") {
+    if (isPhoneEditCard) {
+      rowForClick.classList.toggle("is-flipped");
+      return;
+    }
     const kid = kids.find((item) => item.id === id);
     await renderPlayerDetails(kid);
     return;
@@ -4338,20 +4365,6 @@ playerDetailContent?.addEventListener("click", async (event) => {
     }
     return;
   }
-  const target = event.target.closest("[data-profile-reminder-id]");
-  if (!(target instanceof HTMLButtonElement)) return;
-  const kid = kids.find((item) => item.id === target.dataset.profileReminderId);
-  target.disabled = true;
-  const originalText = target.textContent;
-  target.textContent = "Logging...";
-  const result = await sendReminderDryRun(kid);
-  if (result.success) {
-    await loadPaymentFollowUps();
-  }
-  showToast(result.message);
-  target.disabled = false;
-  target.textContent = originalText;
-  if (kid && result.success) await renderPlayerDetails(kid);
 });
 closeReceiptButton?.addEventListener("click", closeReceiptPopup);
 receiptPopup?.addEventListener("click", (event) => {
@@ -4436,10 +4449,6 @@ rosterJerseyFilterInput?.addEventListener("change", (event) => {
 });
 rosterTypeFilterInput?.addEventListener("change", (event) => {
   rosterTypeFilter = event.target.value || "all";
-  renderKids();
-});
-rosterFeePaidFilterInput?.addEventListener("change", (event) => {
-  rosterFeePaidFilter = event.target.value || "all";
   renderKids();
 });
 rosterFeeDueFilterInput?.addEventListener("change", (event) => {

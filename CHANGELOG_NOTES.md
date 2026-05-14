@@ -46,6 +46,14 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Refined finance mobile pills, expense search/add controls, and expense cards so recent expenses use less vertical whitespace.
 - Added a light visual refresh to the admission form panels and fields without changing the form flow.
 - Bumped web cache assets to `v34`.
+- Combined the separate roster fee-paid and fee-due filters into one Fee filter.
+- Fixed phone roster cards so the player name is not duplicated and edit mode uses a flip-style back panel for edit/discontinue/reminder/delete.
+- Kept Renew Payment as the only phone edit-mode footer action.
+- Removed the duplicate WhatsApp reminder panel from player profile because reminders already exist on roster cards.
+- Redesigned player profile/timeline styling into modern event cards with color-coded timeline dots.
+- Tightened normal desktop roster table widths separately from edit mode to avoid amount/status overlap.
+- Refined mobile finance revenue and expense rows into compact summary cards.
+- Bumped web cache assets to `v35`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

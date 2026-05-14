@@ -1709,11 +1709,6 @@ body.popup-open {
   font-weight: 900;
 }
 
-.reminder-action-panel {
-  display: grid;
-  gap: 8px;
-}
-
 .payment-verification-panel {
   display: grid;
   gap: 8px;
@@ -2282,6 +2277,387 @@ body.popup-open {
 @media (max-width: 1200px) {
   .finance-recent-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* v35: profile, mobile flip cards, finance cards, and admission polish. */
+.admission-banner {
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.admission-banner .records-helper {
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+}
+
+.player-popup {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 199, 46, 0.14), transparent 26%),
+    linear-gradient(180deg, rgba(250, 253, 255, 0.98), rgba(239, 247, 255, 0.98)) !important;
+}
+
+.player-popup .payment-popup-header {
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(15, 34, 64, 0.08);
+}
+
+.player-popup .section-kicker {
+  color: var(--accent);
+}
+
+.player-detail-content {
+  display: grid;
+  gap: 14px;
+}
+
+.player-profile-grid {
+  gap: 10px;
+}
+
+.profile-stat {
+  border: 1px solid rgba(21, 81, 173, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(236, 245, 255, 0.78));
+  box-shadow: 0 10px 22px rgba(15, 34, 64, 0.05);
+}
+
+.player-detail-section {
+  border: 1px solid rgba(21, 81, 173, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 10px 24px rgba(15, 34, 64, 0.05);
+}
+
+.timeline-section {
+  overflow: hidden;
+}
+
+.timeline-list {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 4px 0 0 22px;
+  list-style: none;
+}
+
+.timeline-list::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 7px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(21, 81, 173, 0.34), rgba(16, 185, 129, 0.28), rgba(244, 191, 42, 0.28));
+}
+
+.timeline-event {
+  position: relative;
+  min-width: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  top: 12px;
+  left: -21px;
+  width: 13px;
+  height: 13px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(21, 81, 173, 0.12), 0 8px 18px rgba(15, 34, 64, 0.12);
+}
+
+.timeline-event.payment .timeline-dot {
+  background: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.14), 0 8px 18px rgba(15, 34, 64, 0.12);
+}
+
+.timeline-event.reminder .timeline-dot {
+  background: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.14), 0 8px 18px rgba(15, 34, 64, 0.12);
+}
+
+.timeline-event.admission .timeline-dot {
+  background: #2563eb;
+}
+
+.timeline-card {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 34, 64, 0.07);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(244, 248, 255, 0.9));
+}
+
+.timeline-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.timeline-card strong {
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.timeline-card time {
+  color: var(--accent-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.timeline-actor {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  min-height: 22px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(21, 81, 173, 0.08);
+  color: rgba(11, 52, 112, 0.76);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.timeline-card p {
+  margin: 0;
+  color: rgba(11, 52, 112, 0.74);
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+@media (max-width: 720px) {
+  .admission-banner {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .admission-banner .records-helper {
+    text-align: left;
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  #rosterView .player-link {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr {
+    min-height: 176px !important;
+    perspective: 900px;
+    transform-style: preserve-3d;
+  }
+
+  #rosterView .kids-table.edit-mode tr > td:not([data-label="Actions"]) {
+    transition: opacity 180ms ease, transform 180ms ease, filter 180ms ease;
+  }
+
+  #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]) {
+    opacity: 0.1;
+    transform: rotateY(10deg) scale(0.98);
+    filter: blur(1px);
+    pointer-events: none;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] {
+    display: block !important;
+    grid-area: actions !important;
+    padding-top: 9px !important;
+    border-top: 1px solid rgba(15, 34, 64, 0.08) !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown {
+    display: flex !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown .menu-item:not(.renew-item) {
+    display: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .renew-item {
+    display: inline-flex !important;
+    flex: 0 1 220px !important;
+    justify-content: center !important;
+    min-height: 36px !important;
+    color: #047857 !important;
+    background: rgba(236, 253, 245, 0.92) !important;
+    border-color: rgba(16, 185, 129, 0.24) !important;
+  }
+
+  #rosterView .mobile-card-back-actions {
+    position: absolute;
+    inset: 14px 14px 58px;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-content: center;
+    padding: 12px;
+    border: 1px solid rgba(21, 81, 173, 0.12);
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 244, 255, 0.94));
+    box-shadow: 0 16px 32px rgba(15, 34, 64, 0.13);
+    opacity: 0;
+    pointer-events: none;
+    transform: rotateY(-14deg) scale(0.96);
+    transform-origin: center;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  #rosterView .kids-table tr.is-flipped .mobile-card-back-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: rotateY(0) scale(1);
+  }
+
+  #rosterView .mobile-card-back-actions .menu-item {
+    display: inline-flex !important;
+    min-height: 38px !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.66rem !important;
+  }
+
+  .finance-payments-table tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 5px 12px !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+  }
+
+  .finance-payments-table td {
+    display: block !important;
+    padding: 0 !important;
+    border: 0 !important;
+    text-align: left !important;
+  }
+
+  .finance-payments-table td::before {
+    display: none !important;
+  }
+
+  .finance-payments-table td[data-label="Player"] {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .finance-payments-table td[data-label="Amount"] {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    color: var(--accent-dark);
+    font-size: 0.92rem !important;
+    font-weight: 950 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+
+  .finance-payments-table td[data-label="Date"] {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    color: rgba(11, 52, 112, 0.7);
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+  }
+
+  .finance-payments-table td[data-label="Type"] {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: end;
+  }
+
+  .finance-expenses-table tr,
+  .finance-payments-table tr {
+    background:
+      radial-gradient(circle at top right, rgba(255, 199, 46, 0.08), transparent 32%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 247, 255, 0.9)) !important;
+    box-shadow: 0 8px 20px rgba(15, 34, 64, 0.06) !important;
+  }
+
+  .player-popup {
+    border-radius: 24px !important;
+  }
+
+  .timeline-list {
+    gap: 10px !important;
+    padding-left: 20px !important;
+  }
+
+  .timeline-card {
+    padding: 9px 10px !important;
+  }
+
+  .timeline-card-head {
+    display: grid;
+    gap: 3px;
+  }
+
+  .timeline-card time {
+    white-space: normal;
+  }
+}
+
+@media (min-width: 721px) {
+  #rosterView .player-card-title {
+    display: none !important;
+  }
+
+  #rosterView .kids-table:not(.edit-mode) {
+    min-width: 1220px !important;
+  }
+
+  #rosterView .kids-table:not(.edit-mode) th,
+  #rosterView .kids-table:not(.edit-mode) td {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    overflow: hidden !important;
+  }
+
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(1),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(1) { width: 15.5% !important; min-width: 155px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(9),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(9) { width: 7.8% !important; min-width: 104px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(10),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(10) { width: 7.8% !important; min-width: 104px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(11),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(11) { width: 7.8% !important; min-width: 104px !important; white-space: nowrap !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(12),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(12) { width: 8.8% !important; min-width: 118px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(13),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(13) { width: 6.2% !important; min-width: 82px !important; }
+
+  #rosterView .kids-table:not(.edit-mode) .status-pill,
+  #rosterView .kids-table:not(.edit-mode) .alert-pill {
+    max-width: 100% !important;
+  }
+
+  .player-popup {
+    width: min(100%, 980px) !important;
+  }
+
+  .player-profile-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .player-detail-section.payment-history-section {
+    grid-column: auto;
   }
 }
 
@@ -7564,4 +7940,219 @@ body.popup-open {
       linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 255, 0.88)) !important;
     box-shadow: 0 10px 24px rgba(15, 34, 64, 0.05) !important;
   }
+}
+
+/* v35 final override: keep this after the older roster rescue layers. */
+@media (max-width: 720px) {
+  .admission-banner {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .admission-banner .records-helper {
+    text-align: left !important;
+    font-size: 0.72rem !important;
+    line-height: 1.35 !important;
+  }
+
+  #rosterView .player-link {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #0c2f66 !important;
+    font-size: clamp(0.9rem, 3.35vw, 1rem) !important;
+    font-weight: 950 !important;
+    line-height: 1.16 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-decoration: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr {
+    min-height: 176px !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]) {
+    opacity: 0.1 !important;
+    transform: rotateY(10deg) scale(0.98) !important;
+    filter: blur(1px) !important;
+    pointer-events: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 0 !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown .menu-item:not(.renew-item) {
+    display: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .renew-item {
+    display: inline-flex !important;
+    flex: 0 1 220px !important;
+    justify-content: center !important;
+  }
+
+  #rosterView .mobile-card-back-actions {
+    position: absolute;
+    inset: 14px 14px 58px;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-content: center;
+    padding: 12px;
+    border: 1px solid rgba(21, 81, 173, 0.12);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 244, 255, 0.94));
+    box-shadow: 0 16px 32px rgba(15, 34, 64, 0.13);
+    opacity: 0;
+    pointer-events: none;
+    transform: rotateY(-14deg) scale(0.96);
+    transform-origin: center;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  #rosterView .kids-table tr.is-flipped .mobile-card-back-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: rotateY(0) scale(1);
+  }
+
+  #rosterView .mobile-card-back-actions .menu-item {
+    display: inline-flex !important;
+    min-height: 38px !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    font-size: 0.66rem !important;
+  }
+
+  .finance-payments-table tr,
+  .finance-expenses-table tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 5px 12px !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+    background:
+      radial-gradient(circle at top right, rgba(255, 199, 46, 0.08), transparent 32%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 247, 255, 0.9)) !important;
+    box-shadow: 0 8px 20px rgba(15, 34, 64, 0.06) !important;
+  }
+
+  .finance-payments-table td,
+  .finance-expenses-table td {
+    display: block !important;
+    padding: 0 !important;
+    border: 0 !important;
+    text-align: left !important;
+  }
+
+  .finance-payments-table td::before,
+  .finance-expenses-table td::before {
+    display: none !important;
+  }
+
+  .finance-payments-table td[data-label="Player"],
+  .finance-expenses-table td[data-label="Type"] {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .finance-payments-table td[data-label="Amount"],
+  .finance-expenses-table td[data-label="Amount"] {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    color: var(--accent-dark);
+    font-size: 0.92rem !important;
+    font-weight: 950 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+
+  .finance-payments-table td[data-label="Date"],
+  .finance-expenses-table td[data-label="Date"] {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    color: rgba(11, 52, 112, 0.7);
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+  }
+
+  .finance-payments-table td[data-label="Type"],
+  .finance-expenses-table td[data-label="Paid by"] {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    text-align: right !important;
+  }
+
+  .finance-expenses-table td[data-label="Comment"] {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    color: rgba(11, 52, 112, 0.74) !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+  }
+
+  .finance-expenses-table td[data-label="Action"] {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+    justify-self: end !important;
+  }
+
+  .timeline-list {
+    gap: 10px !important;
+    padding-left: 20px !important;
+    list-style: none !important;
+  }
+
+  .timeline-card {
+    padding: 9px 10px !important;
+  }
+
+  .timeline-card-head {
+    display: grid !important;
+    gap: 3px !important;
+  }
+}
+
+@media (min-width: 721px) {
+  #rosterView .player-card-title {
+    display: none !important;
+  }
+
+  #rosterView .kids-table:not(.edit-mode) {
+    min-width: 1220px !important;
+    table-layout: fixed !important;
+  }
+
+  #rosterView .kids-table:not(.edit-mode) th,
+  #rosterView .kids-table:not(.edit-mode) td {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    overflow: hidden !important;
+  }
+
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(1),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(1) { width: 15.5% !important; min-width: 155px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(9),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(9) { width: 7.8% !important; min-width: 104px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(10),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(10) { width: 7.8% !important; min-width: 104px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(11),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(11) { width: 7.8% !important; min-width: 104px !important; white-space: nowrap !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(12),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(12) { width: 8.8% !important; min-width: 118px !important; }
+  #rosterView .kids-table:not(.edit-mode) th:nth-child(13),
+  #rosterView .kids-table:not(.edit-mode) td:nth-child(13) { width: 6.2% !important; min-width: 82px !important; }
 }
