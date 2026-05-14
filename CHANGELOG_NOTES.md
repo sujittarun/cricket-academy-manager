@@ -71,6 +71,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Replaced the accumulated phone roster flip patches with a dedicated two-sided mobile edit card component.
 - Restored the Renew Payment button as a front-card footer independent of the flipped management actions.
 - Bumped web cache assets to `v40`.
+- Fixed the phone roster flip back face by keeping the player cell visible after flip, so the management buttons can render.
+- Bumped web cache assets to `v41`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

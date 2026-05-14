@@ -8305,6 +8305,16 @@ body.popup-open {
     padding: 0 !important;
     border: 0 !important;
     background: transparent !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr.is-flipped > td[data-label="Player"] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
   }
 
   #rosterView .kids-table.edit-mode .player-name-cell {
