@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-13
+Last updated: 2026-05-14
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,30 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-14
+
+### Responsive Annotation Fixes
+
+- Added the latest Instagram reel `DYAT0h-TlIL` after the feature video in Academy Moments.
+- Kept the Academy Moments helper copy on one line on phone-sized screens.
+- Restored desktop Student Movement to the zoomable monthly tile grid by rendering desktop markup without the mobile scroll wrapper.
+- Tightened phone Student Movement cards so the bars have less empty horizontal space.
+- Improved phone roster card readability by making player names plain, high-contrast text and normalizing the pill heights.
+- Hid compact finance chart fee/expense amount labels on desktop while keeping them available on phone screens.
+- Reworked desktop month-detail revenue/expense rows into compact two-column cards without changing the phone layout.
+- Replaced overlapping mobile roster-card overrides with one cleaner card treatment so the title and status chips stop fighting each other.
+- Tightened desktop roster header/filter spacing and refined desktop movement/finance tile sizing so labels no longer feel oversized or clipped.
+- Bumped web cache assets to `v28` so the newest roster/finance CSS is picked up without stale PWA styles.
+- Rebuilt the phone roster cards again as a final grid-based mobile treatment: player name, slot, status, fee state, and due state now occupy fixed card areas instead of inherited table cells.
+- Moved desktop Student Movement labels into the monthly tile footer beside each dot/count and hid the old top-right legend on that panel.
+- Made desktop Student Movement hover values visible by allowing the movement bar tooltip layer to escape the bar container.
+- Bumped web cache assets to `v29`.
+- Replaced the phone roster cards with a flex-card layout so player names and fee/status pills no longer inherit table-column widths or clip off screen.
+- Bumped web cache assets to `v30`.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+  - `git diff --check` in `web-app-repo`
 
 ## 2026-05-13
 

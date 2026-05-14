@@ -1659,27 +1659,32 @@ const renderStudentMovement = () => {
       <div class="movement-counts">
         <button type="button" data-movement-filter="continuing" data-movement-month="${month.key}">
           <i class="movement-dot continuing"></i>
+          <span class="movement-count-label">Continuing</span>
           <span class="movement-count-value">${month.continuing}</span>
         </button>
         <button type="button" data-movement-filter="joined" data-movement-month="${month.key}">
           <i class="movement-dot joined"></i>
+          <span class="movement-count-label">Joined</span>
           <span class="movement-count-value">${month.joined}</span>
         </button>
         <button type="button" data-movement-filter="left" data-movement-month="${month.key}">
           <i class="movement-dot discontinued"></i>
+          <span class="movement-count-label">Left</span>
           <span class="movement-count-value">${month.discontinued}</span>
         </button>
       </div>
     </article>
   `}).join("");
 
-  studentMovementChart.innerHTML = `
-    <div class="student-movement-integrated" style="display:flex; flex-direction:column; gap:20px; width:100%; overflow:visible; padding:0;">
-      <div class="movement-scroll-wrapper" style="display:flex; overflow-x:auto; scroll-snap-type: x mandatory; padding:4px 0 32px; -webkit-overflow-scrolling:touch; scrollbar-width:none; -ms-overflow-style:none;">
-        ${barsHtml}
+  studentMovementChart.innerHTML = isMobile
+    ? `
+      <div class="student-movement-integrated">
+        <div class="movement-scroll-wrapper">
+          ${barsHtml}
+        </div>
       </div>
-    </div>
-  `;
+    `
+    : barsHtml;
 };
 
 const renderRosterHelper = () => {
@@ -2468,6 +2473,7 @@ const renderKids = () => {
       <td data-label="Player">
         <div class="player-name-cell">
           <button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button>
+          <span class="player-card-title">${kid.name}</span>
           ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special Training">★ SPECIAL</span>' : ''}
         </div>
       </td>
