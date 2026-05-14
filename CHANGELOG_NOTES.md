@@ -54,6 +54,10 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Tightened normal desktop roster table widths separately from edit mode to avoid amount/status overlap.
 - Refined mobile finance revenue and expense rows into compact summary cards.
 - Bumped web cache assets to `v35`.
+- Replaced the faux mobile edit-card reveal with a faster true front/back card flip while keeping Renew Payment outside the flip footer.
+- Restored desktop roster table auto sizing after the combined filter/table-width pass caused edit-mode and normal-mode column overlap.
+- Softened the player timeline rail on phones so the vertical line is lighter and event dots feel more polished.
+- Bumped web cache assets to `v36`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

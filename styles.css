@@ -7857,36 +7857,17 @@ body.popup-open {
 
 @media (min-width: 721px) {
   #rosterView .kids-table {
-    min-width: 1120px !important;
-    table-layout: fixed !important;
+    min-width: 1280px !important;
+    table-layout: auto !important;
   }
 
   #rosterView .kids-table th,
   #rosterView .kids-table td {
-    padding: 9px 5px !important;
+    padding: 9px 7px !important;
     font-size: 0.74rem !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
   }
-
-  #rosterView .kids-table th:nth-child(1),
-  #rosterView .kids-table td:nth-child(1) { width: 14.5% !important; min-width: 145px !important; }
-  #rosterView .kids-table th:nth-child(3),
-  #rosterView .kids-table td:nth-child(3) { width: 4.6% !important; min-width: 58px !important; }
-  #rosterView .kids-table th:nth-child(4),
-  #rosterView .kids-table td:nth-child(4) { width: 3.8% !important; min-width: 48px !important; }
-  #rosterView .kids-table th:nth-child(8),
-  #rosterView .kids-table td:nth-child(8) { width: 6.2% !important; min-width: 76px !important; }
-  #rosterView .kids-table th:nth-child(9),
-  #rosterView .kids-table td:nth-child(9) { width: 7.1% !important; min-width: 94px !important; }
-  #rosterView .kids-table th:nth-child(10),
-  #rosterView .kids-table td:nth-child(10) { width: 6.4% !important; min-width: 82px !important; }
-  #rosterView .kids-table th:nth-child(11),
-  #rosterView .kids-table td:nth-child(11) { width: 6.4% !important; min-width: 86px !important; }
-  #rosterView .kids-table th:nth-child(12),
-  #rosterView .kids-table td:nth-child(12) { width: 7.4% !important; min-width: 98px !important; }
-  #rosterView .kids-table.edit-mode th:nth-child(13),
-  #rosterView .kids-table.edit-mode td[data-label="Actions"] { width: 3.2% !important; min-width: 42px !important; padding-left: 2px !important; padding-right: 2px !important; }
-  #rosterView .kids-table.edit-mode th:nth-child(14),
-  #rosterView .kids-table.edit-mode td[data-label="Last Updated"] { width: 5.6% !important; min-width: 78px !important; }
 
   #rosterView .kids-table .player-link,
   #rosterView .kids-table .sub-copy,
@@ -7976,12 +7957,19 @@ body.popup-open {
 
   #rosterView .kids-table.edit-mode tr {
     min-height: 176px !important;
+    transform-style: preserve-3d !important;
+    perspective: 900px !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr > td:not([data-label="Actions"]) {
+    transform-origin: center !important;
+    backface-visibility: hidden !important;
+    transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 150ms ease !important;
   }
 
   #rosterView .kids-table.edit-mode tr.is-flipped > td:not([data-label="Actions"]) {
-    opacity: 0.1 !important;
-    transform: rotateY(10deg) scale(0.98) !important;
-    filter: blur(1px) !important;
+    opacity: 0 !important;
+    transform: rotateY(104deg) scale(0.94) !important;
     pointer-events: none !important;
   }
 
@@ -8003,7 +7991,7 @@ body.popup-open {
 
   #rosterView .mobile-card-back-actions {
     position: absolute;
-    inset: 14px 14px 58px;
+    inset: 16px 14px 58px;
     z-index: 4;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8016,9 +8004,10 @@ body.popup-open {
     box-shadow: 0 16px 32px rgba(15, 34, 64, 0.13);
     opacity: 0;
     pointer-events: none;
-    transform: rotateY(-14deg) scale(0.96);
+    backface-visibility: hidden;
+    transform: rotateY(-104deg) scale(0.94);
     transform-origin: center;
-    transition: opacity 180ms ease, transform 180ms ease;
+    transition: opacity 150ms ease, transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   #rosterView .kids-table tr.is-flipped .mobile-card-back-actions {
@@ -8111,9 +8100,23 @@ body.popup-open {
   }
 
   .timeline-list {
-    gap: 10px !important;
-    padding-left: 20px !important;
+    gap: 12px !important;
+    padding-left: 14px !important;
     list-style: none !important;
+  }
+
+  .timeline-list::before {
+    left: 3px !important;
+    width: 1px !important;
+    background: linear-gradient(180deg, rgba(21, 81, 173, 0.12), rgba(16, 185, 129, 0.16), rgba(244, 191, 42, 0.12)) !important;
+  }
+
+  .timeline-dot {
+    left: -17px !important;
+    width: 10px !important;
+    height: 10px !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.88), 0 0 0 6px rgba(21, 81, 173, 0.07) !important;
   }
 
   .timeline-card {
@@ -8131,28 +8134,35 @@ body.popup-open {
     display: none !important;
   }
 
-  #rosterView .kids-table:not(.edit-mode) {
-    min-width: 1220px !important;
-    table-layout: fixed !important;
+  #rosterView .mobile-card-back-actions {
+    display: none !important;
   }
 
-  #rosterView .kids-table:not(.edit-mode) th,
-  #rosterView .kids-table:not(.edit-mode) td {
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-    overflow: hidden !important;
+  #rosterView .kids-table td[data-label="Actions"] .action-menu-dropdown {
+    display: grid !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
-  #rosterView .kids-table:not(.edit-mode) th:nth-child(1),
-  #rosterView .kids-table:not(.edit-mode) td:nth-child(1) { width: 15.5% !important; min-width: 155px !important; }
-  #rosterView .kids-table:not(.edit-mode) th:nth-child(9),
-  #rosterView .kids-table:not(.edit-mode) td:nth-child(9) { width: 7.8% !important; min-width: 104px !important; }
-  #rosterView .kids-table:not(.edit-mode) th:nth-child(10),
-  #rosterView .kids-table:not(.edit-mode) td:nth-child(10) { width: 7.8% !important; min-width: 104px !important; }
-  #rosterView .kids-table:not(.edit-mode) th:nth-child(11),
-  #rosterView .kids-table:not(.edit-mode) td:nth-child(11) { width: 7.8% !important; min-width: 104px !important; white-space: nowrap !important; }
-  #rosterView .kids-table:not(.edit-mode) th:nth-child(12),
-  #rosterView .kids-table:not(.edit-mode) td:nth-child(12) { width: 8.8% !important; min-width: 118px !important; }
-  #rosterView .kids-table:not(.edit-mode) th:nth-child(13),
-  #rosterView .kids-table:not(.edit-mode) td:nth-child(13) { width: 6.2% !important; min-width: 82px !important; }
+  #rosterView .kids-table .action-menu-container.active .action-menu-dropdown {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  #rosterView .kids-table,
+  #rosterView .kids-table:not(.edit-mode),
+  #rosterView .kids-table.edit-mode {
+    min-width: 1280px !important;
+    table-layout: auto !important;
+  }
+
+  #rosterView .kids-table th,
+  #rosterView .kids-table td {
+    overflow: visible !important;
+    white-space: nowrap !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
 }

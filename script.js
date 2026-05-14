@@ -2503,6 +2503,12 @@ const renderKids = () => {
         canEdit
           ? `<td data-label="Actions">
             <div class="action-menu-container">
+              <div class="mobile-card-back-actions">
+                <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
+                <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
+                <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
+              </div>
               <button class="action-trigger-btn" type="button" title="Actions">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
@@ -2532,12 +2538,6 @@ const renderKids = () => {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   Delete Record
                 </button>
-              </div>
-              <div class="mobile-card-back-actions">
-                <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
-                <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
-                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
-                <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
               </div>
             </div>
           </td>`
