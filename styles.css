@@ -7957,6 +7957,7 @@ body.popup-open {
 
   #rosterView .kids-table.edit-mode tr {
     min-height: 176px !important;
+    position: relative !important;
     transform-style: preserve-3d !important;
     perspective: 900px !important;
   }
@@ -7974,34 +7975,47 @@ body.popup-open {
   }
 
   #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown {
-    display: flex !important;
-    justify-content: center !important;
-    gap: 0 !important;
-  }
-
-  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown .menu-item:not(.renew-item) {
     display: none !important;
   }
 
-  #rosterView .kids-table.edit-mode td[data-label="Actions"] .renew-item {
-    display: inline-flex !important;
-    flex: 0 1 220px !important;
-    justify-content: center !important;
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    border: 0 !important;
+    pointer-events: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-container {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    pointer-events: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-trigger-btn {
+    display: none !important;
   }
 
   #rosterView .mobile-card-back-actions {
     position: absolute;
-    inset: 16px 14px 58px;
+    inset: 0;
     z-index: 4;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
     align-content: center;
-    padding: 12px;
-    border: 1px solid rgba(21, 81, 173, 0.12);
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 244, 255, 0.94));
-    box-shadow: 0 16px 32px rgba(15, 34, 64, 0.13);
+    padding: 20px 18px 74px;
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at top right, rgba(255, 199, 46, 0.14), transparent 32%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(233, 243, 255, 0.94));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      0 14px 32px rgba(15, 34, 64, 0.12);
     opacity: 0;
     pointer-events: none;
     backface-visibility: hidden;
@@ -8018,11 +8032,44 @@ body.popup-open {
 
   #rosterView .mobile-card-back-actions .menu-item {
     display: inline-flex !important;
-    min-height: 38px !important;
+    min-height: 44px !important;
     justify-content: center !important;
     border-radius: 999px !important;
-    background: rgba(255, 255, 255, 0.92) !important;
-    font-size: 0.66rem !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 10px 22px rgba(15, 34, 64, 0.06) !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.01em !important;
+    pointer-events: auto !important;
+  }
+
+  #rosterView .mobile-card-back-actions .menu-item.edit-item {
+    background: rgba(232, 240, 255, 0.96) !important;
+  }
+
+  #rosterView .mobile-card-back-actions .menu-item.status-item {
+    background: rgba(242, 246, 255, 0.96) !important;
+  }
+
+  #rosterView .mobile-card-back-actions .menu-item.reminder-item {
+    background: rgba(255, 248, 235, 0.96) !important;
+  }
+
+  #rosterView .mobile-card-back-actions .menu-item.delete-item {
+    background: rgba(255, 243, 243, 0.96) !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .renew-item {
+    position: absolute !important;
+    left: 18px !important;
+    right: 18px !important;
+    bottom: 16px !important;
+    display: inline-flex !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    box-shadow: 0 10px 22px rgba(4, 120, 87, 0.12) !important;
+    pointer-events: auto !important;
+    z-index: 5 !important;
   }
 
   .finance-payments-table tr,
@@ -8036,6 +8083,16 @@ body.popup-open {
       radial-gradient(circle at top right, rgba(255, 199, 46, 0.08), transparent 32%),
       linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 247, 255, 0.9)) !important;
     box-shadow: 0 8px 20px rgba(15, 34, 64, 0.06) !important;
+  }
+
+  .finance-payments-table td[data-label="Player"],
+  .finance-payments-table td[data-label="Type"],
+  .finance-expenses-table td[data-label="Type"],
+  .finance-expenses-table td[data-label="Comment"] {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
   }
 
   .finance-payments-table td,
@@ -8091,12 +8148,31 @@ body.popup-open {
     color: rgba(11, 52, 112, 0.74) !important;
     font-size: 0.74rem !important;
     font-weight: 800 !important;
+    line-height: 1.28 !important;
   }
 
   .finance-expenses-table td[data-label="Action"] {
-    grid-column: 1 / -1 !important;
-    grid-row: 4 !important;
+    grid-column: 2 !important;
+    grid-row: 3 / span 2 !important;
     justify-self: end !important;
+    align-self: end !important;
+  }
+
+  .finance-expenses-table tr {
+    align-items: start !important;
+    gap: 6px 10px !important;
+  }
+
+  .finance-expenses-table td[data-label="Type"] {
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    line-height: 1.1 !important;
+  }
+
+  .finance-payments-table td[data-label="Player"] {
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    line-height: 1.1 !important;
   }
 
   .timeline-list {

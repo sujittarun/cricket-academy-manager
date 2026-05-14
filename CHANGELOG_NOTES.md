@@ -58,6 +58,10 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Restored desktop roster table auto sizing after the combined filter/table-width pass caused edit-mode and normal-mode column overlap.
 - Softened the player timeline rail on phones so the vertical line is lighter and event dots feel more polished.
 - Bumped web cache assets to `v36`.
+- Stopped desktop roster action-button clicks from opening player profile behind the action menu.
+- Rebuilt the phone edit-card back face so actions sit on the flipped card itself instead of appearing as an extra overlay panel.
+- Tightened phone recent-expense cards to match the compact recent-revenue pattern and removed the ghost white field backgrounds from expense and revenue labels.
+- Bumped web cache assets to `v37`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

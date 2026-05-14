@@ -4026,7 +4026,17 @@ kidsTableBody.addEventListener("click", async (event) => {
     isManagerLoggedIn &&
     rowForClick instanceof HTMLElement &&
     window.matchMedia("(max-width: 720px)").matches;
+  const clickedTrigger = event.target.closest(".action-trigger-btn");
+  const clickedMenuChrome = event.target.closest(".action-menu-dropdown, .action-menu-container");
   const target = event.target.closest("[data-action]");
+
+  if (clickedTrigger) {
+    return;
+  }
+
+  if (clickedMenuChrome && !(target instanceof HTMLButtonElement)) {
+    return;
+  }
 
   if (
     isPhoneEditCard &&
