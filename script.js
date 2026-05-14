@@ -5345,16 +5345,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             const nextWorker = registration.installing;
             if (!nextWorker) return;
             nextWorker.addEventListener("statechange", () => {
-              if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
-                activateWaitingWorker(registration.waiting || nextWorker);
+              if (nextWorker.state === "installed") {
+                hasTriggeredServiceWorkerRefresh = false;
               }
             });
           });
 
           navigator.serviceWorker.addEventListener("controllerchange", () => {
-            if (hasTriggeredServiceWorkerRefresh) return;
             hasTriggeredServiceWorkerRefresh = true;
-            window.location.reload();
           });
 
           registration.update().catch(() => {});

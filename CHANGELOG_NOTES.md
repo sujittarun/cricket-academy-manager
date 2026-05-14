@@ -62,6 +62,9 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Rebuilt the phone edit-card back face so actions sit on the flipped card itself instead of appearing as an extra overlay panel.
 - Tightened phone recent-expense cards to match the compact recent-revenue pattern and removed the ghost white field backgrounds from expense and revenue labels.
 - Bumped web cache assets to `v37`.
+- Made the phone roster edit actions use the card surface itself as the flipped back face so buttons stay inside the same card.
+- Removed the forced service-worker controller-change reload that caused a second page refresh a few seconds after opening.
+- Bumped web cache assets to `v38`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

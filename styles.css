@@ -7956,7 +7956,7 @@ body.popup-open {
   }
 
   #rosterView .kids-table.edit-mode tr {
-    min-height: 176px !important;
+    min-height: 184px !important;
     position: relative !important;
     transform-style: preserve-3d !important;
     perspective: 900px !important;
@@ -7974,26 +7974,64 @@ body.popup-open {
     pointer-events: none !important;
   }
 
-  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown {
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown .menu-item:not(.renew-item),
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown .menu-divider {
     display: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-dropdown {
+    position: absolute !important;
+    left: 18px !important;
+    right: 18px !important;
+    bottom: 16px !important;
+    z-index: 6 !important;
+    display: flex !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
   }
 
   #rosterView .kids-table.edit-mode td[data-label="Actions"] {
     position: absolute !important;
     inset: 0 !important;
-    display: block !important;
+    display: grid !important;
+    align-content: center !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding: 0 !important;
+    padding: 20px 18px 74px !important;
     border: 0 !important;
+    border-radius: 24px !important;
+    background:
+      radial-gradient(circle at top right, rgba(255, 199, 46, 0.14), transparent 34%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(232, 243, 255, 0.95)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      0 16px 32px rgba(15, 34, 64, 0.14) !important;
+    opacity: 0 !important;
     pointer-events: none !important;
+    backface-visibility: hidden !important;
+    transform: rotateY(-104deg) scale(0.94) !important;
+    transform-origin: center !important;
+    transition: opacity 150ms ease, transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    z-index: 4 !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr.is-flipped td[data-label="Actions"] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: rotateY(0) scale(1) !important;
   }
 
   #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-container {
-    position: absolute !important;
-    inset: 0 !important;
+    position: static !important;
     width: 100% !important;
-    pointer-events: none !important;
+    pointer-events: auto !important;
   }
 
   #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-trigger-btn {
@@ -8001,33 +8039,16 @@ body.popup-open {
   }
 
   #rosterView .mobile-card-back-actions {
-    position: absolute;
-    inset: 0;
+    position: static;
     z-index: 4;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     align-content: center;
-    padding: 20px 18px 74px;
-    border-radius: 24px;
-    background:
-      radial-gradient(circle at top right, rgba(255, 199, 46, 0.14), transparent 32%),
-      linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(233, 243, 255, 0.94));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.92),
-      0 14px 32px rgba(15, 34, 64, 0.12);
-    opacity: 0;
-    pointer-events: none;
-    backface-visibility: hidden;
-    transform: rotateY(-104deg) scale(0.94);
-    transform-origin: center;
-    transition: opacity 150ms ease, transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  #rosterView .kids-table tr.is-flipped .mobile-card-back-actions {
+    padding: 0;
     opacity: 1;
     pointer-events: auto;
-    transform: rotateY(0) scale(1);
+    transform: none;
   }
 
   #rosterView .mobile-card-back-actions .menu-item {
@@ -8059,17 +8080,22 @@ body.popup-open {
   }
 
   #rosterView .kids-table.edit-mode td[data-label="Actions"] .renew-item {
-    position: absolute !important;
-    left: 18px !important;
-    right: 18px !important;
-    bottom: 16px !important;
     display: inline-flex !important;
+    flex: 1 1 100% !important;
     min-height: 44px !important;
     justify-content: center !important;
     border-radius: 999px !important;
     box-shadow: 0 10px 22px rgba(4, 120, 87, 0.12) !important;
     pointer-events: auto !important;
     z-index: 5 !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr:not(.is-flipped) td[data-label="Actions"] {
+    pointer-events: none !important;
+  }
+
+  #rosterView .kids-table.edit-mode tr:not(.is-flipped) td[data-label="Actions"] .renew-item {
+    pointer-events: none !important;
   }
 
   .finance-payments-table tr,
