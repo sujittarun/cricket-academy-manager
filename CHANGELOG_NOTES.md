@@ -68,6 +68,9 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Split phone edit cards into a front Renew Payment footer and a full-size flipped action face so management buttons align inside the same player card.
 - Tuned the phone roster flip animation with a stronger 3D rotation, card depth, and back-face button styling.
 - Bumped web cache assets to `v39`.
+- Replaced the accumulated phone roster flip patches with a dedicated two-sided mobile edit card component.
+- Restored the Renew Payment button as a front-card footer independent of the flipped management actions.
+- Bumped web cache assets to `v40`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

@@ -2461,6 +2461,34 @@ const renderKids = () => {
       const allPayments = getStudentPayments(kid).sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
       return allPayments.length > 0 ? allPayments[0].amount : kid.amountPaid;
     })();
+    const mobileRenewButton =
+      canRenew
+        ? `<button class="mobile-card-renew" data-action="renew-open" data-id="${kid.id}" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Renew Payment
+          </button>`
+        : "";
+    const mobileEditCard =
+      canEdit
+        ? `<div class="mobile-edit-card-shell">
+            <div class="mobile-edit-card-inner">
+              <div class="mobile-edit-card-face mobile-edit-card-front">
+                <div class="mobile-card-name">${kid.name}</div>
+                <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">${kid.discontinued ? "Discontinued" : "Active"}</span>
+                <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
+                <span class="status-pill ${feeDisplay.className}">${feeDisplay.label}</span>
+                <span class="alert-pill ${feeDueIsSafe ? "safe" : ""} ${shouldPulseDuePill ? "critical-pulse" : ""}">${renewalStatus}</span>
+                ${mobileRenewButton}
+              </div>
+              <div class="mobile-edit-card-face mobile-edit-card-back">
+                <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
+                <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
+                <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
+              </div>
+            </div>
+          </div>`
+        : "";
 
     const row = document.createElement("tr");
     row.dataset.playerRowId = kid.id;
@@ -2474,6 +2502,7 @@ const renderKids = () => {
           <button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button>
           ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special Training">★ SPECIAL</span>' : ''}
         </div>
+        ${mobileEditCard}
       </td>
       <td data-label="Age">${kid.age}</td>
       <td data-label="Time slot"><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
@@ -2506,22 +2535,6 @@ const renderKids = () => {
         canEdit
           ? `<td data-label="Actions">
             <div class="action-menu-container">
-              ${
-                canRenew
-                  ? `<div class="mobile-renew-footer">
-                      <button class="menu-item renew-item" data-action="renew-open" data-id="${kid.id}" type="button">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                        Renew Payment
-                      </button>
-                    </div>`
-                  : ""
-              }
-              <div class="mobile-card-back-actions">
-                <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
-                <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
-                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
-                <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
-              </div>
               <button class="action-trigger-btn" type="button" title="Actions">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
