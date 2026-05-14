@@ -8298,6 +8298,17 @@ body.popup-open {
     display: none !important;
   }
 
+  #rosterView .kids-table.edit-mode tr > td[data-label="Actions"],
+  #rosterView .kids-table.edit-mode tr.is-flipped > td[data-label="Actions"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
   #rosterView .kids-table.edit-mode tr > td[data-label="Player"] {
     display: block !important;
     width: 100% !important;
