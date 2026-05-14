@@ -2465,6 +2465,9 @@ const renderKids = () => {
     const row = document.createElement("tr");
     row.dataset.playerRowId = kid.id;
     row.className = kid.discontinued ? "discontinued-row" : reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
+    if (canEdit && canRenew) {
+      row.classList.add("has-renew-footer");
+    }
     row.innerHTML = `
       <td data-label="Player">
         <div class="player-name-cell">
@@ -2503,6 +2506,16 @@ const renderKids = () => {
         canEdit
           ? `<td data-label="Actions">
             <div class="action-menu-container">
+              ${
+                canRenew
+                  ? `<div class="mobile-renew-footer">
+                      <button class="menu-item renew-item" data-action="renew-open" data-id="${kid.id}" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        Renew Payment
+                      </button>
+                    </div>`
+                  : ""
+              }
               <div class="mobile-card-back-actions">
                 <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
                 <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>

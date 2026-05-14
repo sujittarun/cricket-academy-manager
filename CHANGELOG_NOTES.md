@@ -65,6 +65,9 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Made the phone roster edit actions use the card surface itself as the flipped back face so buttons stay inside the same card.
 - Removed the forced service-worker controller-change reload that caused a second page refresh a few seconds after opening.
 - Bumped web cache assets to `v38`.
+- Split phone edit cards into a front Renew Payment footer and a full-size flipped action face so management buttons align inside the same player card.
+- Tuned the phone roster flip animation with a stronger 3D rotation, card depth, and back-face button styling.
+- Bumped web cache assets to `v39`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`
