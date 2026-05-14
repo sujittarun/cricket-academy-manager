@@ -6981,4 +6981,18 @@ body.popup-open {
   #rosterView .kids-table tr::after {
     color: rgba(26, 79, 157, 0.52) !important;
   }
+
+  #rosterView .alert-pill:not(.safe) {
+    color: #dc2626 !important;
+    border-color: rgba(239, 68, 68, 0.24) !important;
+    background: rgba(254, 242, 242, 0.92) !important;
+  }
+
+  #rosterView .alert-pill.critical-pulse {
+    animation: extreme-pulse 1.5s infinite ease-in-out !important;
+    color: #dc2626 !important;
+    border-color: #fee2e2 !important;
+    background: #fef2f2 !important;
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35) !important;
+  }
 }

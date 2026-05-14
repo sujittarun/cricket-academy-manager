@@ -35,6 +35,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Bumped web cache assets to `v30`.
 - Softened the phone roster card background treatment and removed the input-like strip behind player names.
 - Bumped web cache assets to `v31`.
+- Restored mobile fee-due pulse behavior and corrected joining-fee-pending pills so they use the overdue state instead of the safe state.
+- Bumped web cache assets to `v32`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`

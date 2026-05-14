@@ -2458,9 +2458,9 @@ const renderKids = () => {
     const latestRenewal = maxIsoDate(latestRenewalFromTable, latestRenewalFromArray);
     const renewalStatus = getRenewalStatusLabel(kid);
     const feeDisplay = getFeeDisplayState(kid);
-    const dueDate = getPaidThroughDate(kid);
-    const daysUntilDue = -getDaysSinceDate(dueDate);
     const reminderState = getReminderState(kid);
+    const feeDueIsSafe = !feesPending && !renewalPending;
+    const shouldPulseDuePill = reminderState.overdueDays > 7;
     const lastPaymentAmount = (() => {
       const allPayments = getStudentPayments(kid).sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
       return allPayments.length > 0 ? allPayments[0].amount : kid.amountPaid;
@@ -2500,7 +2500,7 @@ const renderKids = () => {
       </td>
       <td data-label="Amount paid">Rs ${Number(lastPaymentAmount).toFixed(2)}</td>
       <td data-label="Next fee due">
-        <span class="alert-pill ${renewalPending ? "" : "safe"} ${daysUntilDue < -7 ? "critical-pulse" : ""}">
+        <span class="alert-pill ${feeDueIsSafe ? "safe" : ""} ${shouldPulseDuePill ? "critical-pulse" : ""}">
           ${renewalStatus}
         </span>
       </td>
