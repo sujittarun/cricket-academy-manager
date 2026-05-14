@@ -6943,3 +6943,42 @@ body.popup-open {
     background: rgba(220, 252, 231, 0.96) !important;
   }
 }
+
+/* v31: calmer phone roster cards, no input-like name strip. */
+@media (max-width: 720px) {
+  #rosterView .kids-table tr {
+    border-color: rgba(13, 46, 91, 0.12) !important;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.84)) !important;
+    box-shadow: 0 8px 18px rgba(13, 46, 91, 0.07) !important;
+  }
+
+  #rosterView .kids-table tr.alert-row {
+    border-color: rgba(244, 191, 42, 0.24) !important;
+    background: linear-gradient(145deg, rgba(255, 253, 246, 0.94), rgba(248, 251, 255, 0.86)) !important;
+  }
+
+  #rosterView .kids-table tr.critical-row {
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    background: linear-gradient(145deg, rgba(255, 250, 250, 0.95), rgba(248, 251, 255, 0.86)) !important;
+    box-shadow: inset 3px 0 0 rgba(239, 68, 68, 0.45), 0 8px 18px rgba(13, 46, 91, 0.07) !important;
+  }
+
+  #rosterView .kids-table td[data-label="Player"],
+  #rosterView .player-name-cell,
+  #rosterView .player-link {
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  #rosterView .player-link {
+    color: #09285a !important;
+    -webkit-text-fill-color: #09285a !important;
+    text-decoration: none !important;
+  }
+
+  #rosterView .kids-table tr::after {
+    color: rgba(26, 79, 157, 0.52) !important;
+  }
+}

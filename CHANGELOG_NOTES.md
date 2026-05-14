@@ -33,6 +33,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Bumped web cache assets to `v29`.
 - Replaced the phone roster cards with a flex-card layout so player names and fee/status pills no longer inherit table-column widths or clip off screen.
 - Bumped web cache assets to `v30`.
+- Softened the phone roster card background treatment and removed the input-like strip behind player names.
+- Bumped web cache assets to `v31`.
 - Verification done:
   - `node --check web-app-repo/script.js`
   - `git diff --check` in `web-app-repo`
