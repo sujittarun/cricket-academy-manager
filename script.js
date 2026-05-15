@@ -3230,13 +3230,17 @@ const renderPlayerDetails = async (kid) => {
         timeline.length > 0
           ? `<ol class="timeline-list">${timeline.map((item) => {
               const eventType = String(item.event_type || "").toLowerCase();
-              const tone = eventType.includes("reminder")
-                ? "reminder"
-                : eventType.includes("payment") || eventType.includes("renew")
-                  ? "payment"
-                  : eventType.includes("admission")
-                    ? "admission"
-                    : "default";
+              const eventText = `${eventType} ${item.title || ""} ${item.details || ""}`.toLowerCase();
+              let tone = "default";
+              if (eventText.includes("failed") || eventText.includes("error")) {
+                tone = "danger";
+              } else if (eventText.includes("confirmed") || eventText.includes("paid") || eventText.includes("payment") || eventText.includes("renew")) {
+                tone = "payment";
+              } else if (eventText.includes("reminder") || eventText.includes("whatsapp") || eventText.includes("message")) {
+                tone = "reminder";
+              } else if (eventText.includes("admission")) {
+                tone = "admission";
+              }
               return `
               <li class="timeline-event ${tone}">
                 <span class="timeline-dot" aria-hidden="true"></span>

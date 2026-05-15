@@ -2383,6 +2383,11 @@ body.popup-open {
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.14), 0 8px 18px rgba(15, 34, 64, 0.12);
 }
 
+.timeline-event.danger .timeline-dot {
+  background: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14), 0 8px 18px rgba(15, 34, 64, 0.12);
+}
+
 .timeline-event.admission .timeline-dot {
   background: #2563eb;
 }
@@ -2436,6 +2441,21 @@ body.popup-open {
   color: rgba(11, 52, 112, 0.74);
   font-size: 0.76rem;
   line-height: 1.38;
+}
+
+.timeline-event.payment .timeline-card {
+  border-color: rgba(5, 150, 105, 0.12);
+  background: linear-gradient(135deg, rgba(241, 255, 248, 0.96), rgba(244, 248, 255, 0.9));
+}
+
+.timeline-event.reminder .timeline-card {
+  border-color: rgba(217, 119, 6, 0.12);
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.96), rgba(244, 248, 255, 0.9));
+}
+
+.timeline-event.danger .timeline-card {
+  border-color: rgba(220, 38, 38, 0.13);
+  background: linear-gradient(135deg, rgba(255, 245, 245, 0.96), rgba(244, 248, 255, 0.9));
 }
 
 @media (max-width: 720px) {

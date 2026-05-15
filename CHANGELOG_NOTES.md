@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-14
+Last updated: 2026-05-15
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,15 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-15
+
+### WhatsApp Flow Timeline Polish
+
+- Player profile timeline tone detection now reads title/details as well as event type, so new WhatsApp flow audit events render as reminder, payment, admission, or danger/error cards instead of plain log rows.
+- Added subtle danger styling for failed/error WhatsApp timeline events while keeping payment and reminder events color-coded.
+- Verification done:
+  - `node --check web-app-repo/script.js`
 
 ## 2026-05-14
 
