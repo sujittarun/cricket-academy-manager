@@ -1009,6 +1009,9 @@ const renderFinanceMonthPopup = (monthKey) => {
     .filter((row) => row.type === "Renewal")
     .reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const expenseTotal = expenseRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const joiningCount = revenueRows.filter((row) => row.type === "Joining").length;
+  const renewalCount = revenueRows.filter((row) => row.type === "Renewal").length;
+  const totalRecordCount = revenueRows.length + expenseRows.length;
   const renderRevenueRows = () => revenueRows.length
     ? revenueRows.map((row) => `
         <article class="finance-detail-row revenue">
@@ -1039,26 +1042,28 @@ const renderFinanceMonthPopup = (monthKey) => {
         <span>Revenue</span>
         <strong>${rupees(revenueTotal)}</strong>
         <div class="finance-summary-submetrics">
-          <small>Joining <b>${rupees(joiningTotal)}</b></small>
-          <small>Renewal <b>${rupees(renewalTotal)}</b></small>
+          <small>Joining <b>${joiningCount}</b> · <b>${rupees(joiningTotal)}</b></small>
+          <small>Renewal <b>${renewalCount}</b> · <b>${rupees(renewalTotal)}</b></small>
         </div>
       </div>
       <div class="finance-summary-card">
         <span>Expenses</span>
         <strong>${rupees(expenseTotal)}</strong>
+        <small>${expenseRows.length} record${expenseRows.length === 1 ? "" : "s"}</small>
       </div>
       <div class="finance-summary-card ${revenueTotal - expenseTotal < 0 ? "negative" : "positive"}">
         <span>Net</span>
         <strong>${rupees(revenueTotal - expenseTotal)}</strong>
+        <small>${totalRecordCount} total record${totalRecordCount === 1 ? "" : "s"}</small>
       </div>
     </div>
     <div class="finance-month-columns">
       <section class="finance-detail-list">
-        <h4>Revenue</h4>
+        <h4>Revenue <span>${revenueRows.length}</span></h4>
         ${renderRevenueRows()}
       </section>
       <section class="finance-detail-list">
-        <h4>Expenses</h4>
+        <h4>Expenses <span>${expenseRows.length}</span></h4>
         ${renderExpenseRows()}
       </section>
     </div>
