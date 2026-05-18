@@ -1028,6 +1028,23 @@ body.popup-open {
   display: block;
 }
 
+@media (min-width: 721px) {
+  #rosterView .action-menu-container.active .action-menu-dropdown {
+    position: fixed;
+    top: var(--action-menu-top, auto);
+    right: auto;
+    bottom: auto;
+    left: var(--action-menu-left, auto);
+    z-index: 5000;
+    max-height: min(330px, calc(100vh - 24px));
+    overflow-y: auto;
+  }
+
+  #rosterView .action-menu-container.active.drop-up .action-menu-dropdown {
+    transform-origin: bottom right;
+  }
+}
+
 .menu-item {
   display: flex;
   align-items: center;

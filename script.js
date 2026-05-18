@@ -5403,21 +5403,72 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // GLOBAL ACTION MENU HANDLER
+const closeRosterActionMenus = () => {
+  document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
+    menu.classList.remove("active", "drop-up");
+    menu.style.removeProperty("--action-menu-left");
+    menu.style.removeProperty("--action-menu-top");
+  });
+};
+
+const positionRosterActionMenu = (container) => {
+  if (!(container instanceof HTMLElement) || window.matchMedia("(max-width: 720px)").matches) return;
+  const trigger = container.querySelector(".action-trigger-btn");
+  const dropdown = container.querySelector(".action-menu-dropdown");
+  if (!(trigger instanceof HTMLElement) || !(dropdown instanceof HTMLElement)) return;
+
+  const triggerRect = trigger.getBoundingClientRect();
+  const menuWidth = Math.max(dropdown.offsetWidth || 210, 210);
+  const menuHeight = Math.min(dropdown.offsetHeight || 260, window.innerHeight - 24);
+  const gutter = 12;
+  const left = Math.min(
+    Math.max(gutter, triggerRect.right - menuWidth),
+    window.innerWidth - menuWidth - gutter,
+  );
+  const openUp = triggerRect.bottom + menuHeight + 10 > window.innerHeight - gutter;
+  const top = openUp
+    ? Math.max(gutter, triggerRect.top - menuHeight - 10)
+    : Math.min(triggerRect.bottom + 10, window.innerHeight - menuHeight - gutter);
+
+  container.classList.toggle("drop-up", openUp);
+  container.style.setProperty("--action-menu-left", `${left}px`);
+  container.style.setProperty("--action-menu-top", `${top}px`);
+};
+
 document.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) {
+    closeRosterActionMenus();
+    return;
+  }
   const trigger = event.target.closest(".action-trigger-btn");
   const container = event.target.closest(".action-menu-container");
-  
+
   // Close all other menus
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
     if (menu !== container) {
-      menu.classList.remove("active");
+      menu.classList.remove("active", "drop-up");
+      menu.style.removeProperty("--action-menu-left");
+      menu.style.removeProperty("--action-menu-top");
     }
   });
 
   if (trigger && container) {
-    container.classList.toggle("active");
+    const willOpen = !container.classList.contains("active");
+    container.classList.toggle("active", willOpen);
+    if (willOpen) {
+      positionRosterActionMenu(container);
+    } else {
+      container.classList.remove("drop-up");
+      container.style.removeProperty("--action-menu-left");
+      container.style.removeProperty("--action-menu-top");
+    }
     event.stopPropagation();
   } else if (!container) {
-    // Clicked outside, menus already closed above
+    closeRosterActionMenus();
   }
+});
+
+window.addEventListener("resize", closeRosterActionMenus);
+document.querySelectorAll("#rosterView .table-wrap").forEach((wrap) => {
+  wrap.addEventListener("scroll", closeRosterActionMenus, { passive: true });
 });
