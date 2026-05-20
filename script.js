@@ -5428,17 +5428,7 @@ const getRosterActionPortal = () => {
 
 const closeRosterActionMenus = () => {
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
-    const dropdown = menu.querySelector(".action-menu-dropdown");
-    menu.classList.remove("active", "drop-up", "portal-open");
-    menu.style.removeProperty("--action-menu-left");
-    menu.style.removeProperty("--action-menu-top");
-    if (dropdown instanceof HTMLElement) {
-      dropdown.style.removeProperty("position");
-      dropdown.style.removeProperty("top");
-      dropdown.style.removeProperty("left");
-      dropdown.style.removeProperty("right");
-      dropdown.style.removeProperty("bottom");
-    }
+    menu.classList.remove("active", "portal-open");
   });
   const portal = document.getElementById("rosterActionPortal");
   if (portal instanceof HTMLElement) {
@@ -5476,10 +5466,7 @@ const positionRosterActionMenu = (container) => {
     ? Math.max(gutter, triggerRect.top - menuHeight - 10)
     : Math.min(triggerRect.bottom + 10, window.innerHeight - menuHeight - gutter);
 
-  container.classList.toggle("drop-up", openUp);
   container.classList.add("portal-open");
-  container.style.setProperty("--action-menu-left", `${left}px`);
-  container.style.setProperty("--action-menu-top", `${top}px`);
   portal.style.left = `${left}px`;
   portal.style.top = `${top}px`;
   portal.style.visibility = "visible";
@@ -5509,12 +5496,17 @@ document.addEventListener("click", (event) => {
   const trigger = event.target.closest(".action-trigger-btn");
   const container = event.target.closest(".action-menu-container");
 
+  if (trigger && container?.classList.contains("active")) {
+    event.preventDefault();
+    event.stopPropagation();
+    closeRosterActionMenus();
+    return;
+  }
+
   // Close all other menus
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
     if (menu !== container) {
-      menu.classList.remove("active", "drop-up", "portal-open");
-      menu.style.removeProperty("--action-menu-left");
-      menu.style.removeProperty("--action-menu-top");
+      menu.classList.remove("active", "portal-open");
     }
   });
 
@@ -5524,17 +5516,7 @@ document.addEventListener("click", (event) => {
     if (willOpen) {
       positionRosterActionMenu(container);
     } else {
-      const dropdown = container.querySelector(".action-menu-dropdown");
-      container.classList.remove("drop-up", "portal-open");
-      container.style.removeProperty("--action-menu-left");
-      container.style.removeProperty("--action-menu-top");
-      if (dropdown instanceof HTMLElement) {
-        dropdown.style.removeProperty("position");
-        dropdown.style.removeProperty("top");
-        dropdown.style.removeProperty("left");
-        dropdown.style.removeProperty("right");
-        dropdown.style.removeProperty("bottom");
-      }
+      closeRosterActionMenus();
     }
     event.stopPropagation();
   } else if (!container) {

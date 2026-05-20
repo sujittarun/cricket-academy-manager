@@ -1045,23 +1045,6 @@ body.popup-open {
   overflow-y: auto;
 }
 
-@media (min-width: 721px) {
-  #rosterView .action-menu-container.active .action-menu-dropdown {
-    position: fixed;
-    top: var(--action-menu-top, auto);
-    right: auto;
-    bottom: auto;
-    left: var(--action-menu-left, auto);
-    z-index: 5000;
-    max-height: min(330px, calc(100vh - 24px));
-    overflow-y: auto;
-  }
-
-  #rosterView .action-menu-container.active.drop-up .action-menu-dropdown {
-    transform-origin: bottom right;
-  }
-}
-
 .menu-item {
   display: flex;
   align-items: center;
@@ -8643,23 +8626,5 @@ body.popup-open {
     color: #dc2626 !important;
     background: rgba(254, 242, 242, 0.98) !important;
     border-color: rgba(239, 68, 68, 0.18) !important;
-  }
-}
-
-/* Final desktop action-menu guard: keep row menus attached to the clicked button and above the table. */
-@media (min-width: 721px) {
-  body #rosterView .kids-table td[data-label="Actions"] .action-menu-container.active .action-menu-dropdown {
-    position: fixed !important;
-    top: var(--action-menu-top, 12px) !important;
-    left: var(--action-menu-left, 12px) !important;
-    right: auto !important;
-    bottom: auto !important;
-    display: grid !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    z-index: 99999 !important;
-    max-height: min(330px, calc(100vh - 24px)) !important;
-    overflow-y: auto !important;
   }
 }
