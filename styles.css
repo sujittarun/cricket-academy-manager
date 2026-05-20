@@ -8628,3 +8628,21 @@ body.popup-open {
     border-color: rgba(239, 68, 68, 0.18) !important;
   }
 }
+
+/* Final desktop action-menu guard: keep row menus attached to the clicked button and above the table. */
+@media (min-width: 721px) {
+  body #rosterView .kids-table td[data-label="Actions"] .action-menu-container.active .action-menu-dropdown {
+    position: fixed !important;
+    top: var(--action-menu-top, 12px) !important;
+    left: var(--action-menu-left, 12px) !important;
+    right: auto !important;
+    bottom: auto !important;
+    display: grid !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 99999 !important;
+    max-height: min(330px, calc(100vh - 24px)) !important;
+    overflow-y: auto !important;
+  }
+}
