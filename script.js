@@ -5412,10 +5412,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // GLOBAL ACTION MENU HANDLER
+let activeRosterActionMenu = null;
+
+const getRosterActionPortal = () => {
+  let portal = document.getElementById("rosterActionPortal");
+  if (!(portal instanceof HTMLElement)) {
+    portal = document.createElement("div");
+    portal.id = "rosterActionPortal";
+    portal.className = "action-menu-dropdown roster-action-portal";
+    portal.hidden = true;
+    document.body.appendChild(portal);
+  }
+  return portal;
+};
+
 const closeRosterActionMenus = () => {
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
     const dropdown = menu.querySelector(".action-menu-dropdown");
-    menu.classList.remove("active", "drop-up");
+    menu.classList.remove("active", "drop-up", "portal-open");
     menu.style.removeProperty("--action-menu-left");
     menu.style.removeProperty("--action-menu-top");
     if (dropdown instanceof HTMLElement) {
@@ -5426,6 +5440,14 @@ const closeRosterActionMenus = () => {
       dropdown.style.removeProperty("bottom");
     }
   });
+  const portal = document.getElementById("rosterActionPortal");
+  if (portal instanceof HTMLElement) {
+    portal.hidden = true;
+    portal.innerHTML = "";
+    portal.style.removeProperty("left");
+    portal.style.removeProperty("top");
+  }
+  activeRosterActionMenu = null;
 };
 
 const positionRosterActionMenu = (container) => {
@@ -5435,8 +5457,15 @@ const positionRosterActionMenu = (container) => {
   if (!(trigger instanceof HTMLElement) || !(dropdown instanceof HTMLElement)) return;
 
   const triggerRect = trigger.getBoundingClientRect();
-  const menuWidth = Math.max(dropdown.offsetWidth || 210, 210);
-  const menuHeight = Math.min(dropdown.offsetHeight || 260, window.innerHeight - 24);
+  const portal = getRosterActionPortal();
+  portal.innerHTML = dropdown.innerHTML;
+  portal.hidden = false;
+  portal.style.visibility = "hidden";
+  portal.style.left = "0px";
+  portal.style.top = "0px";
+
+  const menuWidth = Math.max(portal.offsetWidth || 210, 210);
+  const menuHeight = Math.min(portal.offsetHeight || 260, window.innerHeight - 24);
   const gutter = 12;
   const left = Math.min(
     Math.max(gutter, triggerRect.right - menuWidth),
@@ -5448,13 +5477,13 @@ const positionRosterActionMenu = (container) => {
     : Math.min(triggerRect.bottom + 10, window.innerHeight - menuHeight - gutter);
 
   container.classList.toggle("drop-up", openUp);
+  container.classList.add("portal-open");
   container.style.setProperty("--action-menu-left", `${left}px`);
   container.style.setProperty("--action-menu-top", `${top}px`);
-  dropdown.style.setProperty("position", "fixed", "important");
-  dropdown.style.setProperty("left", `${left}px`, "important");
-  dropdown.style.setProperty("top", `${top}px`, "important");
-  dropdown.style.setProperty("right", "auto", "important");
-  dropdown.style.setProperty("bottom", "auto", "important");
+  portal.style.left = `${left}px`;
+  portal.style.top = `${top}px`;
+  portal.style.visibility = "visible";
+  activeRosterActionMenu = { container };
 };
 
 document.addEventListener("click", (event) => {
@@ -5462,13 +5491,28 @@ document.addEventListener("click", (event) => {
     closeRosterActionMenus();
     return;
   }
+  const portalButton = event.target.closest("#rosterActionPortal [data-action]");
+  if (portalButton instanceof HTMLButtonElement && activeRosterActionMenu?.container instanceof HTMLElement) {
+    const { action, id } = portalButton.dataset;
+    const originalButton = activeRosterActionMenu.container.querySelector(
+      `.action-menu-dropdown [data-action="${CSS.escape(action || "")}"][data-id="${CSS.escape(id || "")}"]`
+    );
+    event.preventDefault();
+    event.stopPropagation();
+    closeRosterActionMenus();
+    if (originalButton instanceof HTMLButtonElement) {
+      originalButton.click();
+    }
+    return;
+  }
+
   const trigger = event.target.closest(".action-trigger-btn");
   const container = event.target.closest(".action-menu-container");
 
   // Close all other menus
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
     if (menu !== container) {
-      menu.classList.remove("active", "drop-up");
+      menu.classList.remove("active", "drop-up", "portal-open");
       menu.style.removeProperty("--action-menu-left");
       menu.style.removeProperty("--action-menu-top");
     }
@@ -5481,7 +5525,7 @@ document.addEventListener("click", (event) => {
       positionRosterActionMenu(container);
     } else {
       const dropdown = container.querySelector(".action-menu-dropdown");
-      container.classList.remove("drop-up");
+      container.classList.remove("drop-up", "portal-open");
       container.style.removeProperty("--action-menu-left");
       container.style.removeProperty("--action-menu-top");
       if (dropdown instanceof HTMLElement) {

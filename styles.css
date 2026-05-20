@@ -1028,6 +1028,23 @@ body.popup-open {
   display: block;
 }
 
+.action-menu-container.portal-open .action-menu-dropdown {
+  display: none !important;
+}
+
+.roster-action-portal {
+  position: fixed !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: grid !important;
+  opacity: 1 !important;
+  visibility: visible;
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+  max-height: min(330px, calc(100vh - 24px));
+  overflow-y: auto;
+}
+
 @media (min-width: 721px) {
   #rosterView .action-menu-container.active .action-menu-dropdown {
     position: fixed;
