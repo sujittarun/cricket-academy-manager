@@ -1877,6 +1877,7 @@ const syncAdmissionStyleState = () => {
 const resetFormState = () => {
   editingKidId = null;
   kidForm.reset();
+  saveButton.disabled = false;
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
   formPanel.hidden = true;
@@ -3983,6 +3984,10 @@ kidForm.addEventListener("submit", async (event) => {
   const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
   let error = null;
   let savedWithoutProfileFields = false;
+  const originalSaveText = saveButton.textContent;
+  saveButton.disabled = true;
+  saveButton.textContent = wasEditing ? "Saving changes..." : "Saving player...";
+  formMessage.textContent = wasEditing ? "Saving player changes..." : "Saving new player...";
   const databasePayload = toDatabasePayload({
     ...payload,
     renewals: currentKid ? currentKid.renewals : [],
@@ -4022,25 +4027,29 @@ kidForm.addEventListener("submit", async (event) => {
   }
 
   if (error) {
+    saveButton.disabled = false;
+    saveButton.textContent = originalSaveText;
     formMessage.textContent = error.message;
     return;
   }
 
-  resetFormState();
-  formMessage.textContent = wasEditing
+  const successMessage = wasEditing
     ? savedWithoutProfileFields
       ? "Player updated, but parent/school fields need the latest Supabase SQL migration."
       : "Gen Alpha player record updated successfully."
     : savedWithoutProfileFields
       ? "Player saved, but parent/school fields need the latest Supabase SQL migration."
       : "Gen Alpha player record saved successfully.";
+
+  resetFormState();
+  showToast(successMessage);
   if (wasEditing && currentKid && currentKid.feesPaid !== "yes" && payload.feesPaid === "yes") {
     latestAdmissionReceipt = buildReceiptFromKid(currentKid, {
       amountPaid: payload.amountPaid,
       jerseySize: payload.jerseySize,
       jerseyPairs: payload.jerseyPairs,
     });
-    formMessage.textContent = `${currentKid.name} marked paid. Receipt is ready for WhatsApp.`;
+    showToast(`${currentKid.name} marked paid. Receipt is ready for WhatsApp.`);
     renderReceipt(latestAdmissionReceipt);
   }
   await loadKids();
@@ -5405,9 +5414,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 // GLOBAL ACTION MENU HANDLER
 const closeRosterActionMenus = () => {
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
+    const dropdown = menu.querySelector(".action-menu-dropdown");
     menu.classList.remove("active", "drop-up");
     menu.style.removeProperty("--action-menu-left");
     menu.style.removeProperty("--action-menu-top");
+    if (dropdown instanceof HTMLElement) {
+      dropdown.style.removeProperty("position");
+      dropdown.style.removeProperty("top");
+      dropdown.style.removeProperty("left");
+      dropdown.style.removeProperty("right");
+      dropdown.style.removeProperty("bottom");
+    }
   });
 };
 
@@ -5433,6 +5450,11 @@ const positionRosterActionMenu = (container) => {
   container.classList.toggle("drop-up", openUp);
   container.style.setProperty("--action-menu-left", `${left}px`);
   container.style.setProperty("--action-menu-top", `${top}px`);
+  dropdown.style.setProperty("position", "fixed", "important");
+  dropdown.style.setProperty("left", `${left}px`, "important");
+  dropdown.style.setProperty("top", `${top}px`, "important");
+  dropdown.style.setProperty("right", "auto", "important");
+  dropdown.style.setProperty("bottom", "auto", "important");
 };
 
 document.addEventListener("click", (event) => {
@@ -5458,9 +5480,17 @@ document.addEventListener("click", (event) => {
     if (willOpen) {
       positionRosterActionMenu(container);
     } else {
+      const dropdown = container.querySelector(".action-menu-dropdown");
       container.classList.remove("drop-up");
       container.style.removeProperty("--action-menu-left");
       container.style.removeProperty("--action-menu-top");
+      if (dropdown instanceof HTMLElement) {
+        dropdown.style.removeProperty("position");
+        dropdown.style.removeProperty("top");
+        dropdown.style.removeProperty("left");
+        dropdown.style.removeProperty("right");
+        dropdown.style.removeProperty("bottom");
+      }
     }
     event.stopPropagation();
   } else if (!container) {
