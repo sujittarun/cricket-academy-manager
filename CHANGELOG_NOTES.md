@@ -15,6 +15,14 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-21
 
+### Blank Jersey Size Save Fix
+
+- Fixed player/admission save payloads so blank jersey size is stored as an empty string instead of `NULL`.
+- Reason: `students.jersey_size` is `NOT NULL`, and editing a player without a jersey size was failing with a constraint error.
+- Bumped web cache assets to `v51`.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+
 ### Jersey Pair Counter and Revenue Ledger
 
 - Added inline jersey-pair +/- controls in roster Edit mode, including a compact phone-card control.

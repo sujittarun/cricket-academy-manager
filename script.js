@@ -542,7 +542,7 @@ const toDatabasePayload = ({
     join_date: joinDate,
     fees_paid: feesPaid === "yes",
     amount_paid: Number(amountPaid),
-    jersey_size: jerseySize || null,
+    jersey_size: String(jerseySize || "").trim(),
     jersey_pairs: Number(jerseyPairs) || 0,
     renewals,
     added_by: addedBy,
@@ -4844,7 +4844,7 @@ admissionForm.addEventListener("submit", async (event) => {
     p_fees_paid: false,
     p_amount_paid: paymentSubmittedForVerification ? getAdmissionAmount() : 0,
     p_grade: String(formData.get("grade") || "").trim(),
-    p_jersey_size: String(formData.get("jerseySize") || "").trim() || null,
+    p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
     p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
     p_payment_upi_id:
