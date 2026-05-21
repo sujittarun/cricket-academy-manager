@@ -980,6 +980,51 @@ body.popup-open {
   font-size: clamp(0.58rem, 0.52vw, 0.68rem);
 }
 
+.jersey-inline-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.jersey-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid rgba(26, 79, 157, 0.14);
+  border-radius: 999px;
+  background: rgba(234, 242, 255, 0.78);
+}
+
+.jersey-stepper button {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--accent);
+  font-weight: 950;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.jersey-stepper button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.jersey-stepper strong {
+  min-width: 18px;
+  color: var(--accent-dark);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-align: center;
+}
+
 .action-menu-container {
   position: relative;
   display: inline-block;
@@ -2762,6 +2807,11 @@ body.popup-open {
 .type-pill.returning {
   background: rgba(33, 150, 243, 0.2);
   color: #64b5f6;
+}
+
+.type-pill.jersey {
+  background: rgba(244, 190, 46, 0.2);
+  color: #9a6400;
 }
 
 .amount-cell {
@@ -8466,7 +8516,8 @@ body.popup-open {
       "name status"
       "slot status"
       "fee due"
-      "renew renew";
+      "renew renew"
+      "jersey jersey";
     gap: 12px 10px;
     align-content: start;
     padding: 22px;
@@ -8545,6 +8596,28 @@ body.popup-open {
     box-shadow: 0 10px 22px rgba(4, 120, 87, 0.12);
     font-size: 0.72rem;
     font-weight: 950;
+  }
+
+  #rosterView .mobile-jersey-editor {
+    grid-area: jersey;
+    display: inline-flex;
+    width: min(78%, 280px);
+    align-items: center;
+    justify-content: space-between;
+    justify-self: center;
+    gap: 10px;
+    padding: 8px 10px 8px 14px;
+    border: 1px solid rgba(26, 79, 157, 0.12);
+    border-radius: 999px;
+    background: rgba(234, 242, 255, 0.54);
+    color: #0b3470;
+    font-size: 0.68rem;
+    font-weight: 950;
+  }
+
+  #rosterView .mobile-jersey-editor .jersey-stepper {
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.7);
   }
 
   #rosterView .mobile-edit-card-back {

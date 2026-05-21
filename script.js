@@ -1,5 +1,6 @@
 const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
 const PAYMENT_CONFIG = window.GEN_ALPHA_PAYMENT_CONFIG ?? {};
+const JERSEY_PAIR_REVENUE = 750;
 
 const kidForm = document.getElementById("kidForm");
 const kidsTable = document.getElementById("kidsTable");
@@ -623,6 +624,19 @@ const maxIsoDate = (first, second) => {
 const getStudentPayments = (kid) =>
   financePayments.filter((payment) => (payment.student_id || payment.studentId) === kid.id);
 
+const getPaymentTypeLabel = (paymentType) => {
+  const normalized = String(paymentType || "").toLowerCase();
+  if (normalized === "joining") return "Joining";
+  if (normalized === "jersey" || normalized === "jersey_refund") return "Jersey";
+  return "Renewal";
+};
+
+const getSignedPaymentAmount = (payment) => {
+  const amount = Number(payment?.amount || 0);
+  const paymentType = String(payment?.payment_type || payment?.paymentType || "").toLowerCase();
+  return paymentType === "jersey_refund" ? -amount : amount;
+};
+
 const getPaymentPlanLabel = (planType, monthsCovered) => {
   const plan = RENEWAL_PLANS[planType] || ADMISSION_FEE_PLANS[planType];
   if (plan?.title) return plan.title;
@@ -660,14 +674,16 @@ const getPlayerPaymentRows = (kid) => {
     });
   }
   payments.forEach((payment) => {
-    const months = getPaymentMonthsCovered(payment);
+    const paymentType = payment.payment_type || payment.paymentType;
+    const isJerseyPayment = ["jersey", "jersey_refund"].includes(String(paymentType || "").toLowerCase());
+    const months = isJerseyPayment ? 0 : getPaymentMonthsCovered(payment);
     rows.push({
       id: payment.id,
       date: payment.paid_on || payment.paidOn,
-      title: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Joining payment" : "Renewal payment",
-      plan: getPaymentPlanLabel(payment.plan_type || payment.planType, months),
+      title: `${getPaymentTypeLabel(paymentType)} payment`,
+      plan: isJerseyPayment ? "Jersey pair" : getPaymentPlanLabel(payment.plan_type || payment.planType, months),
       months,
-      amount: Number(payment.amount || 0),
+      amount: getSignedPaymentAmount(payment),
     });
   });
   return rows.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
@@ -682,13 +698,15 @@ const getPaidThroughDate = (kid) => {
     paidThrough = maxIsoDate(paidThrough, addMonthsIso(renewalDate, 1));
   });
 
-  getStudentPayments(kid).forEach((payment) => {
-    const cycleStart = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on || payment.paidOn;
-    const monthsCovered = getPaymentMonthsCovered(payment);
-    if (cycleStart) {
-      paidThrough = maxIsoDate(paidThrough, addMonthsIso(cycleStart, monthsCovered));
-    }
-  });
+  getStudentPayments(kid)
+    .filter((payment) => ["joining", "renewal"].includes(payment.payment_type || payment.paymentType))
+    .forEach((payment) => {
+      const cycleStart = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on || payment.paidOn;
+      const monthsCovered = getPaymentMonthsCovered(payment);
+      if (cycleStart) {
+        paidThrough = maxIsoDate(paidThrough, addMonthsIso(cycleStart, monthsCovered));
+      }
+    });
 
   return paidThrough;
 };
@@ -982,11 +1000,12 @@ const buildFinanceRevenueRows = () => {
   }));
   const renewalFees = financePayments.map((payment) => {
     const student = kids.find((kid) => kid.id === (payment.student_id || payment.studentId));
+    const paymentType = payment.payment_type || payment.paymentType;
     return {
       date: payment.paid_on || payment.paidOn,
       name: student?.name || "Unknown player",
-      type: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Joining" : "Renewal",
-      amount: Number(payment.amount || 0),
+      type: getPaymentTypeLabel(paymentType),
+      amount: getSignedPaymentAmount(payment),
     };
   });
   return [...initialFees, ...renewalFees].sort((a, b) => {
@@ -1008,9 +1027,13 @@ const renderFinanceMonthPopup = (monthKey) => {
   const renewalTotal = revenueRows
     .filter((row) => row.type === "Renewal")
     .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const jerseyTotal = revenueRows
+    .filter((row) => row.type === "Jersey")
+    .reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const expenseTotal = expenseRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const joiningCount = revenueRows.filter((row) => row.type === "Joining").length;
   const renewalCount = revenueRows.filter((row) => row.type === "Renewal").length;
+  const jerseyCount = revenueRows.filter((row) => row.type === "Jersey").length;
   const totalRecordCount = revenueRows.length + expenseRows.length;
   const renderRevenueRows = () => revenueRows.length
     ? revenueRows.map((row) => `
@@ -1044,6 +1067,7 @@ const renderFinanceMonthPopup = (monthKey) => {
         <div class="finance-summary-submetrics">
           <small>Joining <b>${joiningCount}</b> · <b>${rupees(joiningTotal)}</b></small>
           <small>Renewal <b>${renewalCount}</b> · <b>${rupees(renewalTotal)}</b></small>
+          <small>Jersey <b>${jerseyCount}</b> · <b>${rupees(jerseyTotal)}</b></small>
         </div>
       </div>
       <div class="finance-summary-card">
@@ -2464,9 +2488,32 @@ const renderKids = () => {
     const feeDueIsSafe = !feesPending && !renewalPending;
     const shouldPulseDuePill = reminderState.overdueDays >= 7;
     const lastPaymentAmount = (() => {
-      const allPayments = getStudentPayments(kid).sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
+      const allPayments = getStudentPayments(kid)
+        .filter((payment) => ["joining", "renewal"].includes(payment.payment_type || payment.paymentType))
+        .sort((a, b) => (b.paid_on || "").localeCompare(a.paid_on || ""));
       return allPayments.length > 0 ? allPayments[0].amount : kid.amountPaid;
     })();
+    const jerseyPairCount = Math.max(Number(kid.jerseyPairs || 0), 0);
+    const jerseyPairEditor = canEdit
+      ? `<div class="jersey-inline-editor">
+          <span class="meta-text">${escapeHtml(kid.jerseySize ? `Size ${kid.jerseySize}` : "Size TBD")}</span>
+          <div class="jersey-stepper" aria-label="Update jersey pair count">
+            <button data-action="jersey-pairs-dec" data-id="${kid.id}" type="button" ${jerseyPairCount <= 0 ? "disabled" : ""}>−</button>
+            <strong>${jerseyPairCount}</strong>
+            <button data-action="jersey-pairs-inc" data-id="${kid.id}" type="button">+</button>
+          </div>
+        </div>`
+      : `<span class="meta-text">${formatJerseyDetails(kid)}</span>`;
+    const mobileJerseyEditor = canEdit
+      ? `<div class="mobile-jersey-editor">
+          <span>Jersey pairs</span>
+          <div class="jersey-stepper">
+            <button data-action="jersey-pairs-dec" data-id="${kid.id}" type="button" ${jerseyPairCount <= 0 ? "disabled" : ""}>−</button>
+            <strong>${jerseyPairCount}</strong>
+            <button data-action="jersey-pairs-inc" data-id="${kid.id}" type="button">+</button>
+          </div>
+        </div>`
+      : "";
     const mobileRenewButton =
       canRenew
         ? `<button class="mobile-card-renew" data-action="renew-open" data-id="${kid.id}" type="button">
@@ -2485,6 +2532,7 @@ const renderKids = () => {
                 <span class="status-pill ${feeDisplay.className}">${feeDisplay.label}</span>
                 <span class="alert-pill ${feeDueIsSafe ? "safe" : ""} ${shouldPulseDuePill ? "critical-pulse" : ""}">${renewalStatus}</span>
                 ${mobileRenewButton}
+                ${mobileJerseyEditor}
               </div>
               <div class="mobile-edit-card-face mobile-edit-card-back">
                 <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
@@ -2512,7 +2560,7 @@ const renderKids = () => {
       </td>
       <td data-label="Age">${kid.age}</td>
       <td data-label="Time slot"><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
-      <td data-label="Jersey"><span class="meta-text">${formatJerseyDetails(kid)}</span></td>
+      <td data-label="Jersey">${jerseyPairEditor}</td>
       <td data-label="Status">
         <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">
           ${kid.discontinued ? "Discontinued" : "Active"}
@@ -3210,7 +3258,7 @@ const renderPlayerDetails = async (kid) => {
               <div class="payment-history-row">
                 <div>
                   <strong>${payment.title}</strong>
-                  <span>${formatDate(payment.date)} · ${payment.plan} · ${payment.months} month${payment.months === 1 ? "" : "s"}</span>
+                  <span>${formatDate(payment.date)} · ${payment.plan}${payment.months > 0 ? ` · ${payment.months} month${payment.months === 1 ? "" : "s"}` : ""}</span>
                 </div>
                 <div class="payment-action-cell">
                   <b>${rupees(payment.amount)}</b>
@@ -3483,7 +3531,7 @@ const loadFinance = async () => {
       })),
       ...financePayments.map((p) => ({ 
         paid_on: p.paid_on || p.paidOn, 
-        amount: p.amount, 
+        amount: getSignedPaymentAmount(p),
         payment_type: p.payment_type || p.paymentType || "renewal", 
         student_id: p.student_id || p.studentId,
         isInitial: false
@@ -3501,11 +3549,12 @@ const loadFinance = async () => {
         .map((payment) => {
           const kid = kids.find((k) => k.id === payment.student_id);
           const name = kid ? kid.name : "Unknown Player";
+          const paymentLabel = getPaymentTypeLabel(payment.payment_type);
           return `
             <tr>
               <td data-label="Date">${formatDate(payment.paid_on)}</td>
               <td data-label="Player"><strong>${name}</strong></td>
-              <td data-label="Type"><span class="type-pill ${payment.isInitial ? "new" : "returning"}">${payment.payment_type}</span></td>
+              <td data-label="Type"><span class="type-pill ${paymentLabel === "Jersey" ? "jersey" : payment.isInitial ? "new" : "returning"}">${paymentLabel}</span></td>
               <td data-label="Amount" class="amount-cell">Rs ${Number(payment.amount).toFixed(2)}</td>
             </tr>
           `;
@@ -3656,13 +3705,16 @@ const buildMonthlyExportData = async () => {
   }));
   const renewalFees = financePayments
     .filter((payment) => String(payment.paid_on || payment.paidOn || "").startsWith(range.key))
-    .map((payment) => ({
-      type: payment.payment_type === "joining" || payment.paymentType === "joining" ? "Admission" : "Renewal",
-      player: studentLookup.get(payment.student_id || payment.studentId)?.name || payment.student_id || payment.studentId || "",
-      date: payment.paid_on || payment.paidOn || "",
-      amount: Number(payment.amount || 0),
-      reference: payment.id || "",
-    }));
+    .map((payment) => {
+      const paymentType = payment.payment_type || payment.paymentType;
+      return {
+        type: paymentType === "joining" ? "Admission" : getPaymentTypeLabel(paymentType),
+        player: studentLookup.get(payment.student_id || payment.studentId)?.name || payment.student_id || payment.studentId || "",
+        date: payment.paid_on || payment.paidOn || "",
+        amount: getSignedPaymentAmount(payment),
+        reference: payment.id || "",
+      };
+    });
   const expenses = financeExpenses.filter((expense) => String(expense.expense_date || "").startsWith(range.key));
   const attendanceByStudent = attendanceRows.reduce((map, row) => {
     map.set(row.student_id, (map.get(row.student_id) || 0) + 1);
@@ -3933,6 +3985,76 @@ admissionReviewList?.addEventListener("click", async (event) => {
   showToast(approveButton ? "Admission approved and added to roster." : "Admission rejected.");
 });
 
+const updateJerseyPairCount = async (kid, nextCount, options = {}) => {
+  if (!kid || !isBackendReady || !isManagerLoggedIn || !isEditMode) {
+    return { success: false, message: "Click Edit before updating jersey pairs." };
+  }
+
+  const previousCount = Math.max(Number(kid.jerseyPairs || 0), 0);
+  const safeNextCount = Math.max(Number(nextCount || 0), 0);
+  const delta = safeNextCount - previousCount;
+
+  if (delta === 0) {
+    return { success: true, message: "Jersey pair count is unchanged." };
+  }
+
+  const managerEmail = getActiveManagerEmail();
+
+  if (options.patchStudent !== false) {
+    const { error: updateError } = await supabaseClient
+      .from("students")
+      .update({
+        jersey_pairs: safeNextCount,
+        updated_by: managerEmail,
+      })
+      .eq("id", kid.id);
+
+    if (updateError) {
+      return { success: false, message: updateError.message || "Unable to update jersey pairs." };
+    }
+  }
+
+  const isIncrease = delta > 0;
+  const amount = Math.abs(delta) * JERSEY_PAIR_REVENUE;
+  const { data: paymentRow, error: paymentError } = await supabaseClient
+    .from("student_payments")
+    .insert({
+      student_id: kid.id,
+      payment_type: isIncrease ? "jersey" : "jersey_refund",
+      plan_type: "jersey_pair",
+      cycle_start_date: toLocalIsoDate(),
+      months_covered: 1,
+      amount,
+      paid_on: toLocalIsoDate(),
+      comment: `${isIncrease ? "Jersey pair added" : "Jersey pair removed"}. Count ${previousCount} to ${safeNextCount}.`,
+      recorded_by: managerEmail,
+    })
+    .select("*")
+    .single();
+
+  if (paymentError) {
+    return {
+      success: false,
+      message: `Jersey count updated, but revenue entry failed: ${paymentError.message}`,
+    };
+  }
+
+  kid.jerseyPairs = safeNextCount;
+  if (paymentRow) {
+    financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
+  }
+
+  await loadFinance();
+  await loadKids();
+
+  return {
+    success: true,
+    message: isIncrease
+      ? `Added ${Math.abs(delta)} jersey pair${Math.abs(delta) === 1 ? "" : "s"} and recorded ${rupees(amount)} revenue.`
+      : `Removed ${Math.abs(delta)} jersey pair${Math.abs(delta) === 1 ? "" : "s"} and subtracted ${rupees(amount)} from revenue.`,
+  };
+};
+
 kidForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -4041,6 +4163,13 @@ kidForm.addEventListener("submit", async (event) => {
       ? "Player saved, but parent/school fields need the latest Supabase SQL migration."
       : "Gen Alpha player record saved successfully.";
 
+  if (wasEditing && currentKid && Number(currentKid.jerseyPairs || 0) !== Number(payload.jerseyPairs || 0)) {
+    const jerseyResult = await updateJerseyPairCount(currentKid, payload.jerseyPairs, { patchStudent: false });
+    if (!jerseyResult.success) {
+      showToast(jerseyResult.message);
+    }
+  }
+
   resetFormState();
   showToast(successMessage);
   if (wasEditing && currentKid && currentKid.feesPaid !== "yes" && payload.feesPaid === "yes") {
@@ -4126,6 +4255,17 @@ kidsTableBody.addEventListener("click", async (event) => {
   }
 
   if (!isBackendReady || !isManagerLoggedIn || !isEditMode) {
+    return;
+  }
+
+  if (action === "jersey-pairs-inc" || action === "jersey-pairs-dec") {
+    const kidToUpdate = kids.find((kid) => kid.id === id);
+    if (!kidToUpdate) return;
+    target.disabled = true;
+    const delta = action === "jersey-pairs-inc" ? 1 : -1;
+    const result = await updateJerseyPairCount(kidToUpdate, Math.max(Number(kidToUpdate.jerseyPairs || 0) + delta, 0));
+    target.disabled = false;
+    showToast(result.message);
     return;
   }
 

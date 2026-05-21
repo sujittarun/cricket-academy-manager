@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-15
+Last updated: 2026-05-21
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,20 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-21
+
+### Jersey Pair Counter and Revenue Ledger
+
+- Added inline jersey-pair +/- controls in roster Edit mode, including a compact phone-card control.
+- Each added pair records Rs 750 as `student_payments.payment_type = jersey`.
+- Each removed pair records `payment_type = jersey_refund`; the app treats it as negative revenue while keeping the stored amount positive for DB constraints.
+- Finance recent revenue, month details, exports, and player payment history now display jersey rows correctly.
+- Renewal due-date logic ignores jersey rows so jersey edits do not affect fee renewal calculations.
+- Bumped web cache assets to `v50`.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+  - Local preview loaded `script.js?v=50` and `styles.css?v=50`.
 
 ## 2026-05-15
 
