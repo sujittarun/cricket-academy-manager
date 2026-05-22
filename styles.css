@@ -720,6 +720,12 @@ body.popup-open {
   font-size: 0.92rem;
 }
 
+.field-hint {
+  color: var(--muted);
+  font-size: 0.78em;
+  font-weight: 700;
+}
+
 .form-message {
   margin: 0;
   align-self: end;
