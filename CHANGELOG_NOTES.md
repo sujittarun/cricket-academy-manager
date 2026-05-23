@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,18 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-23
+
+### Special Training Admission Logic
+
+- Fixed special-training admission amount so it is Rs 10,000 for 1 month instead of adding the admission fee and being inferred as quarterly coverage.
+- Added legacy detection for Rs 10,000 first payments so older special-training students show the roster tag and renew after 1 month.
+- Changed the web roster tag to a compact special-training badge.
+- Corrected Parvez Ali in Supabase by adding an explicit `student_payments` joining row with `plan_type = special` and `months_covered = 1`.
+- Bumped web cache assets to `v53`.
+- Verification done:
+  - `node --check web-app-repo/script.js`
 
 ## 2026-05-22
 

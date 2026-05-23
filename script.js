@@ -254,6 +254,12 @@ const PLAN_DISCOUNT_LABELS = {
   quarterly: "5% discount applied",
   halfyearly: "10% discount applied",
 };
+const getAdmissionBaseTotal = (planKey, customAmount = 0) => {
+  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  if (planKey === "custom") return Number(customAmount || 0);
+  if (planKey === "special") return selectedPlan.base;
+  return selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+};
 const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "need_help"];
 const REMINDER_PLAN_LABELS = {
   monthly: "1 Month",
@@ -612,6 +618,7 @@ const getInitialCoverageMonths = (kid) => {
   const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
   const roundedAmount = Math.round(amount);
 
+  if (roundedAmount === 10000) return 1;
   if (withoutAdmissionFee >= 18900 || [18900, 19400, 20000, 20500, 21000].includes(roundedAmount)) return 6;
   // Older records may only have total amount, not the selected plan. Treat both
   // discounted and full 3-month totals as quarterly coverage.
@@ -1862,10 +1869,9 @@ const syncAmountState = () => {
 };
 
 const syncAdmissionAmountState = () => {
-  const selectedPlan = ADMISSION_FEE_PLANS[admissionFeePlan?.value] || ADMISSION_FEE_PLANS.monthly;
-  const baseTotal = admissionFeePlan?.value === "custom"
-    ? Number(admissionCustomAmount?.value || 0)
-    : selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+  const planKey = admissionFeePlan?.value || "monthly";
+  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  const baseTotal = getAdmissionBaseTotal(planKey, admissionCustomAmount?.value);
   const extraJerseyPairs = getChargeableJerseyPairCount(admissionJerseyPairs?.value);
   const extraJerseyAmount = getExtraJerseyAmount(admissionJerseyPairs?.value);
   const total = baseTotal + extraJerseyAmount;
@@ -1873,13 +1879,15 @@ const syncAdmissionAmountState = () => {
     admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
   }
   if (admissionFeeSummary) {
-    const discountLabel = PLAN_DISCOUNT_LABELS[admissionFeePlan?.value];
+    const discountLabel = PLAN_DISCOUNT_LABELS[planKey];
     const jerseyCopy = extraJerseyPairs > 0
       ? ` + Rs ${extraJerseyAmount.toLocaleString("en-IN")} for ${extraJerseyPairs} extra jersey pair${extraJerseyPairs === 1 ? "" : "s"}`
       : "";
-    admissionFeeSummary.textContent = admissionFeePlan?.value === "custom"
+    admissionFeeSummary.textContent = planKey === "custom"
       ? `Custom amount: Rs ${baseTotal.toLocaleString("en-IN")}${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`
-      : `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")}${discountLabel ? ` (${discountLabel})` : ""} + Rs ${ADMISSION_ONE_TIME_FEE} admission${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`;
+      : planKey === "special"
+        ? `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")} for 1 month${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`
+        : `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")}${discountLabel ? ` (${discountLabel})` : ""} + Rs ${ADMISSION_ONE_TIME_FEE} admission${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`;
   }
   updatePaymentAssist();
 };
@@ -1927,10 +1935,7 @@ const buildPaymentIntentId = () =>
   `GA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
 const getAdmissionAmount = () => {
-  const selectedPlan = ADMISSION_FEE_PLANS[admissionFeePlan?.value] || ADMISSION_FEE_PLANS.monthly;
-  const baseAmount = admissionFeePlan?.value === "custom"
-    ? Number(admissionCustomAmount?.value || 0)
-    : selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+  const baseAmount = getAdmissionBaseTotal(admissionFeePlan?.value || "monthly", admissionCustomAmount?.value);
   return baseAmount + getExtraJerseyAmount(admissionJerseyPairs?.value);
 };
 
@@ -2312,10 +2317,14 @@ const updateAuthPanel = () => {
 };
 
 const isSpecialTraining = (kid) => {
-  const latest = getStudentPayments(kid)
-    .filter(p => p.payment_type === "renewal" || p.paymentType === "renewal")
-    .sort((a, b) => (b.cycle_start_date || b.cycleStartDate || "").localeCompare(a.cycle_start_date || a.cycleStartDate || ""))?.[0];
-  return latest?.plan_type === "special" || latest?.planType === "special";
+  const payments = getStudentPayments(kid);
+  if (payments.some((payment) => (payment.plan_type || payment.planType) === "special")) {
+    return true;
+  }
+  const firstPaymentAmount = Math.round(
+    Math.max(Number(kid.amountPaid || 0) - getExtraJerseyAmount(kid.jerseyPairs), 0),
+  );
+  return kid.feesPaid === "yes" && firstPaymentAmount === 10000;
 };
 
 const renderSummary = (alertKids) => {
@@ -2569,7 +2578,7 @@ const renderKids = () => {
       <td data-label="Player">
         <div class="player-name-cell">
           <button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button>
-          ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special Training">★ SPECIAL</span>' : ''}
+          ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
         </div>
         ${mobileEditCard}
       </td>

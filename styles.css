@@ -3010,16 +3010,22 @@ body.popup-open {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  background: #FFF9E6;
+  padding: 2px 7px;
+  background: rgba(244, 191, 42, 0.13);
   color: #8F6500;
-  border: 1px solid #F4BE2E;
-  border-radius: 8px;
-  font-size: 0.65rem;
+  border: 1px solid rgba(244, 191, 42, 0.5);
+  border-radius: 999px;
+  font-size: 0.58rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   pointer-events: none;
+}
+
+.special-tag svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
 }
 
 .special-tag.tiny {
