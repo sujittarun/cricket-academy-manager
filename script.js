@@ -125,12 +125,17 @@ const closePlayerDetailButton = document.getElementById("closePlayerDetailButton
 const renewalPopup = document.getElementById("renewalPopup");
 const renewalForm = document.getElementById("renewalForm");
 const closeRenewalButton = document.getElementById("closeRenewalButton");
+const renewalKicker = document.getElementById("renewalKicker");
+const renewalTitle = document.getElementById("renewalTitle");
 const renewalStudentId = document.getElementById("renewalStudentId");
+const renewalPaymentMode = document.getElementById("renewalPaymentMode");
 const renewalPlan = document.getElementById("renewalPlan");
 const renewalAmount = document.getElementById("renewalAmount");
+const renewalPaymentDate = document.getElementById("renewalPaymentDate");
 const renewalComment = document.getElementById("renewalComment");
 const renewalCycleInfo = document.getElementById("renewalCycleInfo");
 const renewalMessage = document.getElementById("renewalMessage");
+const renewalSaveButton = document.getElementById("renewalSaveButton");
 
 // Attendance
 // Attendance
@@ -877,6 +882,13 @@ const getRenewalAmountForPlan = () => {
   return Number(renewalAmount?.value || 0);
 };
 
+const getJoiningPaymentAmountForPlan = (kid, planKey = "monthly") => {
+  const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
+  if (planKey === "custom") return 0;
+  const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
+  return plan.amount + admissionFee + getExtraJerseyAmount(kid?.jerseyPairs || 0);
+};
+
 const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
 const compactRupees = (value) => {
   const amount = Number(value || 0);
@@ -1200,7 +1212,7 @@ const buildReceiptFromKid = (kid, overrides = {}) => ({
   guardianName: kid.fatherGuardianName || "Parent",
   parentContact: kid.parentContactNo || "",
   joinDate: kid.joinDate,
-  paidOn: toLocalIsoDate(),
+  paidOn: overrides.paidOn || toLocalIsoDate(),
   timeSlot: kid.timeSlot || "Not set",
   feesPaid: true,
   amountPaid: Number(overrides.amountPaid ?? kid.amountPaid ?? 0),
@@ -1209,14 +1221,14 @@ const buildReceiptFromKid = (kid, overrides = {}) => ({
   jerseyPairs: Number(overrides.jerseyPairs ?? kid.jerseyPairs ?? 0),
 });
 
-const buildRenewalReceiptFromKid = (kid, { plan, planTitle, monthsCovered, amount, cycleDate }) => ({
-  receiptType: "renewal",
+const buildRenewalReceiptFromKid = (kid, { plan, planTitle, monthsCovered, amount, cycleDate, paidOn, receiptType = "renewal" }) => ({
+  receiptType,
   regNo: kid.regNo || "Saved",
-  receiptNo: `GACA-REN-${kid.regNo || "NEW"}-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
+  receiptNo: `${receiptType === "joining" ? "GACA" : "GACA-REN"}-${kid.regNo || "NEW"}-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
   playerName: kid.name,
   guardianName: kid.fatherGuardianName || "Parent",
   parentContact: kid.parentContactNo || "",
-  paidOn: toLocalIsoDate(),
+  paidOn: paidOn || toLocalIsoDate(),
   timeSlot: kid.timeSlot || "Not set",
   feesPaid: true,
   amountPaid: Number(amount || 0),
@@ -2512,6 +2524,7 @@ const renderKids = () => {
     const feesPending = isFeesPending(kid);
     const needsAttention = feesPending || renewalPending;
     const canRenew = renewalPending && isActiveKid(kid);
+    const canRecordJoiningFee = feesPending && isActiveKid(kid);
     const studentType = getStudentType(kid);
     const latestRenewalRecord = getStudentPayments(kid)
       .filter(p => p.payment_type === "renewal" || p.paymentType === "renewal")
@@ -2552,10 +2565,10 @@ const renderKids = () => {
         </div>`
       : "";
     const mobileRenewButton =
-      canRenew
-        ? `<button class="mobile-card-renew" data-action="renew-open" data-id="${kid.id}" type="button">
+      canRenew || canRecordJoiningFee
+        ? `<button class="mobile-card-renew" data-action="${canRecordJoiningFee ? "joining-payment-open" : "renew-open"}" data-id="${kid.id}" type="button">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Renew Payment
+            ${canRecordJoiningFee ? "Joining Payment" : "Renew Payment"}
           </button>`
         : "";
     const mobileEditCard =
@@ -2574,6 +2587,7 @@ const renderKids = () => {
               <div class="mobile-edit-card-face mobile-edit-card-back">
                 <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
                 <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
+                ${canRecordJoiningFee ? `<button class="menu-item renew-item" data-action="joining-payment-open" data-id="${kid.id}" type="button">Record Joining Fee</button>` : ""}
                 <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
                 <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
               </div>
@@ -2584,7 +2598,7 @@ const renderKids = () => {
     const row = document.createElement("tr");
     row.dataset.playerRowId = kid.id;
     row.className = kid.discontinued ? "discontinued-row" : reminderState.isCritical ? "critical-row" : needsAttention ? "alert-row" : "";
-    if (canEdit && canRenew) {
+    if (canEdit && (canRenew || canRecordJoiningFee)) {
       row.classList.add("has-renew-footer");
     }
     row.innerHTML = `
@@ -2638,6 +2652,14 @@ const renderKids = () => {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
                   ${kid.discontinued ? "Mark as Active" : "Discontinue"}
                 </button>
+                ${
+                  canRecordJoiningFee
+                    ? `<button class="menu-item renew-item" data-action="joining-payment-open" data-id="${kid.id}" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        Record Joining Fee
+                      </button>`
+                    : ""
+                }
                 ${
                   canRenew
                     ? `<button class="menu-item renew-item" data-action="renew-open" data-id="${kid.id}" type="button">
@@ -3361,15 +3383,23 @@ const renderPlayerDetails = async (kid) => {
   document.body.classList.add("popup-open");
 };
 
-const openRenewalPopup = (kid) => {
+const openRenewalPopup = (kid, mode = "renewal") => {
   if (!kid || !renewalPopup) return;
-  const cycleDate = getDueCycleDate(kid);
+  const isJoiningFee = mode === "joining";
+  const cycleDate = isJoiningFee ? kid.joinDate : getDueCycleDate(kid);
   renewalStudentId.value = kid.id;
+  if (renewalPaymentMode) renewalPaymentMode.value = isJoiningFee ? "joining" : "renewal";
+  if (renewalKicker) renewalKicker.textContent = isJoiningFee ? "Joining Payment" : "Renewal Payment";
+  if (renewalTitle) renewalTitle.textContent = isJoiningFee ? "Record joining fee" : "Record fee payment";
   renewalPlan.value = "monthly";
-  renewalAmount.value = String(RENEWAL_PLANS.monthly.amount);
+  renewalAmount.value = String(isJoiningFee ? getJoiningPaymentAmountForPlan(kid, "monthly") : RENEWAL_PLANS.monthly.amount);
+  if (renewalPaymentDate) renewalPaymentDate.value = toLocalIsoDate();
   renewalComment.value = "";
-  renewalCycleInfo.textContent = `This records payment for cycle starting ${formatDate(cycleDate)}. Paid late does not change the student's usual fee date.`;
+  renewalCycleInfo.textContent = isJoiningFee
+    ? `This records the first fee from join date ${formatDate(cycleDate)}. Payment date is used for finance reports.`
+    : `This records payment for cycle starting ${formatDate(cycleDate)}. Paid late does not change the student's usual fee date.`;
   renewalMessage.textContent = "";
+  if (renewalSaveButton) renewalSaveButton.textContent = isJoiningFee ? "Save joining payment" : "Save renewal payment";
   renewalPopup.hidden = false;
   document.body.classList.add("popup-open");
 };
@@ -4394,6 +4424,22 @@ kidsTableBody.addEventListener("click", async (event) => {
     return;
   }
 
+  if (action === "joining-payment-open") {
+    const kidToPay = kids.find((kid) => kid.id === id);
+
+    if (!kidToPay) {
+      return;
+    }
+
+    if (!isFeesPending(kidToPay)) {
+      formMessage.textContent = "Joining fee is already marked as paid.";
+      return;
+    }
+
+    openRenewalPopup(kidToPay, "joining");
+    return;
+  }
+
   if (action === "toggle-status") {
     const kidToUpdate = kids.find((kid) => kid.id === id);
 
@@ -4464,8 +4510,10 @@ admissionAmountPaidNow?.addEventListener("input", updatePaymentAssist);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
+  const kid = kids.find((item) => item.id === renewalStudentId?.value);
+  const isJoiningFee = renewalPaymentMode?.value === "joining";
   if (renewalPlan.value !== "custom") {
-    renewalAmount.value = String(plan.amount);
+    renewalAmount.value = String(isJoiningFee ? getJoiningPaymentAmountForPlan(kid, renewalPlan.value) : plan.amount);
   }
   renewalAmount.readOnly = false; // Always allow manual adjustment
 });
@@ -4483,16 +4531,22 @@ renewalForm?.addEventListener("submit", async (event) => {
     renewalMessage.textContent = "Enter a valid renewal amount.";
     return;
   }
-  const cycleDate = getDueCycleDate(kid);
+  const isJoiningFee = renewalPaymentMode?.value === "joining";
+  const paymentDate = renewalPaymentDate?.value || toLocalIsoDate();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
+    renewalMessage.textContent = "Choose a valid payment date.";
+    return;
+  }
+  const cycleDate = isJoiningFee ? kid.joinDate : getDueCycleDate(kid);
   const renewals = [...kid.renewals, cycleDate];
   const { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert({
     student_id: kid.id,
-    payment_type: "renewal",
+    payment_type: isJoiningFee ? "joining" : "renewal",
     plan_type: renewalPlan.value,
     cycle_start_date: cycleDate,
     months_covered: plan.months,
     amount,
-    paid_on: toLocalIsoDate(),
+    paid_on: paymentDate,
     comment: renewalComment.value.trim(),
     recorded_by: getActiveManagerEmail(),
   }).select("*").single();
@@ -4503,7 +4557,7 @@ renewalForm?.addEventListener("submit", async (event) => {
   const { error: updateError } = await supabaseClient
     .from("students")
     .update({ 
-      renewals, 
+      ...(isJoiningFee ? { fees_paid: true, amount_paid: amount, payment_status: "paid" } : { renewals }),
       discontinued: false, 
       discontinued_at: null, 
       updated_by: getActiveManagerEmail() 
@@ -4520,12 +4574,18 @@ renewalForm?.addEventListener("submit", async (event) => {
   
   // 3. Show Receipt and Close Popup Instantly
   closeRenewalPopup();
-  latestAdmissionReceipt = buildRenewalReceiptFromKid(kid, {
+  latestAdmissionReceipt = isJoiningFee ? buildReceiptFromKid(kid, {
+    amountPaid: amount,
+    paidOn: paymentDate,
+    jerseySize: kid.jerseySize,
+    jerseyPairs: kid.jerseyPairs,
+  }) : buildRenewalReceiptFromKid(kid, {
     plan: renewalPlan.value,
     planTitle: plan.title,
     monthsCovered: plan.months,
     amount,
     cycleDate,
+    paidOn: paymentDate,
   });
   renderReceipt(latestAdmissionReceipt);
 
@@ -4536,7 +4596,7 @@ renewalForm?.addEventListener("submit", async (event) => {
       if (accessToken) {
         await callRenewalVerifiedFunction({
           kid,
-          planTitle: plan.title,
+          planTitle: isJoiningFee ? "Joining Fee" : plan.title,
           amount,
           cycleDate,
           toDate: renewalToDate,

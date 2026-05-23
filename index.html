@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=54" />
+    <link rel="stylesheet" href="./styles.css?v=55" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       (function() {
@@ -1122,13 +1122,14 @@
       <section class="player-popup panel" role="dialog" aria-modal="true" aria-labelledby="renewalTitle">
         <div class="payment-popup-header">
           <div>
-            <p class="section-kicker">Renewal Payment</p>
+            <p id="renewalKicker" class="section-kicker">Renewal Payment</p>
             <h3 id="renewalTitle">Record fee payment</h3>
           </div>
           <button id="closeRenewalButton" type="button" class="icon-button" aria-label="Close renewal popup">Close</button>
         </div>
         <form id="renewalForm" class="kid-form">
           <input id="renewalStudentId" type="hidden" />
+          <input id="renewalPaymentMode" type="hidden" value="renewal" />
           <label>
             Plan
             <select id="renewalPlan" name="renewalPlan">
@@ -1144,11 +1145,15 @@
             <input id="renewalAmount" name="renewalAmount" type="number" min="0" step="0.01" required />
           </label>
           <label>
+            Payment date
+            <input id="renewalPaymentDate" name="renewalPaymentDate" type="date" required />
+          </label>
+          <label>
             Comment
             <input id="renewalComment" name="renewalComment" type="text" placeholder="Optional note" />
           </label>
           <p id="renewalCycleInfo" class="records-helper"></p>
-          <button class="primary-btn" type="submit">Save renewal payment</button>
+          <button id="renewalSaveButton" class="primary-btn" type="submit">Save renewal payment</button>
           <p id="renewalMessage" class="form-message"></p>
         </form>
       </section>
@@ -1239,6 +1244,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=54"></script>
+    <script src="./script.js?v=55"></script>
   </body>
 </html>

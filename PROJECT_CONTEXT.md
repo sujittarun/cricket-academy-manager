@@ -74,6 +74,7 @@ Current fee constants:
 - Admission can still be submitted when parents pay a custom/partial amount.
 - Renewal amounts do not include admission fee.
 - Use selected plan/month count for due-date calculation, not manually typed amount.
+- Joining-fee-pending players can be marked paid from manager actions. Save `payment_type = joining`; use the selected payment date for finance (`paid_on`) and keep the cycle start on the player join date for next-fee-due logic.
 - 3-month and 6-month payments must extend due date by 3 or 6 months.
 - Renewal day should follow the join/cycle day, not the late payment date.
 - Example: joined March 3, paid renewal April 10; next cycle starts April 3, not April 10.
