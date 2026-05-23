@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=53" />
+    <link rel="stylesheet" href="./styles.css?v=54" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       (function() {
@@ -292,7 +292,7 @@
                   type="number"
                   min="0"
                   step="1"
-                  placeholder="First pair included"
+                  placeholder="e.g. 1"
                 />
               </label>
 
@@ -822,8 +822,26 @@
                       Custom amount
                       <input id="admissionCustomAmount" name="customAmount" type="number" min="0" step="0.01" placeholder="Enter amount" />
                     </label>
+                    <div id="admissionFeeBreakdown" class="admission-fee-breakdown full-span" aria-live="polite">
+                      <article>
+                        <span>Coaching fee</span>
+                        <strong id="admissionCoachingFee">Rs 3,500</strong>
+                      </article>
+                      <article>
+                        <span>Admission fee</span>
+                        <strong id="admissionOneTimeFee">Rs 500</strong>
+                      </article>
+                      <article>
+                        <span>Jersey amount</span>
+                        <strong id="admissionJerseyAmount">Rs 0</strong>
+                      </article>
+                      <article class="total">
+                        <span>Total</span>
+                        <strong id="admissionTotalAmount">Rs 4,000</strong>
+                      </article>
+                    </div>
                     <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
-                      Monthly: Rs 3,500 + Rs 500 admission. First payment Rs 4,000.
+                      Select jersey pairs to calculate the jersey amount. Parents can still submit if they paid a different amount.
                     </div>
                     <div id="admissionPaymentAssist" class="payment-entry-inline full-span">
                       <div class="payment-entry-side payment-entry-only-action">
@@ -855,7 +873,7 @@
                         type="number"
                         min="0"
                         step="1"
-                        placeholder="First pair included"
+                        placeholder="e.g. 1"
                       />
                     </label>
                   </div>
@@ -960,6 +978,10 @@
                 <option value="no">No</option>
                 <option value="yes">Paid by UPI - verify by manager</option>
               </select>
+            </label>
+            <label class="full-span" style="margin-bottom: 24px;">
+              Amount paid now <span class="field-hint">(optional)</span>
+              <input id="admissionAmountPaidNow" name="amountPaidNow" type="number" min="0" step="0.01" placeholder="Leave blank to use calculated total" />
             </label>
 
             <div class="admission-actions">
@@ -1217,6 +1239,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=53"></script>
+    <script src="./script.js?v=54"></script>
   </body>
 </html>

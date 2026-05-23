@@ -1,10 +1,9 @@
 const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
 const PAYMENT_CONFIG = window.GEN_ALPHA_PAYMENT_CONFIG ?? {};
 const JERSEY_PAIR_REVENUE = 750;
-const INCLUDED_JERSEY_PAIRS = 1;
 
 const getChargeableJerseyPairCount = (pairCount) =>
-  Math.max(Number(pairCount || 0) - INCLUDED_JERSEY_PAIRS, 0);
+  Math.max(Number(pairCount || 0), 0);
 
 const getExtraJerseyAmount = (pairCount) =>
   getChargeableJerseyPairCount(pairCount) * JERSEY_PAIR_REVENUE;
@@ -85,6 +84,11 @@ const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionFeePlan = document.getElementById("admissionFeePlan");
 const admissionCustomAmountLabel = document.getElementById("admissionCustomAmountLabel");
 const admissionCustomAmount = document.getElementById("admissionCustomAmount");
+const admissionAmountPaidNow = document.getElementById("admissionAmountPaidNow");
+const admissionCoachingFee = document.getElementById("admissionCoachingFee");
+const admissionOneTimeFee = document.getElementById("admissionOneTimeFee");
+const admissionJerseyAmount = document.getElementById("admissionJerseyAmount");
+const admissionTotalAmount = document.getElementById("admissionTotalAmount");
 const admissionFeeSummary = document.getElementById("admissionFeeSummary");
 const admissionJerseySize = document.getElementById("admissionJerseySize");
 const admissionJerseyPairs = document.getElementById("admissionJerseyPairs");
@@ -254,11 +258,17 @@ const PLAN_DISCOUNT_LABELS = {
   quarterly: "5% discount applied",
   halfyearly: "10% discount applied",
 };
-const getAdmissionBaseTotal = (planKey, customAmount = 0) => {
+const getAdmissionFeeBreakdown = () => {
+  const planKey = admissionFeePlan?.value || "monthly";
   const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
-  if (planKey === "custom") return Number(customAmount || 0);
-  if (planKey === "special") return selectedPlan.base;
-  return selectedPlan.base + ADMISSION_ONE_TIME_FEE;
+  const coachingFee = planKey === "custom"
+    ? Number(admissionCustomAmount?.value || 0)
+    : selectedPlan.base;
+  const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
+  const jerseyPairs = getChargeableJerseyPairCount(admissionJerseyPairs?.value);
+  const jerseyAmount = getExtraJerseyAmount(admissionJerseyPairs?.value);
+  const total = coachingFee + admissionFee + jerseyAmount;
+  return { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
 };
 const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "need_help"];
 const REMINDER_PLAN_LABELS = {
@@ -1869,25 +1879,24 @@ const syncAmountState = () => {
 };
 
 const syncAdmissionAmountState = () => {
-  const planKey = admissionFeePlan?.value || "monthly";
-  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
-  const baseTotal = getAdmissionBaseTotal(planKey, admissionCustomAmount?.value);
-  const extraJerseyPairs = getChargeableJerseyPairCount(admissionJerseyPairs?.value);
-  const extraJerseyAmount = getExtraJerseyAmount(admissionJerseyPairs?.value);
-  const total = baseTotal + extraJerseyAmount;
+  const { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total } = getAdmissionFeeBreakdown();
   if (admissionCustomAmountLabel) {
     admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
   }
+  if (admissionCoachingFee) admissionCoachingFee.textContent = rupees(coachingFee);
+  if (admissionOneTimeFee) admissionOneTimeFee.textContent = rupees(admissionFee);
+  if (admissionJerseyAmount) admissionJerseyAmount.textContent = rupees(jerseyAmount);
+  if (admissionTotalAmount) admissionTotalAmount.textContent = rupees(total);
   if (admissionFeeSummary) {
     const discountLabel = PLAN_DISCOUNT_LABELS[planKey];
-    const jerseyCopy = extraJerseyPairs > 0
-      ? ` + Rs ${extraJerseyAmount.toLocaleString("en-IN")} for ${extraJerseyPairs} extra jersey pair${extraJerseyPairs === 1 ? "" : "s"}`
+    const jerseyCopy = jerseyPairs > 0
+      ? ` Jersey: ${jerseyPairs} pair${jerseyPairs === 1 ? "" : "s"} x Rs ${JERSEY_PAIR_REVENUE}.`
       : "";
     admissionFeeSummary.textContent = planKey === "custom"
-      ? `Custom amount: Rs ${baseTotal.toLocaleString("en-IN")}${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`
+      ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Parents can still submit if they paid a different amount.`
       : planKey === "special"
-        ? `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")} for 1 month${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`
-        : `${selectedPlan.title}: Rs ${selectedPlan.base.toLocaleString("en-IN")}${discountLabel ? ` (${discountLabel})` : ""} + Rs ${ADMISSION_ONE_TIME_FEE} admission${jerseyCopy}. First payment Rs ${total.toLocaleString("en-IN")}.`;
+        ? `${selectedPlan.title}: ${rupees(selectedPlan.base)} for 1 month.${jerseyCopy} Parents can still submit if they paid a different amount.`
+        : `${selectedPlan.title}${discountLabel ? ` (${discountLabel})` : ""}: total due ${rupees(total)}.${jerseyCopy} Parents can still submit if they paid a different amount.`;
   }
   updatePaymentAssist();
 };
@@ -1935,8 +1944,12 @@ const buildPaymentIntentId = () =>
   `GA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
 const getAdmissionAmount = () => {
-  const baseAmount = getAdmissionBaseTotal(admissionFeePlan?.value || "monthly", admissionCustomAmount?.value);
-  return baseAmount + getExtraJerseyAmount(admissionJerseyPairs?.value);
+  return getAdmissionFeeBreakdown().total;
+};
+
+const getAdmissionPaymentAmount = () => {
+  const overrideAmount = Number(admissionAmountPaidNow?.value || 0);
+  return overrideAmount > 0 ? overrideAmount : getAdmissionAmount();
 };
 
 const getPaymentDescriptor = () => {
@@ -1955,7 +1968,7 @@ const buildUpiQueryString = (params) =>
   ).toString();
 
 const buildBaseUpiQuery = () => {
-  const amount = getAdmissionAmount();
+  const amount = getAdmissionPaymentAmount();
   return buildUpiQueryString({
     pa: academyPaymentConfig.upiId,
     pn: academyPaymentConfig.payeeName,
@@ -1995,7 +2008,7 @@ const setPendingPaymentReturn = (provider) => {
     JSON.stringify({
       provider,
       timestamp: Date.now(),
-      amount: getAdmissionAmount(),
+      amount: getAdmissionPaymentAmount(),
     })
   );
 };
@@ -2119,7 +2132,7 @@ const updatePaymentAssist = () => {
   }
 
   const hasConfig = Boolean(academyPaymentConfig.upiId);
-  const amount = getAdmissionAmount();
+  const amount = getAdmissionPaymentAmount();
 
   if (paymentMerchantUpiId) paymentMerchantUpiId.textContent = hasConfig ? academyPaymentConfig.upiId : "Not configured";
   if (paymentMerchantMobile) paymentMerchantMobile.textContent = academyPaymentConfig.mobileNumber || "Not available";
@@ -4044,7 +4057,7 @@ const updateJerseyPairCount = async (kid, nextCount, options = {}) => {
     await loadKids();
     return {
       success: true,
-      message: "Jersey pair count updated. The first pair is included, so no extra charge was recorded.",
+      message: "Jersey pair count updated.",
     };
   }
 
@@ -4060,7 +4073,7 @@ const updateJerseyPairCount = async (kid, nextCount, options = {}) => {
       months_covered: 1,
       amount,
       paid_on: toLocalIsoDate(),
-      comment: `${isIncrease ? "Extra jersey pair added" : "Extra jersey pair removed"}. Count ${previousCount} to ${safeNextCount}. First pair is included.`,
+      comment: `${isIncrease ? "Jersey pair added" : "Jersey pair removed"}. Count ${previousCount} to ${safeNextCount}.`,
       recorded_by: managerEmail,
     })
     .select("*")
@@ -4084,8 +4097,8 @@ const updateJerseyPairCount = async (kid, nextCount, options = {}) => {
   return {
     success: true,
     message: isIncrease
-      ? `Added ${Math.abs(chargeableDelta)} extra jersey pair${Math.abs(chargeableDelta) === 1 ? "" : "s"} and recorded ${rupees(amount)} revenue.`
-      : `Removed ${Math.abs(chargeableDelta)} extra jersey pair${Math.abs(chargeableDelta) === 1 ? "" : "s"} and subtracted ${rupees(amount)} from revenue.`,
+      ? `Added ${Math.abs(chargeableDelta)} jersey pair${Math.abs(chargeableDelta) === 1 ? "" : "s"} and recorded ${rupees(amount)} revenue.`
+      : `Removed ${Math.abs(chargeableDelta)} jersey pair${Math.abs(chargeableDelta) === 1 ? "" : "s"} and subtracted ${rupees(amount)} from revenue.`,
   };
 };
 
@@ -4447,6 +4460,7 @@ admissionBirthYear.addEventListener("change", updateAdmissionAge);
 admissionFeePlan?.addEventListener("change", syncAdmissionAmountState);
 admissionCustomAmount?.addEventListener("input", syncAdmissionAmountState);
 admissionJerseyPairs?.addEventListener("input", syncAdmissionAmountState);
+admissionAmountPaidNow?.addEventListener("input", updatePaymentAssist);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
@@ -4877,7 +4891,7 @@ admissionForm.addEventListener("submit", async (event) => {
     p_time_slot: String(formData.get("timeSlot") || "").trim(),
     p_join_date: String(formData.get("joinDate") || "").trim(),
     p_fees_paid: false,
-    p_amount_paid: paymentSubmittedForVerification ? getAdmissionAmount() : 0,
+    p_amount_paid: paymentSubmittedForVerification ? getAdmissionPaymentAmount() : 0,
     p_grade: String(formData.get("grade") || "").trim(),
     p_jersey_size: String(formData.get("jerseySize") || "").trim(),
     p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),

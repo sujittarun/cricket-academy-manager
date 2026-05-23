@@ -69,7 +69,9 @@ Current fee constants:
 - 6 months base before discount: Rs 21,000.
 - 6 months payable after 10% discount: Rs 18,900.
 - Special training: Rs 10,000 per month.
-- Admission first payment adds Rs 500 one-time fee to selected plan.
+- Admission first payment shows separate coaching fee, one-time admission fee, and jersey amount boxes.
+- Jersey pairs are charged at Rs 750 per pair; there is no free first-pair rule.
+- Admission can still be submitted when parents pay a custom/partial amount.
 - Renewal amounts do not include admission fee.
 - Use selected plan/month count for due-date calculation, not manually typed amount.
 - 3-month and 6-month payments must extend due date by 3 or 6 months.

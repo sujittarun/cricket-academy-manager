@@ -3505,6 +3505,42 @@ body.popup-open {
   padding: 10px 12px;
 }
 
+.admission-fee-breakdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admission-fee-breakdown article {
+  min-height: 74px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(21, 81, 173, 0.12);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(235, 243, 255, 0.86));
+  display: grid;
+  align-content: center;
+  gap: 5px;
+}
+
+.admission-fee-breakdown span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admission-fee-breakdown strong {
+  color: var(--accent-dark);
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+
+.admission-fee-breakdown article.total {
+  border-color: rgba(244, 191, 42, 0.45);
+  background: linear-gradient(145deg, rgba(255, 250, 229, 0.98), rgba(255, 255, 255, 0.92));
+}
+
 .payment-entry-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -4471,6 +4507,7 @@ body.popup-open {
 
   .compact-grid-three,
   .compact-grid-two,
+  .admission-fee-breakdown,
   .dob-compact-row,
   .admission-style-layout,
   .payment-app-grid,
