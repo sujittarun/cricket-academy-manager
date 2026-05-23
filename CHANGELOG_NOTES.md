@@ -15,6 +15,17 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-23
 
+### Player Edit Fee Split and Blank Values
+
+- Added a compact manager/player edit fee split showing coaching fee, admission fee, jersey amount, and total due.
+- Blank amount values are accepted and saved as Rs 0 instead of blocking saves.
+- Hardened amount and jersey pair parsing so blank values do not write `NaN` to Supabase.
+- Kept renewal pricing unchanged: monthly Rs 3,500, 3 months Rs 9,975, 6 months Rs 18,900.
+- Fixed small-screen roster edit cards so the player name remains visible.
+- Bumped web cache assets to `v56`.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+
 ### Joining Fee Payment Action
 
 - Added a roster action for joining-fee-pending players to record the first fee payment through the payment popup.

@@ -2,8 +2,13 @@ const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
 const PAYMENT_CONFIG = window.GEN_ALPHA_PAYMENT_CONFIG ?? {};
 const JERSEY_PAIR_REVENUE = 750;
 
+const parseNonNegativeNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+};
+
 const getChargeableJerseyPairCount = (pairCount) =>
-  Math.max(Number(pairCount || 0), 0);
+  Math.floor(parseNonNegativeNumber(pairCount, 0));
 
 const getExtraJerseyAmount = (pairCount) =>
   getChargeableJerseyPairCount(pairCount) * JERSEY_PAIR_REVENUE;
@@ -21,6 +26,11 @@ const feesPaidSelect = document.getElementById("feesPaid");
 const amountPaidInput = document.getElementById("amountPaid");
 const jerseySizeSelect = document.getElementById("jerseySize");
 const jerseyPairsInput = document.getElementById("jerseyPairs");
+const managerCoachingFee = document.getElementById("managerCoachingFee");
+const managerAdmissionFee = document.getElementById("managerAdmissionFee");
+const managerJerseyAmount = document.getElementById("managerJerseyAmount");
+const managerTotalAmount = document.getElementById("managerTotalAmount");
+const managerFeeSummary = document.getElementById("managerFeeSummary");
 const joinDateInput = document.getElementById("joinDate");
 const formMessage = document.getElementById("formMessage");
 const saveButton = document.getElementById("saveButton");
@@ -267,7 +277,7 @@ const getAdmissionFeeBreakdown = () => {
   const planKey = admissionFeePlan?.value || "monthly";
   const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
   const coachingFee = planKey === "custom"
-    ? Number(admissionCustomAmount?.value || 0)
+    ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
     : selectedPlan.base;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   const jerseyPairs = getChargeableJerseyPairCount(admissionJerseyPairs?.value);
@@ -569,9 +579,9 @@ const toDatabasePayload = ({
     time_slot: timeSlot,
     join_date: joinDate,
     fees_paid: feesPaid === "yes",
-    amount_paid: Number(amountPaid),
+    amount_paid: parseNonNegativeNumber(amountPaid, 0),
     jersey_size: String(jerseySize || "").trim(),
-    jersey_pairs: Number(jerseyPairs) || 0,
+    jersey_pairs: getChargeableJerseyPairCount(jerseyPairs),
     renewals,
     added_by: addedBy,
     updated_by: updatedBy,
@@ -1888,6 +1898,35 @@ const syncAmountState = () => {
   if (!isPaid) {
     amountPaidInput.value = "0";
   }
+
+  syncManagerFeeBreakdown();
+};
+
+const getManagerFeeBreakdown = () => {
+  const coachingFee = ADMISSION_FEE_PLANS.monthly.base;
+  const admissionFee = ADMISSION_ONE_TIME_FEE;
+  const jerseyPairs = getChargeableJerseyPairCount(jerseyPairsInput?.value);
+  const jerseyAmount = getExtraJerseyAmount(jerseyPairsInput?.value);
+  const total = coachingFee + admissionFee + jerseyAmount;
+  const amountPaid = parseNonNegativeNumber(amountPaidInput?.value, 0);
+  return { coachingFee, admissionFee, jerseyPairs, jerseyAmount, total, amountPaid };
+};
+
+const syncManagerFeeBreakdown = () => {
+  const { coachingFee, admissionFee, jerseyPairs, jerseyAmount, total, amountPaid } = getManagerFeeBreakdown();
+  if (managerCoachingFee) managerCoachingFee.textContent = rupees(coachingFee);
+  if (managerAdmissionFee) managerAdmissionFee.textContent = rupees(admissionFee);
+  if (managerJerseyAmount) managerJerseyAmount.textContent = rupees(jerseyAmount);
+  if (managerTotalAmount) managerTotalAmount.textContent = rupees(total);
+  if (managerFeeSummary) {
+    const pairCopy = jerseyPairs > 0
+      ? ` Jersey: ${jerseyPairs} pair${jerseyPairs === 1 ? "" : "s"} x Rs ${JERSEY_PAIR_REVENUE}.`
+      : " Jersey pairs are optional and can be updated later.";
+    const paidCopy = amountPaid > 0
+      ? ` Amount paid now: ${rupees(amountPaid)}.`
+      : " Blank amount is saved as Rs 0.";
+    managerFeeSummary.textContent = `Suggested first admission split: coaching + admission + jersey = ${rupees(total)}.${pairCopy}${paidCopy}`;
+  }
 };
 
 const syncAdmissionAmountState = () => {
@@ -1960,7 +1999,7 @@ const getAdmissionAmount = () => {
 };
 
 const getAdmissionPaymentAmount = () => {
-  const overrideAmount = Number(admissionAmountPaidNow?.value || 0);
+  const overrideAmount = parseNonNegativeNumber(admissionAmountPaidNow?.value, 0);
   return overrideAmount > 0 ? overrideAmount : getAdmissionAmount();
 };
 
@@ -2576,7 +2615,7 @@ const renderKids = () => {
         ? `<div class="mobile-edit-card-shell">
             <div class="mobile-edit-card-inner">
               <div class="mobile-edit-card-face mobile-edit-card-front">
-                <div class="mobile-card-name">${kid.name}</div>
+                <div class="mobile-card-name" title="${escapeHtml(kid.name)}">${escapeHtml(kid.name)}</div>
                 <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">${kid.discontinued ? "Discontinued" : "Active"}</span>
                 <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
                 <span class="status-pill ${feeDisplay.className}">${feeDisplay.label}</span>
@@ -4149,9 +4188,9 @@ kidForm.addEventListener("submit", async (event) => {
     timeSlot: formData.get("timeSlot").toString(),
     joinDate: formData.get("joinDate").toString(),
     feesPaid: formData.get("feesPaid").toString(),
-    amountPaid: Number(formData.get("amountPaid")),
+    amountPaid: parseNonNegativeNumber(formData.get("amountPaid"), 0),
     jerseySize: formData.get("jerseySize").toString(),
-    jerseyPairs: Number(formData.get("jerseyPairs") || 0),
+    jerseyPairs: getChargeableJerseyPairCount(formData.get("jerseyPairs")),
     renewals: [],
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
@@ -4498,6 +4537,8 @@ editModeButton.addEventListener("click", () => {
 });
 
 feesPaidSelect.addEventListener("change", syncAmountState);
+amountPaidInput?.addEventListener("input", syncManagerFeeBreakdown);
+jerseyPairsInput?.addEventListener("input", syncManagerFeeBreakdown);
 admissionFeesPaid.addEventListener("change", syncAdmissionAmountState);
 admissionReadyToStart.addEventListener("change", syncAdmissionStyleState);
 admissionBirthDay.addEventListener("change", updateAdmissionAge);

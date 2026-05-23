@@ -889,6 +889,39 @@ body.popup-open {
   grid-column: span 2;
 }
 
+#formPanel .manager-fee-breakdown,
+#formPanel .manager-fee-summary {
+  grid-column: 1 / -1;
+}
+
+#formPanel .manager-fee-breakdown {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#formPanel .manager-fee-breakdown article {
+  min-height: 58px;
+  padding: 10px;
+  border-radius: 14px;
+}
+
+#formPanel .manager-fee-breakdown span {
+  font-size: 0.62rem;
+}
+
+#formPanel .manager-fee-breakdown strong {
+  font-size: 0.94rem;
+}
+
+#formPanel .manager-fee-summary {
+  min-height: auto;
+  margin: -2px 0 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 #formPanel .form-message {
   min-height: 36px;
   display: flex;
@@ -8598,14 +8631,23 @@ body.popup-open {
 
   #rosterView .mobile-card-name {
     grid-area: name;
+    position: relative;
+    z-index: 6;
+    display: block !important;
     min-width: 0;
+    max-width: 100%;
     color: #09285a;
     font-size: 1rem;
     font-weight: 950;
     line-height: 1.16;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.84);
   }
 
   #rosterView .mobile-edit-card-front .state-pill {
