@@ -2701,6 +2701,7 @@ const renderKids = () => {
           </div>
         </div>`
       : "";
+    const safeKidName = escapeHtml(kid.name || "Unnamed player");
     const mobileRenewButton =
       canRenew || canRecordJoiningFee
         ? `<button class="mobile-card-renew" data-action="${canRecordJoiningFee ? "joining-payment-open" : "renew-open"}" data-id="${kid.id}" type="button">
@@ -2713,7 +2714,7 @@ const renderKids = () => {
         ? `<div class="mobile-edit-card-shell">
             <div class="mobile-edit-card-inner">
               <div class="mobile-edit-card-face mobile-edit-card-front">
-                <div class="mobile-card-name" title="${escapeHtml(kid.name)}">${escapeHtml(kid.name)}</div>
+                <div class="mobile-card-name" title="${safeKidName}">${safeKidName}</div>
                 <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">${kid.discontinued ? "Discontinued" : "Active"}</span>
                 <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
                 <span class="status-pill ${feeDisplay.className}">${feeDisplay.label}</span>
@@ -2722,6 +2723,7 @@ const renderKids = () => {
                 ${mobileJerseyEditor}
               </div>
               <div class="mobile-edit-card-face mobile-edit-card-back">
+                <div class="mobile-card-back-title" title="${safeKidName}">${safeKidName}</div>
                 <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
                 <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
                 ${canRecordJoiningFee ? `<button class="menu-item renew-item" data-action="joining-payment-open" data-id="${kid.id}" type="button">Record Joining Fee</button>` : ""}

@@ -22,6 +22,9 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
 - After logout, return to admission-only landing page.
 - If a shared feature changes in web, check Android too.
 - If a field is added, check Supabase schema/RPC, web form/render/edit flows, Android models/repository/UI, receipts/finance/timeline if relevant.
+- For code/UI changes, do a proper audit before finishing: inspect the diff, think through edge cases, and test rough UI edges such as small screens, long text, flipped/expanded states, empty or optional values, and stale-cache behavior when relevant.
+- For browser UI changes, verify the rendered app at the affected viewport(s), including mobile when the bug is mobile-only. A passing syntax/build check is not enough for visible layout work.
+- Going forward, completed code changes should be committed and pushed to GitHub after verification unless the user explicitly says to keep the work local, skip pushing, or pause before publishing.
 - Update `CHANGELOG_NOTES.md` automatically for meaningful feature work, bug fixes, database changes, UI redesigns, payment/reminder changes, and anything pushed to GitHub.
 - Update this context only when stable project truth changes.
 
