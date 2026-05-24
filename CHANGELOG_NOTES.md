@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-24
+Last updated: 2026-05-25
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,19 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-25
+
+### Simplified Admission Amount Paid Wiring
+
+- Removed the visible manual "Amount paid" override from public admission and manager player create/edit forms.
+- Kept the database/RPC `amount_paid` wiring stable: paid/pending admissions now submit the calculated total, unpaid submissions submit Rs 0, and existing paid player edits preserve the stored paid amount.
+- Custom or partial collections should use the manager joining-fee or renewal payment action, where the payment amount remains editable.
+- Bumped web cache assets to `v60`.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+  - `git diff --check`
+  - Small-screen browser check at 390 px confirmed admission has no `Amount paid now`, manager edit form has no manual amount field, and edit-card player names are visible without overlapping status.
 
 ## 2026-05-24
 

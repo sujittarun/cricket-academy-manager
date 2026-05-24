@@ -39,7 +39,6 @@ const criticalAlertCard = document.getElementById("criticalAlertCard");
 const criticalAlertCount = document.getElementById("criticalAlertCount");
 const criticalAlertSummary = document.getElementById("criticalAlertSummary");
 const feesPaidSelect = document.getElementById("feesPaid");
-const amountPaidInput = document.getElementById("amountPaid");
 const jerseySizeSelect = document.getElementById("jerseySize");
 const jerseyPairsInput = document.getElementById("jerseyPairs");
 const managerCoachingFee = document.getElementById("managerCoachingFee");
@@ -110,7 +109,6 @@ const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionFeePlan = document.getElementById("admissionFeePlan");
 const admissionCustomAmountLabel = document.getElementById("admissionCustomAmountLabel");
 const admissionCustomAmount = document.getElementById("admissionCustomAmount");
-const admissionAmountPaidNow = document.getElementById("admissionAmountPaidNow");
 const admissionCoachingFee = document.getElementById("admissionCoachingFee");
 const admissionOneTimeFee = document.getElementById("admissionOneTimeFee");
 const admissionJerseyAmount = document.getElementById("admissionJerseyAmount");
@@ -1967,13 +1965,6 @@ const showToast = (message) => {
 };
 
 const syncAmountState = () => {
-  const isPaid = feesPaidSelect.value === "yes" && isManagerLoggedIn && isBackendReady;
-  amountPaidInput.disabled = !isPaid;
-
-  if (!isPaid) {
-    amountPaidInput.value = "0";
-  }
-
   syncManagerFeeBreakdown();
 };
 
@@ -1984,12 +1975,11 @@ const getManagerFeeBreakdown = () => {
   const admissionFee = readMoneyField(managerAdmissionFee, ADMISSION_ONE_TIME_FEE);
   const jerseyAmount = hasJerseySize ? readMoneyField(managerJerseyAmount, getExtraJerseyAmount(jerseyPairsInput?.value)) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
-  const amountPaid = parseNonNegativeNumber(amountPaidInput?.value, 0);
-  return { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total, amountPaid };
+  return { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total };
 };
 
 const syncManagerFeeBreakdown = () => {
-  const { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total, amountPaid } = getManagerFeeBreakdown();
+  const { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total } = getManagerFeeBreakdown();
   if (jerseyPairsInput) {
     jerseyPairsInput.disabled = !hasJerseySize;
     if (!hasJerseySize && jerseyPairsInput.value) {
@@ -2007,9 +1997,9 @@ const syncManagerFeeBreakdown = () => {
       : hasJerseySize
         ? " Jersey pair count can stay blank and be updated later."
         : " Select a jersey size only if the player is taking a jersey.";
-    const paidCopy = amountPaid > 0
-      ? ` Amount paid now: ${rupees(amountPaid)}.`
-      : " Blank amount is saved as Rs 0.";
+    const paidCopy = feesPaidSelect?.value === "yes"
+      ? ` Marked paid saves ${rupees(total)} as the joining amount.`
+      : " Unpaid saves Rs 0 until joining payment is recorded.";
     managerFeeSummary.textContent = `Suggested first admission split: coaching + admission + jersey = ${rupees(total)}.${pairCopy}${paidCopy}`;
   }
 };
@@ -2039,10 +2029,10 @@ const syncAdmissionAmountState = () => {
         ? " Jersey pair count can stay blank and be updated later."
         : " Select a jersey size only if the player is taking a jersey.";
     admissionFeeSummary.textContent = planKey === "custom"
-      ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Parents can still submit if they paid a different amount.`
+      ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
       : planKey === "special"
-        ? `${selectedPlan.title}: ${rupees(selectedPlan.base)} for 1 month.${jerseyCopy} Parents can still submit if they paid a different amount.`
-        : `${selectedPlan.title}${discountLabel ? ` (${discountLabel})` : ""}: total due ${rupees(total)}.${jerseyCopy} Parents can still submit if they paid a different amount.`;
+        ? `${selectedPlan.title}: ${rupees(selectedPlan.base)} for 1 month.${jerseyCopy} Payment marked made is submitted for manager verification.`
+        : `${selectedPlan.title}${discountLabel ? ` (${discountLabel})` : ""}: total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`;
   }
   updatePaymentAssist();
 };
@@ -2097,8 +2087,7 @@ const getAdmissionAmount = () => {
 };
 
 const getAdmissionPaymentAmount = () => {
-  const overrideAmount = parseNonNegativeNumber(admissionAmountPaidNow?.value, 0);
-  return overrideAmount > 0 ? overrideAmount : getAdmissionAmount();
+  return getAdmissionAmount();
 };
 
 const getPaymentDescriptor = () => {
@@ -4306,13 +4295,22 @@ kidForm.addEventListener("submit", async (event) => {
   const formData = new FormData(kidForm);
   const jerseySizeValue = String(formData.get("jerseySize") || "").trim();
   const managerFeeSplit = getManagerFeeBreakdown();
+  const wasEditing = Boolean(editingKidId);
+  const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
+  const feesPaidValue = formData.get("feesPaid").toString();
+  const existingPaidAmount = parseNonNegativeNumber(currentKid?.amountPaid, 0);
+  const derivedAmountPaid = feesPaidValue === "yes"
+    ? existingPaidAmount > 0
+      ? existingPaidAmount
+      : managerFeeSplit.total
+    : 0;
   const payload = {
     name: formData.get("name").toString().trim(),
     age: Number(formData.get("age")),
     timeSlot: formData.get("timeSlot").toString(),
     joinDate: formData.get("joinDate").toString(),
-    feesPaid: formData.get("feesPaid").toString(),
-    amountPaid: parseNonNegativeNumber(formData.get("amountPaid"), 0),
+    feesPaid: feesPaidValue,
+    amountPaid: derivedAmountPaid,
     feePlan: "monthly",
     coachingFee: managerFeeSplit.coachingFee,
     admissionFee: managerFeeSplit.admissionFee,
@@ -4347,8 +4345,6 @@ kidForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  const wasEditing = Boolean(editingKidId);
-  const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
   let error = null;
   let savedWithoutProfileFields = false;
   let savedWithoutFeeFields = false;
@@ -4578,7 +4574,6 @@ kidsTableBody.addEventListener("click", async (event) => {
     }
 
     feesPaidSelect.value = kidToEdit.feesPaid;
-    amountPaidInput.value = String(kidToEdit.amountPaid);
     jerseySizeSelect.value = kidToEdit.jerseySize || "";
     jerseyPairsInput.value = String(kidToEdit.jerseyPairs || 0);
     writeMoneyField(managerCoachingFee, kidToEdit.coachingFee || ADMISSION_FEE_PLANS.monthly.base);
@@ -4704,7 +4699,6 @@ editModeButton.addEventListener("click", () => {
 });
 
 feesPaidSelect.addEventListener("change", syncAmountState);
-amountPaidInput?.addEventListener("input", syncManagerFeeBreakdown);
 managerCoachingFee?.addEventListener("input", syncManagerFeeBreakdown);
 managerAdmissionFee?.addEventListener("input", syncManagerFeeBreakdown);
 managerJerseyAmount?.addEventListener("input", syncManagerFeeBreakdown);
@@ -4740,7 +4734,6 @@ admissionJerseyPairs?.addEventListener("input", () => {
   resetAdmissionFeeInputsFromPlan();
   syncAdmissionAmountState();
 });
-admissionAmountPaidNow?.addEventListener("input", updatePaymentAssist);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;

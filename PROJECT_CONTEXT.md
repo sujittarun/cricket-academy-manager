@@ -54,7 +54,7 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
   - parent Aadhaar optional; do not use "NIDA" wording.
   - time slot.
   - join date defaults to today but can be picked.
-  - fee paid yes/no, payment plan, amount/custom amount.
+  - fee paid yes/no, payment plan, calculated total amount.
   - jersey size and jersey pairs.
   - comments/special requests optional.
   - skills and playing style; "Kick start the journey now" disables detailed style choices.
@@ -77,7 +77,7 @@ Current fee constants:
 - Special training: Rs 10,000 per month.
 - Admission first payment shows separate coaching fee, one-time admission fee, and jersey amount boxes.
 - Jersey pairs are charged at Rs 750 per pair; there is no free first-pair rule.
-- Admission can still be submitted when parents pay a custom/partial amount.
+- Admission/player create-edit forms should not expose a manual "amount paid" override. Store `amount_paid` internally as the calculated total when payment is marked made/pending, or Rs 0 when unpaid. Custom/partial collections belong in the manager joining-fee or renewal payment action.
 - Renewal amounts do not include admission fee.
 - Use selected plan/month count for due-date calculation, not manually typed amount.
 - Joining-fee-pending players can be marked paid from manager actions. Save `payment_type = joining`; use the selected payment date for finance (`paid_on`) and keep the cycle start on the player join date for next-fee-due logic.

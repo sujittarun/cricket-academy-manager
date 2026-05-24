@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=59" />
+    <link rel="stylesheet" href="./styles.css?v=60" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       (function() {
@@ -256,18 +256,6 @@
               </label>
 
               <label>
-                Amount paid
-                <input
-                  id="amountPaid"
-                  name="amountPaid"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </label>
-
-              <label>
                 Jersey size
                 <select id="jerseySize" name="jerseySize">
                   <option value="">Not set</option>
@@ -314,7 +302,7 @@
                 </article>
               </div>
               <p id="managerFeeSummary" class="records-helper manager-fee-summary form-span-full">
-                Suggested first admission split. Amount paid can be blank or custom.
+                Suggested joining fee split. If fees are marked paid, the total due is saved as the received joining amount.
               </p>
 
               <label class="form-span-full">
@@ -862,7 +850,7 @@
                       </article>
                     </div>
                     <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
-                      Select jersey pairs to calculate the jersey amount. Parents can still submit if they paid a different amount.
+                      Select jersey pairs to calculate the jersey amount. If payment is marked made, the total is sent for manager verification.
                     </div>
                     <label>
                       Jersey size
@@ -999,10 +987,6 @@
                 <option value="no">No</option>
                 <option value="yes">Paid by UPI - verify by manager</option>
               </select>
-            </label>
-            <label class="full-span" style="margin-bottom: 24px;">
-              Amount paid now <span class="field-hint">(optional)</span>
-              <input id="admissionAmountPaidNow" name="amountPaidNow" type="number" min="0" step="0.01" placeholder="Leave blank to use calculated total" />
             </label>
 
             <div class="admission-actions">
@@ -1265,6 +1249,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=59"></script>
+    <script src="./script.js?v=60"></script>
   </body>
 </html>
