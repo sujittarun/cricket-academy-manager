@@ -5937,28 +5937,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 let activeRosterActionMenu = null;
 
 const getRosterActionPortal = () => {
-  let portal = document.getElementById("rosterActionPortal");
+  const portals = Array.from(document.querySelectorAll("#rosterActionPortal"));
+  portals.slice(1).forEach((stalePortal) => stalePortal.remove());
+  let portal = portals[0] || document.getElementById("rosterActionPortal");
   if (!(portal instanceof HTMLElement)) {
     portal = document.createElement("div");
     portal.id = "rosterActionPortal";
-    portal.className = "action-menu-dropdown roster-action-portal";
-    portal.hidden = true;
     document.body.appendChild(portal);
   }
+  portal.className = "action-menu-dropdown roster-action-portal";
+  portal.setAttribute("role", "menu");
+  portal.hidden = true;
   return portal;
 };
 
 const closeRosterActionMenus = () => {
   document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
     menu.classList.remove("active", "portal-open");
+    const trigger = menu.querySelector(".action-trigger-btn");
+    if (trigger instanceof HTMLElement) {
+      trigger.setAttribute("aria-expanded", "false");
+    }
   });
-  const portal = document.getElementById("rosterActionPortal");
-  if (portal instanceof HTMLElement) {
+  document.querySelectorAll("#rosterActionPortal, .roster-action-portal").forEach((portal) => {
+    if (!(portal instanceof HTMLElement)) return;
     portal.hidden = true;
     portal.innerHTML = "";
+    portal.removeAttribute("data-source-player-id");
     portal.style.removeProperty("left");
     portal.style.removeProperty("top");
-  }
+    portal.style.removeProperty("visibility");
+  });
   activeRosterActionMenu = null;
 };
 
@@ -5971,6 +5980,7 @@ const positionRosterActionMenu = (container) => {
   const triggerRect = trigger.getBoundingClientRect();
   const portal = getRosterActionPortal();
   portal.innerHTML = dropdown.innerHTML;
+  portal.dataset.sourcePlayerId = container.closest("[data-player-row-id]")?.dataset.playerRowId || "";
   portal.hidden = false;
   portal.style.visibility = "hidden";
   portal.style.left = "0px";
@@ -5989,6 +5999,7 @@ const positionRosterActionMenu = (container) => {
     : Math.min(triggerRect.bottom + 10, window.innerHeight - menuHeight - gutter);
 
   container.classList.add("portal-open");
+  trigger.setAttribute("aria-expanded", "true");
   portal.style.left = `${left}px`;
   portal.style.top = `${top}px`;
   portal.style.visibility = "visible";
@@ -6005,12 +6016,17 @@ document.addEventListener("click", (event) => {
   const container = event.target.closest(".action-menu-container");
 
   if (trigger && container instanceof HTMLElement) {
-    const wasActive = container.classList.contains("active") && activeRosterActionMenu?.container === container;
+    const portal = document.getElementById("rosterActionPortal");
+    const wasActive =
+      container.classList.contains("active") &&
+      activeRosterActionMenu?.container === container &&
+      !(portal instanceof HTMLElement && portal.hidden);
     event.preventDefault();
     event.stopPropagation();
     closeRosterActionMenus();
     if (!wasActive) {
       container.classList.add("active");
+      trigger.setAttribute("aria-expanded", "true");
       positionRosterActionMenu(container);
     }
     return;
@@ -6044,6 +6060,9 @@ document.addEventListener("click", (event) => {
 
 window.addEventListener("resize", closeRosterActionMenus);
 window.addEventListener("scroll", closeRosterActionMenus, true);
+document.addEventListener("scroll", closeRosterActionMenus, true);
+window.visualViewport?.addEventListener("resize", closeRosterActionMenus);
+window.visualViewport?.addEventListener("scroll", closeRosterActionMenus);
 document.querySelectorAll("#rosterView .table-wrap").forEach((wrap) => {
   wrap.addEventListener("scroll", closeRosterActionMenus, { passive: true });
 });

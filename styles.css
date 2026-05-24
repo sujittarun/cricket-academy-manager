@@ -8492,10 +8492,18 @@ body.popup-open {
     pointer-events: none !important;
   }
 
-  #rosterView .kids-table .action-menu-container.active .action-menu-dropdown {
+  #rosterView .kids-table .action-menu-container.active:not(.portal-open) .action-menu-dropdown {
     opacity: 1 !important;
     visibility: visible !important;
     pointer-events: auto !important;
+  }
+
+  #rosterView .kids-table .action-menu-container.portal-open .action-menu-dropdown,
+  #rosterView .kids-table .action-menu-container.active.portal-open .action-menu-dropdown {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
   #rosterView .kids-table,

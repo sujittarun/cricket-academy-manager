@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-25
 
+### Desktop Roster Action Menu Stability
+
+- Fixed the desktop roster three-dot action menu so the body portal is the only visible dropdown.
+- Hardened close/open handling to remove stale duplicate portals, reset trigger state, and keep inline row dropdowns as hidden templates while the portal is open.
+- Verified repeated open, switch-row, same-row close, outside click, and single-visible-menu assertions at desktop browser size.
+- Bumped web cache assets to `v61`.
+
 ### Simplified Admission Amount Paid Wiring
 
 - Removed the visible manual "Amount paid" override from public admission and manager player create/edit forms.
