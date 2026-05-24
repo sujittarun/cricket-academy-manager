@@ -155,6 +155,11 @@ const renewalStudentId = document.getElementById("renewalStudentId");
 const renewalPaymentMode = document.getElementById("renewalPaymentMode");
 const renewalPlan = document.getElementById("renewalPlan");
 const renewalAmount = document.getElementById("renewalAmount");
+const joiningFeeBreakdown = document.getElementById("joiningFeeBreakdown");
+const joiningCoachingFee = document.getElementById("joiningCoachingFee");
+const joiningAdmissionFee = document.getElementById("joiningAdmissionFee");
+const joiningJerseyAmount = document.getElementById("joiningJerseyAmount");
+const joiningTotalFeeAmount = document.getElementById("joiningTotalFeeAmount");
 const renewalPaymentDate = document.getElementById("renewalPaymentDate");
 const renewalComment = document.getElementById("renewalComment");
 const renewalCycleInfo = document.getElementById("renewalCycleInfo");
@@ -684,6 +689,15 @@ const isMissingStudentFeeColumnError = (error) => {
   );
 };
 
+const isMissingPaymentFeeColumnError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("schema cache") &&
+    ["coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount"]
+      .some((column) => message.includes(column))
+  );
+};
+
 const setJoinDateLimit = () => {
   joinDateInput.max = toLocalIsoDate();
   admissionJoinDate.max = toLocalIsoDate();
@@ -970,6 +984,39 @@ const getJoiningPaymentAmountForPlan = (kid, planKey = "monthly") => {
   if (planKey === "custom") return 0;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   return plan.amount + admissionFee + getExtraJerseyAmount(kid?.jerseyPairs || 0);
+};
+
+const getJoiningPaymentDefaultSplit = (kid, planKey = "monthly") => {
+  const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
+  const coachingFee = planKey === "custom" ? 0 : plan.amount;
+  const admissionFee = planKey === "special" || planKey === "custom" ? 0 : ADMISSION_ONE_TIME_FEE;
+  const jerseyAmount = getExtraJerseyAmount(kid?.jerseyPairs || 0);
+  const totalFeeAmount = coachingFee + admissionFee + jerseyAmount;
+  return { coachingFee, admissionFee, jerseyAmount, totalFeeAmount };
+};
+
+const syncJoiningFeeBreakdown = ({ resetFromPlan = false, updateAmount = false } = {}) => {
+  const kid = kids.find((item) => item.id === renewalStudentId?.value);
+  const isJoiningFee = renewalPaymentMode?.value === "joining";
+  if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = !isJoiningFee;
+  if (!isJoiningFee || !kid) return { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0 };
+
+  if (resetFromPlan) {
+    const defaults = getJoiningPaymentDefaultSplit(kid, renewalPlan?.value || "monthly");
+    writeMoneyField(joiningCoachingFee, defaults.coachingFee);
+    writeMoneyField(joiningAdmissionFee, defaults.admissionFee);
+    writeMoneyField(joiningJerseyAmount, defaults.jerseyAmount);
+  }
+
+  const coachingFee = readMoneyField(joiningCoachingFee, 0);
+  const admissionFee = readMoneyField(joiningAdmissionFee, 0);
+  const jerseyAmount = readMoneyField(joiningJerseyAmount, 0);
+  const totalFeeAmount = coachingFee + admissionFee + jerseyAmount;
+  writeMoneyField(joiningTotalFeeAmount, totalFeeAmount);
+  if (updateAmount && renewalAmount && renewalPlan?.value !== "custom") {
+    renewalAmount.value = String(totalFeeAmount);
+  }
+  return { coachingFee, admissionFee, jerseyAmount, totalFeeAmount };
 };
 
 const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
@@ -3520,11 +3567,16 @@ const openRenewalPopup = (kid, mode = "renewal") => {
   if (renewalKicker) renewalKicker.textContent = isJoiningFee ? "Joining Payment" : "Renewal Payment";
   if (renewalTitle) renewalTitle.textContent = isJoiningFee ? "Record joining fee" : "Record fee payment";
   renewalPlan.value = "monthly";
-  renewalAmount.value = String(isJoiningFee ? getJoiningPaymentAmountForPlan(kid, "monthly") : RENEWAL_PLANS.monthly.amount);
+  if (isJoiningFee) {
+    syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
+  } else {
+    if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = true;
+    renewalAmount.value = String(RENEWAL_PLANS.monthly.amount);
+  }
   if (renewalPaymentDate) renewalPaymentDate.value = toLocalIsoDate();
   renewalComment.value = "";
   renewalCycleInfo.textContent = isJoiningFee
-    ? `This records the first fee from join date ${formatDate(cycleDate)}. Payment date is used for finance reports.`
+    ? `This records the first fee from join date ${formatDate(cycleDate)} and saves the coaching/admission/jersey split on the player profile.`
     : `This records payment for cycle starting ${formatDate(cycleDate)}. Paid late does not change the student's usual fee date.`;
   renewalMessage.textContent = "";
   if (renewalSaveButton) renewalSaveButton.textContent = isJoiningFee ? "Save joining payment" : "Save renewal payment";
@@ -4740,9 +4792,21 @@ renewalPlan?.addEventListener("change", () => {
   const kid = kids.find((item) => item.id === renewalStudentId?.value);
   const isJoiningFee = renewalPaymentMode?.value === "joining";
   if (renewalPlan.value !== "custom") {
-    renewalAmount.value = String(isJoiningFee ? getJoiningPaymentAmountForPlan(kid, renewalPlan.value) : plan.amount);
+    if (isJoiningFee) {
+      syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
+    } else {
+      renewalAmount.value = String(plan.amount);
+    }
+  } else if (isJoiningFee) {
+    syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: false });
+    renewalAmount.value = "";
+  } else {
+    renewalAmount.value = "";
   }
   renewalAmount.readOnly = false; // Always allow manual adjustment
+});
+[joiningCoachingFee, joiningAdmissionFee, joiningJerseyAmount].forEach((input) => {
+  input?.addEventListener("input", () => syncJoiningFeeBreakdown());
 });
 closeRenewalButton?.addEventListener("click", closeRenewalPopup);
 renewalPopup?.addEventListener("click", (event) => {
@@ -4766,7 +4830,10 @@ renewalForm?.addEventListener("submit", async (event) => {
   }
   const cycleDate = isJoiningFee ? kid.joinDate : getDueCycleDate(kid);
   const renewals = [...kid.renewals, cycleDate];
-  const { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert({
+  const joiningFeeSplit = isJoiningFee
+    ? syncJoiningFeeBreakdown()
+    : { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0 };
+  const paymentPayload = {
     student_id: kid.id,
     payment_type: isJoiningFee ? "joining" : "renewal",
     plan_type: renewalPlan.value,
@@ -4776,23 +4843,71 @@ renewalForm?.addEventListener("submit", async (event) => {
     paid_on: paymentDate,
     comment: renewalComment.value.trim(),
     recorded_by: getActiveManagerEmail(),
-  }).select("*").single();
+    ...(isJoiningFee
+      ? {
+          coaching_fee: joiningFeeSplit.coachingFee,
+          admission_fee: joiningFeeSplit.admissionFee,
+          jersey_amount: joiningFeeSplit.jerseyAmount,
+          total_fee_amount: joiningFeeSplit.totalFeeAmount,
+        }
+      : {}),
+  };
+  let { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert(paymentPayload).select("*").single();
+  let savedWithoutPaymentFeeFields = false;
+  if (paymentError && isJoiningFee && isMissingPaymentFeeColumnError(paymentError)) {
+    const legacyPaymentPayload = { ...paymentPayload };
+    delete legacyPaymentPayload.coaching_fee;
+    delete legacyPaymentPayload.admission_fee;
+    delete legacyPaymentPayload.jersey_amount;
+    delete legacyPaymentPayload.total_fee_amount;
+    ({ data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert(legacyPaymentPayload).select("*").single());
+    savedWithoutPaymentFeeFields = !paymentError;
+  }
   if (paymentError) {
     renewalMessage.textContent = paymentError.message;
     return;
   }
-  const { error: updateError } = await supabaseClient
+  const studentUpdatePayload = {
+    ...(isJoiningFee
+      ? {
+          fees_paid: true,
+          amount_paid: amount,
+          payment_status: "paid",
+          fee_plan: renewalPlan.value,
+          coaching_fee: joiningFeeSplit.coachingFee,
+          admission_fee: joiningFeeSplit.admissionFee,
+          jersey_amount: joiningFeeSplit.jerseyAmount,
+          total_fee_amount: joiningFeeSplit.totalFeeAmount,
+        }
+      : { renewals }),
+    discontinued: false,
+    discontinued_at: null,
+    updated_by: getActiveManagerEmail(),
+  };
+  let { error: updateError } = await supabaseClient
     .from("students")
-    .update({ 
-      ...(isJoiningFee ? { fees_paid: true, amount_paid: amount, payment_status: "paid" } : { renewals }),
-      discontinued: false, 
-      discontinued_at: null, 
-      updated_by: getActiveManagerEmail() 
-    })
+    .update(studentUpdatePayload)
     .eq("id", kid.id);
+  let savedWithoutStudentFeeFields = false;
+  if (updateError && isJoiningFee && isMissingStudentFeeColumnError(updateError)) {
+    const legacyStudentUpdatePayload = { ...studentUpdatePayload };
+    delete legacyStudentUpdatePayload.fee_plan;
+    delete legacyStudentUpdatePayload.coaching_fee;
+    delete legacyStudentUpdatePayload.admission_fee;
+    delete legacyStudentUpdatePayload.jersey_amount;
+    delete legacyStudentUpdatePayload.total_fee_amount;
+    ({ error: updateError } = await supabaseClient
+      .from("students")
+      .update(legacyStudentUpdatePayload)
+      .eq("id", kid.id));
+    savedWithoutStudentFeeFields = !updateError;
+  }
   if (updateError) {
     renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}`;
     return;
+  }
+  if (savedWithoutPaymentFeeFields || savedWithoutStudentFeeFields) {
+    showToast("Joining payment saved. Apply the latest Supabase fee split migration to save detailed split fields.");
   }
   if (paymentRow) {
     financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];

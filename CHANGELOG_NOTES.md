@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-25
 
+### Joining Fee Split Payment Wiring
+
+- Updated the `Record joining fee` popup to show coaching fee, admission fee, jersey amount, and total due split fields.
+- Joining payments now attempt to save the split on `student_payments` and update the same split on the player record while keeping `amount_paid` as the actual received amount.
+- Added schema-cache fallbacks so payment save still works before the new Supabase payment split migration is applied.
+- Bumped web cache assets to `v62`.
+
 ### Desktop Roster Action Menu Stability
 
 - Fixed the desktop roster three-dot action menu so the body portal is the only visible dropdown.
