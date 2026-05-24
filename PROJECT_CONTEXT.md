@@ -16,11 +16,14 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
 
 ## Product Rule
 
+- This workspace contains two separate app projects: the web/browser app at `/Users/jiths/Documents/New project/web-app-repo` and the Android/native app at `/Users/jiths/Documents/New project`.
 - Public landing page must show only the admission form before manager login.
 - Parents should not see roster, manager stats, finance, or internal manager text before login.
 - After manager login, show dashboard/roster/attendance/finance as appropriate.
 - After logout, return to admission-only landing page.
-- If a shared feature changes in web, check Android too.
+- Unless the user explicitly says "web only" or "Android only", any logic, product behavior, business rule, schema/RPC payload, fee/reminder/payment flow, validation, or shared bug fix must be checked and implemented in both apps.
+- Do not blindly copy UI/code between apps. Understand each app's project structure, data flow, design language, navigation, and user flow, then fit the change exactly where it belongs in that app.
+- If a shared change truly does not apply to one app, note why in the final response and, when meaningful, in `CHANGELOG_NOTES.md`.
 - If a field is added, check Supabase schema/RPC, web form/render/edit flows, Android models/repository/UI, receipts/finance/timeline if relevant.
 - For code/UI changes, do a proper audit before finishing: inspect the diff, think through edge cases, and test rough UI edges such as small screens, long text, flipped/expanded states, empty or optional values, and stale-cache behavior when relevant.
 - For browser UI changes, verify the rendered app at the affected viewport(s), including mobile when the bug is mobile-only. A passing syntax/build check is not enough for visible layout work.
