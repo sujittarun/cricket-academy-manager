@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-24
 
+### Editable Fee Split and Roster Action Cleanup
+
+- Changed admission and manager player-entry fee breakdown tiles into editable amount fields for coaching fee, admission fee, jersey amount, and total.
+- Wired fee split values into the admission submit payload and manager `kidForm` student payload with safe fallback when the Supabase fee-split migration has not been applied yet.
+- Consolidated roster action-menu click handling so only one menu can stay open, menus close on scroll, and stale floating dropdowns do not follow the page.
+- Added cache bump to `v58`.
+
 ### Admission Jersey Payment Layout
 
 - Moved the admission `Pay now` button below jersey size and jersey pairs.

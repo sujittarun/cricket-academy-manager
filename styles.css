@@ -913,6 +913,12 @@ body.popup-open {
   font-size: 0.94rem;
 }
 
+#formPanel .manager-fee-breakdown input {
+  min-height: 32px;
+  font-size: 0.88rem;
+  padding: 6px 8px;
+}
+
 #formPanel .manager-fee-summary {
   min-height: auto;
   margin: -2px 0 0;
@@ -3555,7 +3561,8 @@ body.popup-open {
   gap: 5px;
 }
 
-.admission-fee-breakdown span {
+.admission-fee-breakdown span,
+.admission-fee-breakdown label {
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 800;
@@ -3567,6 +3574,37 @@ body.popup-open {
   color: var(--accent-dark);
   font-size: 1.1rem;
   line-height: 1.1;
+}
+
+.admission-fee-breakdown input {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(21, 81, 173, 0.14);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 250, 255, 0.92));
+  color: var(--accent-dark);
+  font-size: 1.02rem;
+  font-weight: 900;
+  line-height: 1.1;
+  outline: none;
+  padding: 7px 9px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.admission-fee-breakdown input:focus {
+  border-color: rgba(21, 81, 173, 0.42);
+  box-shadow: 0 0 0 3px rgba(21, 81, 173, 0.1);
+  transform: translateY(-1px);
+}
+
+.admission-fee-breakdown input[readonly] {
+  cursor: default;
+  color: #0b7a48;
+  border-color: rgba(244, 191, 42, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 239, 0.98), rgba(255, 248, 219, 0.9));
 }
 
 .admission-fee-breakdown article.total {

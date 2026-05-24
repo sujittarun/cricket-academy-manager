@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=57" />
+    <link rel="stylesheet" href="./styles.css?v=58" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       (function() {
@@ -297,20 +297,20 @@
 
               <div id="managerFeeBreakdown" class="admission-fee-breakdown manager-fee-breakdown form-span-full" aria-live="polite">
                 <article>
-                  <span>Coaching fee</span>
-                  <strong id="managerCoachingFee">Rs 3,500</strong>
+                  <label for="managerCoachingFee">Coaching fee</label>
+                  <input id="managerCoachingFee" name="coachingFee" type="number" min="0" step="0.01" value="3500" />
                 </article>
                 <article>
-                  <span>Admission fee</span>
-                  <strong id="managerAdmissionFee">Rs 500</strong>
+                  <label for="managerAdmissionFee">Admission fee</label>
+                  <input id="managerAdmissionFee" name="admissionFee" type="number" min="0" step="0.01" value="500" />
                 </article>
                 <article>
-                  <span>Jersey amount</span>
-                  <strong id="managerJerseyAmount">Rs 0</strong>
+                  <label for="managerJerseyAmount">Jersey amount</label>
+                  <input id="managerJerseyAmount" name="jerseyAmount" type="number" min="0" step="0.01" value="0" />
                 </article>
                 <article class="total">
-                  <span>Total due</span>
-                  <strong id="managerTotalAmount">Rs 4,000</strong>
+                  <label for="managerTotalAmount">Total due</label>
+                  <input id="managerTotalAmount" name="totalFeeAmount" type="number" min="0" step="0.01" value="4000" readonly />
                 </article>
               </div>
               <p id="managerFeeSummary" class="records-helper manager-fee-summary form-span-full">
@@ -845,20 +845,20 @@
                     </label>
                     <div id="admissionFeeBreakdown" class="admission-fee-breakdown full-span" aria-live="polite">
                       <article>
-                        <span>Coaching fee</span>
-                        <strong id="admissionCoachingFee">Rs 3,500</strong>
+                        <label for="admissionCoachingFee">Coaching fee</label>
+                        <input id="admissionCoachingFee" name="coachingFee" type="number" min="0" step="0.01" value="3500" />
                       </article>
                       <article>
-                        <span>Admission fee</span>
-                        <strong id="admissionOneTimeFee">Rs 500</strong>
+                        <label for="admissionOneTimeFee">Admission fee</label>
+                        <input id="admissionOneTimeFee" name="admissionFee" type="number" min="0" step="0.01" value="500" />
                       </article>
                       <article>
-                        <span>Jersey amount</span>
-                        <strong id="admissionJerseyAmount">Rs 0</strong>
+                        <label for="admissionJerseyAmount">Jersey amount</label>
+                        <input id="admissionJerseyAmount" name="jerseyAmount" type="number" min="0" step="0.01" value="0" />
                       </article>
                       <article class="total">
-                        <span>Total</span>
-                        <strong id="admissionTotalAmount">Rs 4,000</strong>
+                        <label for="admissionTotalAmount">Total</label>
+                        <input id="admissionTotalAmount" name="totalFeeAmount" type="number" min="0" step="0.01" value="4000" readonly />
                       </article>
                     </div>
                     <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
@@ -1265,6 +1265,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=57"></script>
+    <script src="./script.js?v=58"></script>
   </body>
 </html>

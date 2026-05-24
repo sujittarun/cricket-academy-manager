@@ -13,6 +13,22 @@ const getChargeableJerseyPairCount = (pairCount) =>
 const getExtraJerseyAmount = (pairCount) =>
   getChargeableJerseyPairCount(pairCount) * JERSEY_PAIR_REVENUE;
 
+const readMoneyField = (field, fallback = 0) => {
+  if (field instanceof HTMLInputElement) {
+    return parseNonNegativeNumber(field.value, fallback);
+  }
+  return parseNonNegativeNumber(field?.textContent, fallback);
+};
+
+const writeMoneyField = (field, value) => {
+  const safeValue = parseNonNegativeNumber(value, 0);
+  if (field instanceof HTMLInputElement) {
+    field.value = String(Math.round(safeValue * 100) / 100);
+  } else if (field instanceof HTMLElement) {
+    field.textContent = rupees(safeValue);
+  }
+};
+
 const kidForm = document.getElementById("kidForm");
 const kidsTable = document.getElementById("kidsTable");
 const kidsTableBody = document.getElementById("kidsTableBody");
@@ -276,15 +292,36 @@ const PLAN_DISCOUNT_LABELS = {
 const getAdmissionFeeBreakdown = () => {
   const planKey = admissionFeePlan?.value || "monthly";
   const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  const defaultCoachingFee = planKey === "custom"
+    ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
+    : selectedPlan.base;
+  const defaultAdmissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
+  const hasJerseySize = Boolean(admissionJerseySize?.value);
+  const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(admissionJerseyPairs?.value) : 0;
+  const defaultJerseyAmount = hasJerseySize ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
+  const coachingFee = readMoneyField(admissionCoachingFee, defaultCoachingFee);
+  const admissionFee = readMoneyField(admissionOneTimeFee, defaultAdmissionFee);
+  const jerseyAmount = hasJerseySize ? readMoneyField(admissionJerseyAmount, defaultJerseyAmount) : 0;
+  const total = coachingFee + admissionFee + jerseyAmount;
+  return { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
+};
+
+const resetAdmissionFeeInputsFromPlan = () => {
+  const planKey = admissionFeePlan?.value || "monthly";
+  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
   const coachingFee = planKey === "custom"
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
     : selectedPlan.base;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
-  const hasJerseySize = Boolean(admissionJerseySize?.value);
-  const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(admissionJerseyPairs?.value) : 0;
-  const jerseyAmount = hasJerseySize ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
-  const total = coachingFee + admissionFee + jerseyAmount;
-  return { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
+  const jerseyAmount = admissionJerseySize?.value ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
+  writeMoneyField(admissionCoachingFee, coachingFee);
+  writeMoneyField(admissionOneTimeFee, admissionFee);
+  writeMoneyField(admissionJerseyAmount, jerseyAmount);
+};
+
+const resetManagerJerseyAmountFromPairs = () => {
+  const jerseyAmount = jerseySizeSelect?.value ? getExtraJerseyAmount(jerseyPairsInput?.value) : 0;
+  writeMoneyField(managerJerseyAmount, jerseyAmount);
 };
 const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "need_help"];
 const REMINDER_PLAN_LABELS = {
@@ -497,6 +534,11 @@ const normalizeKid = (kid) => {
     joinDate: kid.join_date || "",
     feesPaid,
     amountPaid,
+    feePlan: kid.fee_plan || "monthly",
+    coachingFee: Number(kid.coaching_fee) || 0,
+    admissionFee: Number(kid.admission_fee) || 0,
+    jerseyAmount: Number(kid.jersey_amount) || 0,
+    totalFeeAmount: Number(kid.total_fee_amount) || 0,
     jerseySize: kid.jersey_size || "",
     jerseyPairs: Number(kid.jersey_pairs) || 0,
     renewals,
@@ -540,6 +582,11 @@ const normalizePendingAdmission = (admission) => ({
   joinDate: admission.join_date || "",
   feesPaid: Boolean(admission.fees_paid),
   amountPaid: Number(admission.amount_paid) || 0,
+  feePlan: admission.fee_plan || "monthly",
+  coachingFee: Number(admission.coaching_fee) || 0,
+  admissionFee: Number(admission.admission_fee) || 0,
+  jerseyAmount: Number(admission.jersey_amount) || 0,
+  totalFeeAmount: Number(admission.total_fee_amount) || 0,
   jerseySize: admission.jersey_size || "",
   jerseyPairs: Number(admission.jersey_pairs) || 0,
   filledBy: admission.filled_by || "Parent / Guardian",
@@ -561,6 +608,11 @@ const toDatabasePayload = ({
   joinDate,
   feesPaid,
   amountPaid,
+  feePlan = "monthly",
+  coachingFee = 0,
+  admissionFee = 0,
+  jerseyAmount = 0,
+  totalFeeAmount = 0,
   jerseySize,
   jerseyPairs,
   renewals,
@@ -581,6 +633,11 @@ const toDatabasePayload = ({
     join_date: joinDate,
     fees_paid: feesPaid === "yes",
     amount_paid: parseNonNegativeNumber(amountPaid, 0),
+    fee_plan: feePlan || "monthly",
+    coaching_fee: parseNonNegativeNumber(coachingFee, 0),
+    admission_fee: parseNonNegativeNumber(admissionFee, 0),
+    jersey_amount: parseNonNegativeNumber(jerseyAmount, 0),
+    total_fee_amount: parseNonNegativeNumber(totalFeeAmount, 0),
     jersey_size: String(jerseySize || "").trim(),
     jersey_pairs: getChargeableJerseyPairCount(jerseyPairs),
     renewals,
@@ -588,6 +645,14 @@ const toDatabasePayload = ({
     updated_by: updatedBy,
     discontinued: Boolean(discontinued),
   };
+
+  if (options.includeFeeFields === false) {
+    delete databasePayload.fee_plan;
+    delete databasePayload.coaching_fee;
+    delete databasePayload.admission_fee;
+    delete databasePayload.jersey_amount;
+    delete databasePayload.total_fee_amount;
+  }
 
   if (options.includeProfileFields !== false) {
     Object.assign(databasePayload, {
@@ -608,6 +673,15 @@ const isMissingStudentProfileColumnError = (error) => {
   return (
     message.includes("schema cache") &&
     ["father_guardian_name", "parent_contact_no", "alternate_contact_no", "school_college", "grade", "address"]
+      .some((column) => message.includes(column))
+  );
+};
+
+const isMissingStudentFeeColumnError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("schema cache") &&
+    ["fee_plan", "coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount"]
       .some((column) => message.includes(column))
   );
 };
@@ -1904,11 +1978,11 @@ const syncAmountState = () => {
 };
 
 const getManagerFeeBreakdown = () => {
-  const coachingFee = ADMISSION_FEE_PLANS.monthly.base;
-  const admissionFee = ADMISSION_ONE_TIME_FEE;
   const hasJerseySize = Boolean(jerseySizeSelect?.value);
   const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(jerseyPairsInput?.value) : 0;
-  const jerseyAmount = hasJerseySize ? getExtraJerseyAmount(jerseyPairsInput?.value) : 0;
+  const coachingFee = readMoneyField(managerCoachingFee, ADMISSION_FEE_PLANS.monthly.base);
+  const admissionFee = readMoneyField(managerAdmissionFee, ADMISSION_ONE_TIME_FEE);
+  const jerseyAmount = hasJerseySize ? readMoneyField(managerJerseyAmount, getExtraJerseyAmount(jerseyPairsInput?.value)) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
   const amountPaid = parseNonNegativeNumber(amountPaidInput?.value, 0);
   return { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total, amountPaid };
@@ -1923,10 +1997,10 @@ const syncManagerFeeBreakdown = () => {
     }
     jerseyPairsInput.placeholder = hasJerseySize ? "e.g. 1" : "Select jersey size first";
   }
-  if (managerCoachingFee) managerCoachingFee.textContent = rupees(coachingFee);
-  if (managerAdmissionFee) managerAdmissionFee.textContent = rupees(admissionFee);
-  if (managerJerseyAmount) managerJerseyAmount.textContent = rupees(jerseyAmount);
-  if (managerTotalAmount) managerTotalAmount.textContent = rupees(total);
+  if (!hasJerseySize) {
+    writeMoneyField(managerJerseyAmount, 0);
+  }
+  writeMoneyField(managerTotalAmount, total);
   if (managerFeeSummary) {
     const pairCopy = jerseyPairs > 0
       ? ` Jersey: ${jerseyPairs} pair${jerseyPairs === 1 ? "" : "s"} x Rs ${JERSEY_PAIR_REVENUE}.`
@@ -1953,10 +2027,10 @@ const syncAdmissionAmountState = () => {
   if (admissionCustomAmountLabel) {
     admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
   }
-  if (admissionCoachingFee) admissionCoachingFee.textContent = rupees(coachingFee);
-  if (admissionOneTimeFee) admissionOneTimeFee.textContent = rupees(admissionFee);
-  if (admissionJerseyAmount) admissionJerseyAmount.textContent = rupees(jerseyAmount);
-  if (admissionTotalAmount) admissionTotalAmount.textContent = rupees(total);
+  if (!hasJerseySize) {
+    writeMoneyField(admissionJerseyAmount, 0);
+  }
+  writeMoneyField(admissionTotalAmount, total);
   if (admissionFeeSummary) {
     const discountLabel = PLAN_DISCOUNT_LABELS[planKey];
     const jerseyCopy = jerseyPairs > 0
@@ -2009,6 +2083,9 @@ const resetFormState = () => {
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
   formPanel.hidden = true;
+  writeMoneyField(managerCoachingFee, ADMISSION_FEE_PLANS.monthly.base);
+  writeMoneyField(managerAdmissionFee, ADMISSION_ONE_TIME_FEE);
+  writeMoneyField(managerJerseyAmount, 0);
   syncAmountState();
 };
 
@@ -4089,8 +4166,9 @@ admissionReviewList?.addEventListener("click", async (event) => {
   actionButton.textContent = approveButton ? "Approving..." : "Rejecting...";
 
   let error;
+  let data;
   if (approveButton) {
-    ({ error } = await supabaseClient.rpc("approve_admission", {
+    ({ data, error } = await supabaseClient.rpc("approve_admission", {
       p_admission_id: admissionId,
       p_reviewed_by: getActiveManagerEmail(),
       p_review_notes: "",
@@ -4104,6 +4182,27 @@ admissionReviewList?.addEventListener("click", async (event) => {
     actionButton.disabled = false;
     actionButton.textContent = approveButton ? "Approve to roster" : "Reject";
     return;
+  }
+
+  if (approveButton) {
+    const admission = pendingAdmissions.find((item) => item.id === admissionId);
+    const approvedRow = Array.isArray(data) ? data[0] : data;
+    const approvedStudentId = approvedRow?.student_id || approvedRow?.studentId;
+    if (admission && approvedStudentId) {
+      const { error: feePatchError } = await supabaseClient
+        .from("students")
+        .update({
+          fee_plan: admission.feePlan || "monthly",
+          coaching_fee: parseNonNegativeNumber(admission.coachingFee, 0),
+          admission_fee: parseNonNegativeNumber(admission.admissionFee, 0),
+          jersey_amount: parseNonNegativeNumber(admission.jerseyAmount, 0),
+          total_fee_amount: parseNonNegativeNumber(admission.totalFeeAmount, 0),
+        })
+        .eq("id", approvedStudentId);
+      if (feePatchError && !isMissingStudentFeeColumnError(feePatchError)) {
+        showToast(feePatchError.message || "Admission approved, but fee split could not be copied.");
+      }
+    }
   }
 
   pendingAdmissions = pendingAdmissions.filter((admission) => admission.id !== admissionId);
@@ -4204,6 +4303,7 @@ kidForm.addEventListener("submit", async (event) => {
 
   const formData = new FormData(kidForm);
   const jerseySizeValue = String(formData.get("jerseySize") || "").trim();
+  const managerFeeSplit = getManagerFeeBreakdown();
   const payload = {
     name: formData.get("name").toString().trim(),
     age: Number(formData.get("age")),
@@ -4211,6 +4311,11 @@ kidForm.addEventListener("submit", async (event) => {
     joinDate: formData.get("joinDate").toString(),
     feesPaid: formData.get("feesPaid").toString(),
     amountPaid: parseNonNegativeNumber(formData.get("amountPaid"), 0),
+    feePlan: "monthly",
+    coachingFee: managerFeeSplit.coachingFee,
+    admissionFee: managerFeeSplit.admissionFee,
+    jerseyAmount: managerFeeSplit.jerseyAmount,
+    totalFeeAmount: managerFeeSplit.total,
     jerseySize: jerseySizeValue,
     jerseyPairs: jerseySizeValue ? getChargeableJerseyPairCount(formData.get("jerseyPairs")) : 0,
     renewals: [],
@@ -4244,6 +4349,7 @@ kidForm.addEventListener("submit", async (event) => {
   const currentKid = wasEditing ? kids.find((kid) => kid.id === editingKidId) : null;
   let error = null;
   let savedWithoutProfileFields = false;
+  let savedWithoutFeeFields = false;
   const originalSaveText = saveButton.textContent;
   saveButton.disabled = true;
   saveButton.textContent = wasEditing ? "Saving changes..." : "Saving player...";
@@ -4266,8 +4372,11 @@ kidForm.addEventListener("submit", async (event) => {
     ({ error } = await supabaseClient.from("students").insert(databasePayload));
   }
 
-  if (error && isMissingStudentProfileColumnError(error)) {
-    savedWithoutProfileFields = true;
+  if (error && (isMissingStudentProfileColumnError(error) || isMissingStudentFeeColumnError(error))) {
+    const missingProfileFields = isMissingStudentProfileColumnError(error);
+    const missingFeeFields = isMissingStudentFeeColumnError(error);
+    savedWithoutProfileFields = missingProfileFields;
+    savedWithoutFeeFields = missingFeeFields;
     const fallbackPayload = toDatabasePayload(
       {
         ...payload,
@@ -4276,13 +4385,37 @@ kidForm.addEventListener("submit", async (event) => {
         updatedBy: getActiveManagerEmail(),
         discontinued: currentKid ? currentKid.discontinued : false,
       },
-      { includeProfileFields: false }
+      {
+        includeProfileFields: !missingProfileFields,
+        includeFeeFields: !missingFeeFields,
+      }
     );
 
     if (wasEditing) {
       ({ error } = await supabaseClient.from("students").update(fallbackPayload).eq("id", editingKidId));
     } else {
       ({ error } = await supabaseClient.from("students").insert(fallbackPayload));
+    }
+  }
+
+  if (error && (isMissingStudentProfileColumnError(error) || isMissingStudentFeeColumnError(error))) {
+    savedWithoutProfileFields = savedWithoutProfileFields || isMissingStudentProfileColumnError(error);
+    savedWithoutFeeFields = savedWithoutFeeFields || isMissingStudentFeeColumnError(error);
+    const minimalPayload = toDatabasePayload(
+      {
+        ...payload,
+        renewals: currentKid ? currentKid.renewals : [],
+        addedBy: currentKid ? currentKid.addedBy : getActiveManagerEmail(),
+        updatedBy: getActiveManagerEmail(),
+        discontinued: currentKid ? currentKid.discontinued : false,
+      },
+      { includeProfileFields: false, includeFeeFields: false }
+    );
+
+    if (wasEditing) {
+      ({ error } = await supabaseClient.from("students").update(minimalPayload).eq("id", editingKidId));
+    } else {
+      ({ error } = await supabaseClient.from("students").insert(minimalPayload));
     }
   }
 
@@ -4296,9 +4429,13 @@ kidForm.addEventListener("submit", async (event) => {
   const successMessage = wasEditing
     ? savedWithoutProfileFields
       ? "Player updated, but parent/school fields need the latest Supabase SQL migration."
+      : savedWithoutFeeFields
+        ? "Player updated, but fee split fields need the latest Supabase SQL migration."
       : "Gen Alpha player record updated successfully."
     : savedWithoutProfileFields
       ? "Player saved, but parent/school fields need the latest Supabase SQL migration."
+      : savedWithoutFeeFields
+        ? "Player saved, but fee split fields need the latest Supabase SQL migration."
       : "Gen Alpha player record saved successfully.";
 
   if (wasEditing && currentKid && Number(currentKid.jerseyPairs || 0) !== Number(payload.jerseyPairs || 0)) {
@@ -4365,6 +4502,9 @@ kidsTableBody.addEventListener("click", async (event) => {
   }
 
   const { id, action } = target.dataset;
+  if (target.closest(".action-menu-dropdown, #rosterActionPortal")) {
+    closeRosterActionMenus();
+  }
 
   if (action === "details") {
     if (isPhoneEditCard) {
@@ -4439,6 +4579,9 @@ kidsTableBody.addEventListener("click", async (event) => {
     amountPaidInput.value = String(kidToEdit.amountPaid);
     jerseySizeSelect.value = kidToEdit.jerseySize || "";
     jerseyPairsInput.value = String(kidToEdit.jerseyPairs || 0);
+    writeMoneyField(managerCoachingFee, kidToEdit.coachingFee || ADMISSION_FEE_PLANS.monthly.base);
+    writeMoneyField(managerAdmissionFee, kidToEdit.admissionFee || ADMISSION_ONE_TIME_FEE);
+    writeMoneyField(managerJerseyAmount, kidToEdit.jerseyAmount || getExtraJerseyAmount(kidToEdit.jerseyPairs || 0));
     saveButton.textContent = "Save changes";
     cancelEditButton.hidden = false;
     syncAmountState();
@@ -4560,17 +4703,41 @@ editModeButton.addEventListener("click", () => {
 
 feesPaidSelect.addEventListener("change", syncAmountState);
 amountPaidInput?.addEventListener("input", syncManagerFeeBreakdown);
-jerseySizeSelect?.addEventListener("change", syncManagerFeeBreakdown);
-jerseyPairsInput?.addEventListener("input", syncManagerFeeBreakdown);
+managerCoachingFee?.addEventListener("input", syncManagerFeeBreakdown);
+managerAdmissionFee?.addEventListener("input", syncManagerFeeBreakdown);
+managerJerseyAmount?.addEventListener("input", syncManagerFeeBreakdown);
+jerseySizeSelect?.addEventListener("change", () => {
+  resetManagerJerseyAmountFromPairs();
+  syncManagerFeeBreakdown();
+});
+jerseyPairsInput?.addEventListener("input", () => {
+  resetManagerJerseyAmountFromPairs();
+  syncManagerFeeBreakdown();
+});
 admissionFeesPaid.addEventListener("change", syncAdmissionAmountState);
 admissionReadyToStart.addEventListener("change", syncAdmissionStyleState);
 admissionBirthDay.addEventListener("change", updateAdmissionAge);
 admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
-admissionFeePlan?.addEventListener("change", syncAdmissionAmountState);
-admissionCustomAmount?.addEventListener("input", syncAdmissionAmountState);
-admissionJerseySize?.addEventListener("change", syncAdmissionAmountState);
-admissionJerseyPairs?.addEventListener("input", syncAdmissionAmountState);
+admissionFeePlan?.addEventListener("change", () => {
+  resetAdmissionFeeInputsFromPlan();
+  syncAdmissionAmountState();
+});
+admissionCustomAmount?.addEventListener("input", () => {
+  resetAdmissionFeeInputsFromPlan();
+  syncAdmissionAmountState();
+});
+admissionCoachingFee?.addEventListener("input", syncAdmissionAmountState);
+admissionOneTimeFee?.addEventListener("input", syncAdmissionAmountState);
+admissionJerseyAmount?.addEventListener("input", syncAdmissionAmountState);
+admissionJerseySize?.addEventListener("change", () => {
+  resetAdmissionFeeInputsFromPlan();
+  syncAdmissionAmountState();
+});
+admissionJerseyPairs?.addEventListener("input", () => {
+  resetAdmissionFeeInputsFromPlan();
+  syncAdmissionAmountState();
+});
 admissionAmountPaidNow?.addEventListener("input", updatePaymentAssist);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
@@ -5000,6 +5167,7 @@ admissionForm.addEventListener("submit", async (event) => {
   admissionMessage.textContent = "Submitting admission form...";
   const paymentSubmittedForVerification = String(formData.get("feesPaid") || "no") === "yes";
   const admissionJerseySizeValue = String(formData.get("jerseySize") || "").trim();
+  const admissionFeeSplit = getAdmissionFeeBreakdown();
 
   const baseAdmissionPayload = {
     p_applicant_name: String(formData.get("applicantName") || "").trim(),
@@ -5018,6 +5186,11 @@ admissionForm.addEventListener("submit", async (event) => {
     p_join_date: String(formData.get("joinDate") || "").trim(),
     p_fees_paid: false,
     p_amount_paid: paymentSubmittedForVerification ? getAdmissionPaymentAmount() : 0,
+    p_fee_plan: admissionFeeSplit.planKey,
+    p_coaching_fee: admissionFeeSplit.coachingFee,
+    p_admission_fee: admissionFeeSplit.admissionFee,
+    p_jersey_amount: admissionFeeSplit.jerseyAmount,
+    p_total_fee_amount: admissionFeeSplit.total,
     p_grade: String(formData.get("grade") || "").trim(),
     p_jersey_size: admissionJerseySizeValue,
     p_jersey_pairs: admissionJerseySizeValue ? getChargeableJerseyPairCount(formData.get("jerseyPairs")) : 0,
@@ -5038,14 +5211,34 @@ admissionForm.addEventListener("submit", async (event) => {
 
   // Backward compatibility: some DBs still expose an older RPC signature.
   if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
+    const noFeeSplitPayload = { ...baseAdmissionPayload };
+    delete noFeeSplitPayload.p_fee_plan;
+    delete noFeeSplitPayload.p_coaching_fee;
+    delete noFeeSplitPayload.p_admission_fee;
+    delete noFeeSplitPayload.p_jersey_amount;
+    delete noFeeSplitPayload.p_total_fee_amount;
+    ({ data, error } = await supabaseClient.rpc("submit_admission_form", noFeeSplitPayload));
+  }
+
+  if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
     const noFilledByPayload = { ...baseAdmissionPayload };
     delete noFilledByPayload.p_filled_by;
+    delete noFilledByPayload.p_fee_plan;
+    delete noFilledByPayload.p_coaching_fee;
+    delete noFilledByPayload.p_admission_fee;
+    delete noFilledByPayload.p_jersey_amount;
+    delete noFilledByPayload.p_total_fee_amount;
     ({ data, error } = await supabaseClient.rpc("submit_admission_form", noFilledByPayload));
   }
 
   if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
     const legacyPayload = { ...baseAdmissionPayload };
     delete legacyPayload.p_filled_by;
+    delete legacyPayload.p_fee_plan;
+    delete legacyPayload.p_coaching_fee;
+    delete legacyPayload.p_admission_fee;
+    delete legacyPayload.p_jersey_amount;
+    delete legacyPayload.p_total_fee_amount;
     delete legacyPayload.p_payment_method;
     delete legacyPayload.p_payment_upi_id;
     delete legacyPayload.p_payment_reference;
@@ -5054,45 +5247,64 @@ admissionForm.addEventListener("submit", async (event) => {
 
   // Final fallback: direct insert into admissions table when RPC signature/cache is inconsistent.
   if (error && /Could not find the function public\.submit_admission_form/i.test(error.message || "")) {
-    const { data: insertedRow, error: insertError } = await supabaseClient
+    const admissionInsertPayload = {
+      applicant_name: baseAdmissionPayload.p_applicant_name,
+      nationality: baseAdmissionPayload.p_nationality,
+      date_of_birth: baseAdmissionPayload.p_date_of_birth,
+      age: baseAdmissionPayload.p_age,
+      gender: baseAdmissionPayload.p_gender,
+      father_guardian_name: baseAdmissionPayload.p_father_guardian_name,
+      emergency_contact_no: baseAdmissionPayload.p_alternate_contact_no,
+      parent_contact_no: baseAdmissionPayload.p_parent_contact_no,
+      city: baseAdmissionPayload.p_city,
+      address: baseAdmissionPayload.p_address,
+      school_college: baseAdmissionPayload.p_school_college,
+      parent_aadhaar_no: baseAdmissionPayload.p_parent_aadhaar_no,
+      time_slot: baseAdmissionPayload.p_time_slot,
+      join_date: baseAdmissionPayload.p_join_date,
+      fees_paid: baseAdmissionPayload.p_fees_paid,
+      amount_paid: baseAdmissionPayload.p_amount_paid,
+      fee_plan: baseAdmissionPayload.p_fee_plan,
+      coaching_fee: baseAdmissionPayload.p_coaching_fee,
+      admission_fee: baseAdmissionPayload.p_admission_fee,
+      jersey_amount: baseAdmissionPayload.p_jersey_amount,
+      total_fee_amount: baseAdmissionPayload.p_total_fee_amount,
+      grade: baseAdmissionPayload.p_grade,
+      jersey_size: baseAdmissionPayload.p_jersey_size,
+      jersey_pairs: baseAdmissionPayload.p_jersey_pairs,
+      payment_method: baseAdmissionPayload.p_payment_method || "UPI",
+      payment_upi_id: baseAdmissionPayload.p_payment_upi_id || "",
+      payment_reference: baseAdmissionPayload.p_payment_reference || "",
+      filled_by: baseAdmissionPayload.p_filled_by || "Parent / Guardian",
+      comments: baseAdmissionPayload.p_comments || "",
+      batsman_style: baseAdmissionPayload.p_batsman_style || "",
+      bowling_styles: baseAdmissionPayload.p_bowling_styles || [],
+      ready_to_start: baseAdmissionPayload.p_ready_to_start,
+      consent_accepted: baseAdmissionPayload.p_consent_accepted,
+      terms_accepted: baseAdmissionPayload.p_terms_accepted,
+      review_status: "pending",
+    };
+    let insertResponse = await supabaseClient
       .from("admissions")
-      .insert({
-        applicant_name: baseAdmissionPayload.p_applicant_name,
-        nationality: baseAdmissionPayload.p_nationality,
-        date_of_birth: baseAdmissionPayload.p_date_of_birth,
-        age: baseAdmissionPayload.p_age,
-        gender: baseAdmissionPayload.p_gender,
-        father_guardian_name: baseAdmissionPayload.p_father_guardian_name,
-        emergency_contact_no: baseAdmissionPayload.p_alternate_contact_no,
-        parent_contact_no: baseAdmissionPayload.p_parent_contact_no,
-        city: baseAdmissionPayload.p_city,
-        address: baseAdmissionPayload.p_address,
-        school_college: baseAdmissionPayload.p_school_college,
-        parent_aadhaar_no: baseAdmissionPayload.p_parent_aadhaar_no,
-        time_slot: baseAdmissionPayload.p_time_slot,
-        join_date: baseAdmissionPayload.p_join_date,
-        fees_paid: baseAdmissionPayload.p_fees_paid,
-        amount_paid: baseAdmissionPayload.p_amount_paid,
-        grade: baseAdmissionPayload.p_grade,
-        jersey_size: baseAdmissionPayload.p_jersey_size,
-        jersey_pairs: baseAdmissionPayload.p_jersey_pairs,
-        payment_method: baseAdmissionPayload.p_payment_method || "UPI",
-        payment_upi_id: baseAdmissionPayload.p_payment_upi_id || "",
-        payment_reference: baseAdmissionPayload.p_payment_reference || "",
-        filled_by: baseAdmissionPayload.p_filled_by || "Parent / Guardian",
-        comments: baseAdmissionPayload.p_comments || "",
-        batsman_style: baseAdmissionPayload.p_batsman_style || "",
-        bowling_styles: baseAdmissionPayload.p_bowling_styles || [],
-        ready_to_start: baseAdmissionPayload.p_ready_to_start,
-        consent_accepted: baseAdmissionPayload.p_consent_accepted,
-        terms_accepted: baseAdmissionPayload.p_terms_accepted,
-        review_status: "pending",
-      })
+      .insert(admissionInsertPayload)
       .select("id, reg_no")
       .single();
 
-    data = insertedRow;
-    error = insertError;
+    if (insertResponse.error && isMissingStudentFeeColumnError(insertResponse.error)) {
+      delete admissionInsertPayload.fee_plan;
+      delete admissionInsertPayload.coaching_fee;
+      delete admissionInsertPayload.admission_fee;
+      delete admissionInsertPayload.jersey_amount;
+      delete admissionInsertPayload.total_fee_amount;
+      insertResponse = await supabaseClient
+        .from("admissions")
+        .insert(admissionInsertPayload)
+        .select("id, reg_no")
+        .single();
+    }
+
+    data = insertResponse.data;
+    error = insertResponse.error;
   }
 
   submitAdmissionButton.disabled = false;
@@ -5793,6 +6005,22 @@ document.addEventListener("click", (event) => {
     closeRosterActionMenus();
     return;
   }
+
+  const trigger = event.target.closest(".action-trigger-btn");
+  const container = event.target.closest(".action-menu-container");
+
+  if (trigger && container instanceof HTMLElement) {
+    const wasActive = container.classList.contains("active") && activeRosterActionMenu?.container === container;
+    event.preventDefault();
+    event.stopPropagation();
+    closeRosterActionMenus();
+    if (!wasActive) {
+      container.classList.add("active");
+      positionRosterActionMenu(container);
+    }
+    return;
+  }
+
   const portalButton = event.target.closest("#rosterActionPortal [data-action]");
   if (portalButton instanceof HTMLButtonElement && activeRosterActionMenu?.container instanceof HTMLElement) {
     const { action, id } = portalButton.dataset;
@@ -5808,38 +6036,19 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  const trigger = event.target.closest(".action-trigger-btn");
-  const container = event.target.closest(".action-menu-container");
-
-  if (trigger && container?.classList.contains("active")) {
+  if (event.target.closest("#rosterActionPortal")) {
     event.preventDefault();
     event.stopPropagation();
-    closeRosterActionMenus();
     return;
   }
 
-  // Close all other menus
-  document.querySelectorAll(".action-menu-container.active").forEach((menu) => {
-    if (menu !== container) {
-      menu.classList.remove("active", "portal-open");
-    }
-  });
-
-  if (trigger && container) {
-    const willOpen = !container.classList.contains("active");
-    container.classList.toggle("active", willOpen);
-    if (willOpen) {
-      positionRosterActionMenu(container);
-    } else {
-      closeRosterActionMenus();
-    }
-    event.stopPropagation();
-  } else if (!container) {
+  if (!container) {
     closeRosterActionMenus();
   }
 });
 
 window.addEventListener("resize", closeRosterActionMenus);
+window.addEventListener("scroll", closeRosterActionMenus, true);
 document.querySelectorAll("#rosterView .table-wrap").forEach((wrap) => {
   wrap.addEventListener("scroll", closeRosterActionMenus, { passive: true });
 });
