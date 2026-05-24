@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,14 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-05-24
+
+### Admission Jersey Payment Layout
+
+- Moved the admission `Pay now` button below jersey size and jersey pairs.
+- Removed the optional label from admission and manager jersey pairs and made pair count active only when jersey size is selected.
+- Bumped web cache assets to `v57`.
 
 ## 2026-05-23
 

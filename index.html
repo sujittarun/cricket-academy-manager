@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=56" />
+    <link rel="stylesheet" href="./styles.css?v=57" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       (function() {
@@ -284,7 +284,7 @@
               </label>
 
               <label>
-                Jersey pairs <span class="field-hint">(optional)</span>
+                Jersey pairs
                 <input
                   id="jerseyPairs"
                   name="jerseyPairs"
@@ -864,13 +864,6 @@
                     <div id="admissionFeeSummary" class="records-helper compact-fee-summary full-span">
                       Select jersey pairs to calculate the jersey amount. Parents can still submit if they paid a different amount.
                     </div>
-                    <div id="admissionPaymentAssist" class="payment-entry-inline full-span">
-                      <div class="payment-entry-side payment-entry-only-action">
-                        <button id="openPaymentPopupButton" type="button" class="primary-btn payment-open-btn">
-                          Pay now
-                        </button>
-                      </div>
-                    </div>
                     <label>
                       Jersey size
                       <select id="admissionJerseySize" name="jerseySize">
@@ -887,7 +880,7 @@
                       </select>
                     </label>
                     <label>
-                      Jersey pairs <span class="field-hint">(optional)</span>
+                      Jersey pairs
                       <input
                         id="admissionJerseyPairs"
                         name="jerseyPairs"
@@ -897,6 +890,13 @@
                         placeholder="e.g. 1"
                       />
                     </label>
+                    <div id="admissionPaymentAssist" class="payment-entry-inline full-span">
+                      <div class="payment-entry-side payment-entry-only-action">
+                        <button id="openPaymentPopupButton" type="button" class="primary-btn payment-open-btn">
+                          Pay now
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </section>
               </div>
@@ -1265,6 +1265,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=56"></script>
+    <script src="./script.js?v=57"></script>
   </body>
 </html>

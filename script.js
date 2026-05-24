@@ -280,8 +280,9 @@ const getAdmissionFeeBreakdown = () => {
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
     : selectedPlan.base;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
-  const jerseyPairs = getChargeableJerseyPairCount(admissionJerseyPairs?.value);
-  const jerseyAmount = getExtraJerseyAmount(admissionJerseyPairs?.value);
+  const hasJerseySize = Boolean(admissionJerseySize?.value);
+  const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(admissionJerseyPairs?.value) : 0;
+  const jerseyAmount = hasJerseySize ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
   return { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
 };
@@ -1905,15 +1906,23 @@ const syncAmountState = () => {
 const getManagerFeeBreakdown = () => {
   const coachingFee = ADMISSION_FEE_PLANS.monthly.base;
   const admissionFee = ADMISSION_ONE_TIME_FEE;
-  const jerseyPairs = getChargeableJerseyPairCount(jerseyPairsInput?.value);
-  const jerseyAmount = getExtraJerseyAmount(jerseyPairsInput?.value);
+  const hasJerseySize = Boolean(jerseySizeSelect?.value);
+  const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(jerseyPairsInput?.value) : 0;
+  const jerseyAmount = hasJerseySize ? getExtraJerseyAmount(jerseyPairsInput?.value) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
   const amountPaid = parseNonNegativeNumber(amountPaidInput?.value, 0);
-  return { coachingFee, admissionFee, jerseyPairs, jerseyAmount, total, amountPaid };
+  return { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total, amountPaid };
 };
 
 const syncManagerFeeBreakdown = () => {
-  const { coachingFee, admissionFee, jerseyPairs, jerseyAmount, total, amountPaid } = getManagerFeeBreakdown();
+  const { coachingFee, admissionFee, hasJerseySize, jerseyPairs, jerseyAmount, total, amountPaid } = getManagerFeeBreakdown();
+  if (jerseyPairsInput) {
+    jerseyPairsInput.disabled = !hasJerseySize;
+    if (!hasJerseySize && jerseyPairsInput.value) {
+      jerseyPairsInput.value = "";
+    }
+    jerseyPairsInput.placeholder = hasJerseySize ? "e.g. 1" : "Select jersey size first";
+  }
   if (managerCoachingFee) managerCoachingFee.textContent = rupees(coachingFee);
   if (managerAdmissionFee) managerAdmissionFee.textContent = rupees(admissionFee);
   if (managerJerseyAmount) managerJerseyAmount.textContent = rupees(jerseyAmount);
@@ -1921,7 +1930,9 @@ const syncManagerFeeBreakdown = () => {
   if (managerFeeSummary) {
     const pairCopy = jerseyPairs > 0
       ? ` Jersey: ${jerseyPairs} pair${jerseyPairs === 1 ? "" : "s"} x Rs ${JERSEY_PAIR_REVENUE}.`
-      : " Jersey pairs are optional and can be updated later.";
+      : hasJerseySize
+        ? " Jersey pair count can stay blank and be updated later."
+        : " Select a jersey size only if the player is taking a jersey.";
     const paidCopy = amountPaid > 0
       ? ` Amount paid now: ${rupees(amountPaid)}.`
       : " Blank amount is saved as Rs 0.";
@@ -1930,6 +1941,14 @@ const syncManagerFeeBreakdown = () => {
 };
 
 const syncAdmissionAmountState = () => {
+  const hasJerseySize = Boolean(admissionJerseySize?.value);
+  if (admissionJerseyPairs) {
+    admissionJerseyPairs.disabled = !hasJerseySize;
+    if (!hasJerseySize && admissionJerseyPairs.value) {
+      admissionJerseyPairs.value = "";
+    }
+    admissionJerseyPairs.placeholder = hasJerseySize ? "e.g. 1" : "Select jersey size first";
+  }
   const { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total } = getAdmissionFeeBreakdown();
   if (admissionCustomAmountLabel) {
     admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
@@ -1942,7 +1961,9 @@ const syncAdmissionAmountState = () => {
     const discountLabel = PLAN_DISCOUNT_LABELS[planKey];
     const jerseyCopy = jerseyPairs > 0
       ? ` Jersey: ${jerseyPairs} pair${jerseyPairs === 1 ? "" : "s"} x Rs ${JERSEY_PAIR_REVENUE}.`
-      : "";
+      : hasJerseySize
+        ? " Jersey pair count can stay blank and be updated later."
+        : " Select a jersey size only if the player is taking a jersey.";
     admissionFeeSummary.textContent = planKey === "custom"
       ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Parents can still submit if they paid a different amount.`
       : planKey === "special"
@@ -4182,6 +4203,7 @@ kidForm.addEventListener("submit", async (event) => {
   }
 
   const formData = new FormData(kidForm);
+  const jerseySizeValue = String(formData.get("jerseySize") || "").trim();
   const payload = {
     name: formData.get("name").toString().trim(),
     age: Number(formData.get("age")),
@@ -4189,8 +4211,8 @@ kidForm.addEventListener("submit", async (event) => {
     joinDate: formData.get("joinDate").toString(),
     feesPaid: formData.get("feesPaid").toString(),
     amountPaid: parseNonNegativeNumber(formData.get("amountPaid"), 0),
-    jerseySize: formData.get("jerseySize").toString(),
-    jerseyPairs: getChargeableJerseyPairCount(formData.get("jerseyPairs")),
+    jerseySize: jerseySizeValue,
+    jerseyPairs: jerseySizeValue ? getChargeableJerseyPairCount(formData.get("jerseyPairs")) : 0,
     renewals: [],
     addedBy: getActiveManagerEmail(),
     updatedBy: getActiveManagerEmail(),
@@ -4538,6 +4560,7 @@ editModeButton.addEventListener("click", () => {
 
 feesPaidSelect.addEventListener("change", syncAmountState);
 amountPaidInput?.addEventListener("input", syncManagerFeeBreakdown);
+jerseySizeSelect?.addEventListener("change", syncManagerFeeBreakdown);
 jerseyPairsInput?.addEventListener("input", syncManagerFeeBreakdown);
 admissionFeesPaid.addEventListener("change", syncAdmissionAmountState);
 admissionReadyToStart.addEventListener("change", syncAdmissionStyleState);
@@ -4546,6 +4569,7 @@ admissionBirthMonth.addEventListener("change", updateAdmissionAge);
 admissionBirthYear.addEventListener("change", updateAdmissionAge);
 admissionFeePlan?.addEventListener("change", syncAdmissionAmountState);
 admissionCustomAmount?.addEventListener("input", syncAdmissionAmountState);
+admissionJerseySize?.addEventListener("change", syncAdmissionAmountState);
 admissionJerseyPairs?.addEventListener("input", syncAdmissionAmountState);
 admissionAmountPaidNow?.addEventListener("input", updatePaymentAssist);
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
@@ -4975,6 +4999,7 @@ admissionForm.addEventListener("submit", async (event) => {
   submitAdmissionButton.disabled = true;
   admissionMessage.textContent = "Submitting admission form...";
   const paymentSubmittedForVerification = String(formData.get("feesPaid") || "no") === "yes";
+  const admissionJerseySizeValue = String(formData.get("jerseySize") || "").trim();
 
   const baseAdmissionPayload = {
     p_applicant_name: String(formData.get("applicantName") || "").trim(),
@@ -4994,8 +5019,8 @@ admissionForm.addEventListener("submit", async (event) => {
     p_fees_paid: false,
     p_amount_paid: paymentSubmittedForVerification ? getAdmissionPaymentAmount() : 0,
     p_grade: String(formData.get("grade") || "").trim(),
-    p_jersey_size: String(formData.get("jerseySize") || "").trim(),
-    p_jersey_pairs: Number(formData.get("jerseyPairs") || 0),
+    p_jersey_size: admissionJerseySizeValue,
+    p_jersey_pairs: admissionJerseySizeValue ? getChargeableJerseyPairCount(formData.get("jerseyPairs")) : 0,
     p_payment_method: String(formData.get("paymentMethod") || "UPI").trim(),
     p_payment_upi_id:
       String(formData.get("paymentUpiId") || academyPaymentConfig.upiId || "").trim(),
