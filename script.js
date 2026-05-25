@@ -237,6 +237,7 @@ const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
 const attendancePresentCount = document.getElementById("attendancePresentCount");
 const attendanceTotalCount = document.getElementById("attendanceTotalCount");
+const attendanceAbsenceNudge = document.getElementById("attendanceAbsenceNudge");
 const attendanceFilterBar = document.getElementById("attendanceFilterBar");
 const attendanceSearchInput = document.getElementById("attendanceSearchInput");
 const attendanceSlotFilters = document.getElementById("attendanceSlotFilters");
@@ -433,6 +434,7 @@ let isEditMode = false;
 let admissionPaymentIntentId = "";
 let todayAttendanceIds = new Set();
 let attendanceDateValue = toLocalIsoDate();
+let recentAttendanceRows = [];
 let isFeesVerified = false;
 let realtimeStudentsChannel = null;
 let realtimeAttendanceChannel = null;
@@ -2170,6 +2172,66 @@ const getFilteredAttendancePlayers = (activePlayers) => {
     String(kid.age || "").includes(search) ||
     String(kid.timeSlot || "").toLowerCase().includes(search)
   );
+};
+
+const ATTENDANCE_ABSENCE_NUDGE_DAYS = 5;
+
+const buildAttendanceAbsenceNudges = (activePlayers, attendedIds, referenceDate = attendanceDateValue) => {
+  const reference = parseIsoDate(referenceDate);
+  if (!reference) return [];
+  const referenceIso = toLocalIsoDate(reference);
+  const latestPresentByStudent = recentAttendanceRows.reduce((map, row) => {
+    const studentId = row.student_id || row.studentId;
+    const attendanceDate = String(row.attendance_date || row.attendanceDate || "").slice(0, 10);
+    if (!studentId || !attendanceDate || attendanceDate > referenceIso) return map;
+    const current = map.get(studentId);
+    if (!current || attendanceDate > current) map.set(studentId, attendanceDate);
+    return map;
+  }, new Map());
+
+  attendedIds.forEach((studentId) => {
+    latestPresentByStudent.set(studentId, referenceIso);
+  });
+
+  return activePlayers
+    .map((kid) => {
+      const joinDate = String(kid.joinDate || "").slice(0, 10);
+      if (!joinDate || joinDate > referenceIso) return null;
+      const lastPresentDate = latestPresentByStudent.get(kid.id) || "";
+      const startDate = lastPresentDate || joinDate;
+      const absentDays = daysBetweenIso(startDate, referenceIso);
+      if (absentDays < ATTENDANCE_ABSENCE_NUDGE_DAYS) return null;
+      return { kid, absentDays, lastPresentDate };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.absentDays - a.absentDays || a.kid.name.localeCompare(b.kid.name));
+};
+
+const renderAttendanceAbsenceNudge = (activePlayers, attendedIds) => {
+  if (!attendanceAbsenceNudge) return;
+  const nudges = buildAttendanceAbsenceNudges(activePlayers, attendedIds);
+  attendanceAbsenceNudge.hidden = nudges.length === 0;
+  if (nudges.length === 0) {
+    attendanceAbsenceNudge.innerHTML = "";
+    return;
+  }
+  const visible = nudges.slice(0, 6);
+  const remaining = nudges.length - visible.length;
+  attendanceAbsenceNudge.innerHTML = `
+    <div class="absence-nudge-copy">
+      <strong>${nudges.length} player${nudges.length === 1 ? "" : "s"} need attendance follow-up</strong>
+      <span>No attendance marked for ${ATTENDANCE_ABSENCE_NUDGE_DAYS}+ days. Review before marking discontinued.</span>
+    </div>
+    <div class="absence-nudge-list">
+      ${visible.map(({ kid, absentDays, lastPresentDate }) => `
+        <span class="absence-nudge-pill">
+          ${escapeHtml(kid.name)}
+          <small>${absentDays}d${lastPresentDate ? ` • last ${formatDate(lastPresentDate)}` : " • never marked"}</small>
+        </span>
+      `).join("")}
+      ${remaining > 0 ? `<span class="absence-nudge-more">+${remaining} more</span>` : ""}
+    </div>
+  `;
 };
 
 const showToast = (message) => {
@@ -5878,17 +5940,30 @@ const loadAttendance = async (date = attendanceDateValue) => {
   }
 
   try {
-    const { data, error } = await supabaseClient
-      .from("attendance")
-      .select("student_id")
-      .eq("attendance_date", date);
+    const since = addDaysIso(date, -45);
+    const [dayResult, recentResult] = await Promise.all([
+      supabaseClient
+        .from("attendance")
+        .select("student_id")
+        .eq("attendance_date", date),
+      supabaseClient
+        .from("attendance")
+        .select("student_id, attendance_date")
+        .gte("attendance_date", since)
+        .lte("attendance_date", date)
+        .order("attendance_date", { ascending: false }),
+    ]);
 
-    if (error) {
+    if (dayResult.error) {
       renderAttendance(new Set());
       return;
     }
 
-    const ids = new Set((data || []).map((r) => r.student_id));
+    if (!recentResult.error) {
+      recentAttendanceRows = recentResult.data || [];
+    }
+
+    const ids = new Set((dayResult.data || []).map((r) => r.student_id));
     todayAttendanceIds = ids;
     renderAttendance(ids);
   } catch (_) {
@@ -5905,6 +5980,7 @@ const renderAttendance = (attendedIds) => {
 
   if (!managerReady) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = true;
     if (attendanceGridContainer) attendanceGridContainer.hidden = true;
@@ -5923,6 +5999,7 @@ const renderAttendance = (attendedIds) => {
 
   if (activePlayers.length === 0) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = false;
     if (attendanceGridContainer) attendanceGridContainer.hidden = true;
@@ -5930,6 +6007,7 @@ const renderAttendance = (attendedIds) => {
   }
 
   if (attendanceSummaryBar) attendanceSummaryBar.hidden = false;
+  renderAttendanceAbsenceNudge(activePlayers, attendedIds);
   if (attendanceFilterBar) attendanceFilterBar.hidden = false;
   if (attendanceEmptyState) {
     attendanceEmptyState.hidden = visiblePlayers.length > 0;
@@ -5991,9 +6069,17 @@ attendanceTableBody?.addEventListener("change", async (event) => {
 
   if (isNowPresent) {
     todayAttendanceIds.add(studentId);
+    recentAttendanceRows = [
+      ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === studentId && (row.attendance_date || row.attendanceDate) === attendanceDateValue)),
+      { student_id: studentId, attendance_date: attendanceDateValue },
+    ];
   } else {
     todayAttendanceIds.delete(studentId);
+    recentAttendanceRows = recentAttendanceRows.filter(
+      (row) => !((row.student_id || row.studentId) === studentId && (row.attendance_date || row.attendanceDate) === attendanceDateValue)
+    );
   }
+  renderAttendance(todayAttendanceIds);
 
   // Update summary counts
   const activePlayers = getFilteredAttendancePlayers(kids.filter((k) => !k.discontinued));
@@ -6018,13 +6104,34 @@ attendanceTableBody?.addEventListener("change", async (event) => {
       }
       if (isNowPresent) {
         todayAttendanceIds.delete(studentId);
+        recentAttendanceRows = recentAttendanceRows.filter(
+          (row) => !((row.student_id || row.studentId) === studentId && (row.attendance_date || row.attendanceDate) === attendanceDateValue)
+        );
       } else {
         todayAttendanceIds.add(studentId);
+        recentAttendanceRows = [
+          ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === studentId && (row.attendance_date || row.attendanceDate) === attendanceDateValue)),
+          { student_id: studentId, attendance_date: attendanceDateValue },
+        ];
       }
+      renderAttendance(todayAttendanceIds);
     }
   } catch (err) {
     showToast("⚠ Attendance update failed.");
     input.checked = !isNowPresent;
+    if (isNowPresent) {
+      todayAttendanceIds.delete(studentId);
+      recentAttendanceRows = recentAttendanceRows.filter(
+        (row) => !((row.student_id || row.studentId) === studentId && (row.attendance_date || row.attendanceDate) === attendanceDateValue)
+      );
+    } else {
+      todayAttendanceIds.add(studentId);
+      recentAttendanceRows = [
+        ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === studentId && (row.attendance_date || row.attendanceDate) === attendanceDateValue)),
+        { student_id: studentId, attendance_date: attendanceDateValue },
+      ];
+    }
+    renderAttendance(todayAttendanceIds);
   }
 });
 
@@ -6162,6 +6269,12 @@ const initRealtimeSync = () => {
         if (event === "INSERT") {
           const sid = payload.new?.student_id;
           const adate = payload.new?.attendance_date;
+          if (sid && adate && adate <= attendanceDateValue) {
+            recentAttendanceRows = [
+              ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === sid && (row.attendance_date || row.attendanceDate) === adate)),
+              { student_id: sid, attendance_date: adate },
+            ];
+          }
           if (sid && adate === attendanceDateValue) {
             todayAttendanceIds.add(sid);
             const playerName = kids.find((k) => k.id === sid)?.name;
@@ -6171,6 +6284,12 @@ const initRealtimeSync = () => {
         } else if (event === "UPDATE") {
           const sid = payload.new?.student_id;
           const adate = payload.new?.attendance_date;
+          if (sid && adate && adate <= attendanceDateValue) {
+            recentAttendanceRows = [
+              ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === sid && (row.attendance_date || row.attendanceDate) === adate)),
+              { student_id: sid, attendance_date: adate },
+            ];
+          }
           if (sid && adate === attendanceDateValue) {
             todayAttendanceIds.add(sid);
             if (activeView === "attendance") renderAttendance(todayAttendanceIds);
@@ -6178,6 +6297,11 @@ const initRealtimeSync = () => {
         } else if (event === "DELETE") {
           const sid = payload.old?.student_id;
           const adate = payload.old?.attendance_date;
+          if (sid && adate) {
+            recentAttendanceRows = recentAttendanceRows.filter(
+              (row) => !((row.student_id || row.studentId) === sid && (row.attendance_date || row.attendanceDate) === adate)
+            );
+          }
           if (sid && adate === attendanceDateValue) {
             todayAttendanceIds.delete(sid);
             const playerName = kids.find((k) => k.id === sid)?.name;
