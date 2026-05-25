@@ -1455,6 +1455,12 @@ body.popup-open {
   border: 1px solid rgba(26, 79, 157, 0.2);
 }
 
+.status-failed {
+  background: rgba(185, 28, 28, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(185, 28, 28, 0.24);
+}
+
 .alert-pill {
   background: #fffbeb;
   color: #92400e;
@@ -1559,7 +1565,9 @@ body.popup-open {
   justify-content: space-between;
   gap: 18px;
   align-items: flex-start;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 1;
 }
 
 .academy-moments {
@@ -1721,11 +1729,13 @@ body.popup-open {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 18px;
+  margin: 0 0 18px;
   padding: 14px 16px;
   border: 1px solid rgba(15, 34, 64, 0.08);
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(26, 79, 157, 0.06), rgba(244, 191, 42, 0.12));
+  position: relative;
+  z-index: 0;
 }
 
 .player-link {

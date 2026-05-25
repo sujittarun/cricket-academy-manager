@@ -1145,7 +1145,7 @@
               <option value="custom">Custom amount</option>
             </select>
           </label>
-          <label>
+          <label id="renewalAmountField">
             Amount paid
             <input id="renewalAmount" name="renewalAmount" type="number" min="0" step="0.01" required />
           </label>
@@ -1159,8 +1159,29 @@
               <input id="joiningAdmissionFee" name="joiningAdmissionFee" type="number" min="0" step="0.01" value="500" />
             </label>
             <label>
+              Jersey size
+              <select id="joiningJerseySize" name="joiningJerseySize">
+                <option value="">Not set</option>
+                <option value="22">22</option>
+                <option value="24">24</option>
+                <option value="26">26</option>
+                <option value="28">28</option>
+                <option value="30">30</option>
+                <option value="32">32</option>
+                <option value="34">34</option>
+                <option value="36">36</option>
+                <option value="38">38</option>
+                <option value="40">40</option>
+                <option value="42">42</option>
+              </select>
+            </label>
+            <label>
+              Jersey pairs
+              <input id="joiningJerseyPairs" name="joiningJerseyPairs" type="number" min="0" step="1" value="0" />
+            </label>
+            <label>
               Jersey amount
-              <input id="joiningJerseyAmount" name="joiningJerseyAmount" type="number" min="0" step="0.01" value="0" />
+              <input id="joiningJerseyAmount" name="joiningJerseyAmount" type="number" min="0" step="0.01" value="0" readonly />
             </label>
             <label>
               Total due

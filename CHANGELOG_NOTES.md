@@ -15,6 +15,17 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-25
 
+### Reminder Status and Joining Fee Simplification
+
+- Fee-status pills now show `Reminder failed` for failed WhatsApp/Meta reminders instead of treating every attempted reminder as `Reminder sent`.
+- Player profile timeline loading now includes failed reminder fallback entries with provider reason details from `reminder_events` when the DB timeline trigger has not captured the update yet.
+- Simplified `Record joining fee`: joining mode hides the separate `Amount paid` field, preloads jersey size/pairs, derives jersey amount from pair count at Rs 750 each, and saves jersey size/pairs with the joining payment row.
+- Fixed admission banner spacing under the admission heading.
+- Verification done:
+  - `node --check web-app-repo/script.js`
+  - `git diff --check`
+  - Browser DOM check on a fresh local static server confirmed the edited fields, readonly jersey amount, and positive admission heading/banner gap.
+
 ### Joining Fee Split Payment Wiring
 
 - Updated the `Record joining fee` popup to show coaching fee, admission fee, jersey amount, and total due split fields.

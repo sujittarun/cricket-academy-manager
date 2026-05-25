@@ -62,7 +62,7 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
 - Mobile number validation: parent and alternate contact should be 10 digits when provided/required.
 - Payment is not mandatory. If fees paid is "No", no receipt should be generated at submit time.
 - Parent UPI payments are not automatically verified. If a parent marks payment made or enters UTR/reference, show/store it as `Payment pending verification`: keep `fees_paid=false`, keep the submitted amount/reference for manager review, do not count it in finance, and do not generate receipt until manager verifies/marks paid.
-- Roster/profile fee state should distinguish `Reminder sent`, `Pending verification`, and `Paid` when WhatsApp reminder/payment-link data exists.
+- Roster/profile fee state should distinguish `Reminder sent`, `Reminder failed`, `Pending verification`, and `Paid` when WhatsApp reminder/payment-link data exists; failed reminders must preserve/display the provider reason in the player timeline.
 
 ## Fees and Renewal Logic
 
@@ -76,6 +76,7 @@ Current fee constants:
 - 6 months payable after 10% discount: Rs 18,900.
 - Special training: Rs 10,000 per month.
 - Admission first payment shows separate coaching fee, one-time admission fee, and jersey amount boxes.
+- The manager `Record joining fee` action should not show a separate manual "Amount paid" field; it saves the calculated total due from coaching fee + admission fee + jersey pairs.
 - Jersey pairs are charged at Rs 750 per pair; there is no free first-pair rule.
 - Admission/player create-edit forms should not expose a manual "amount paid" override. Store `amount_paid` internally as the calculated total when payment is marked made/pending, or Rs 0 when unpaid. Custom/partial collections belong in the manager joining-fee or renewal payment action.
 - Renewal amounts do not include admission fee.

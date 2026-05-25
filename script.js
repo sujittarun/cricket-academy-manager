@@ -154,10 +154,13 @@ const renewalTitle = document.getElementById("renewalTitle");
 const renewalStudentId = document.getElementById("renewalStudentId");
 const renewalPaymentMode = document.getElementById("renewalPaymentMode");
 const renewalPlan = document.getElementById("renewalPlan");
+const renewalAmountField = document.getElementById("renewalAmountField");
 const renewalAmount = document.getElementById("renewalAmount");
 const joiningFeeBreakdown = document.getElementById("joiningFeeBreakdown");
 const joiningCoachingFee = document.getElementById("joiningCoachingFee");
 const joiningAdmissionFee = document.getElementById("joiningAdmissionFee");
+const joiningJerseySize = document.getElementById("joiningJerseySize");
+const joiningJerseyPairs = document.getElementById("joiningJerseyPairs");
 const joiningJerseyAmount = document.getElementById("joiningJerseyAmount");
 const joiningTotalFeeAmount = document.getElementById("joiningTotalFeeAmount");
 const renewalPaymentDate = document.getElementById("renewalPaymentDate");
@@ -471,26 +474,55 @@ const normalizePaymentFollowUp = (reminder = null, link = null) => ({
   cycleStartDate: link?.cycle_start_date || reminder?.due_date || "",
   paymentLinkUrl: link?.payment_link_url || reminder?.payment_link_url || "",
   createdAt: link?.created_at || reminder?.created_at || "",
+  metaError: reminder?.meta_error || null,
+  providerError: reminder?.provider_error || "",
+  failedAt: reminder?.failed_at || "",
+  deliveredAt: reminder?.delivered_at || "",
+  readAt: reminder?.read_at || "",
   reminder,
   link,
 });
+
+const REMINDER_FAILED_STATUSES = new Set(["failed", "send_failed", "delivery_failed", "undelivered"]);
+const REMINDER_SENT_STATUSES = new Set([
+  "queued",
+  "accepted",
+  "sent",
+  "delivered",
+  "read",
+  "payment_link_sent",
+  "payment_attempted",
+  "help_requested",
+]);
+const REMINDER_SENT_LINK_STATUSES = new Set(["awaiting_parent_choice", "payment_link_sent", "payment_attempted"]);
 
 const isPaymentPendingFollowUp = (followUp) =>
   ["payment_pending_verification", "pending_verification"].includes(followUp?.linkStatus) ||
   ["payment_pending_verification", "pending_verification"].includes(followUp?.reminderStatus);
 
+const isReminderFailedFollowUp = (followUp) =>
+  REMINDER_FAILED_STATUSES.has(followUp?.reminderStatus) ||
+  REMINDER_FAILED_STATUSES.has(followUp?.linkStatus) ||
+  Boolean(followUp?.failedAt || followUp?.providerError || followUp?.metaError?.message || followUp?.metaError?.error?.message);
+
 const isReminderSentFollowUp = (followUp) =>
-  [
-    "queued",
-    "accepted",
-    "sent",
-    "delivered",
-    "read",
-    "payment_link_sent",
-    "payment_attempted",
-    "help_requested",
-  ].includes(followUp?.reminderStatus) ||
-  ["awaiting_parent_choice", "payment_link_sent", "payment_attempted"].includes(followUp?.linkStatus);
+  !isReminderFailedFollowUp(followUp) &&
+  (REMINDER_SENT_STATUSES.has(followUp?.reminderStatus) ||
+    REMINDER_SENT_LINK_STATUSES.has(followUp?.linkStatus));
+
+const describeReminderFailure = (followUp = {}) => {
+  const meta = followUp?.metaError || followUp?.reminder?.meta_error || {};
+  const nestedError = meta?.error || meta?.errors?.[0] || {};
+  const reason =
+    followUp?.providerError ||
+    meta?.message ||
+    nestedError?.message ||
+    nestedError?.error_data?.details ||
+    nestedError?.details ||
+    "";
+  const status = followUp?.reminderStatus || followUp?.linkStatus || "failed";
+  return reason ? `Reminder failed: ${reason}` : `Reminder failed (${status})`;
+};
 
 const getPaymentFollowUpForKid = (kid) =>
   paymentFollowUps.find((followUp) => followUp.studentId === kid?.id) || null;
@@ -499,6 +531,9 @@ const getFeeDisplayState = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
   if (isPaymentPendingFollowUp(followUp) || kid?.paymentStatus === "pending_verification") {
     return { label: "Pending verification", className: "status-pending", followUp };
+  }
+  if (isReminderFailedFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
+    return { label: "Reminder failed", className: "status-failed", followUp, title: describeReminderFailure(followUp) };
   }
   if (isReminderSentFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
     return { label: "Reminder sent", className: "status-reminder", followUp };
@@ -684,7 +719,7 @@ const isMissingStudentFeeColumnError = (error) => {
   const message = String(error?.message || "").toLowerCase();
   return (
     message.includes("schema cache") &&
-    ["fee_plan", "coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount"]
+    ["fee_plan", "coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount", "jersey_size", "jersey_pairs"]
       .some((column) => message.includes(column))
   );
 };
@@ -693,8 +728,16 @@ const isMissingPaymentFeeColumnError = (error) => {
   const message = String(error?.message || "").toLowerCase();
   return (
     message.includes("schema cache") &&
-    ["coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount"]
+    ["coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount", "jersey_size", "jersey_pairs"]
       .some((column) => message.includes(column))
+  );
+};
+
+const isMissingReminderTrackingColumnError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("schema cache") &&
+    ["meta_error", "failed_at", "delivered_at", "read_at"].some((column) => message.includes(column))
   );
 };
 
@@ -999,24 +1042,37 @@ const syncJoiningFeeBreakdown = ({ resetFromPlan = false, updateAmount = false }
   const kid = kids.find((item) => item.id === renewalStudentId?.value);
   const isJoiningFee = renewalPaymentMode?.value === "joining";
   if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = !isJoiningFee;
+  if (renewalAmountField) renewalAmountField.hidden = isJoiningFee;
+  if (renewalAmount) renewalAmount.required = !isJoiningFee;
   if (!isJoiningFee || !kid) return { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0 };
 
   if (resetFromPlan) {
     const defaults = getJoiningPaymentDefaultSplit(kid, renewalPlan?.value || "monthly");
     writeMoneyField(joiningCoachingFee, defaults.coachingFee);
     writeMoneyField(joiningAdmissionFee, defaults.admissionFee);
-    writeMoneyField(joiningJerseyAmount, defaults.jerseyAmount);
+    if (joiningJerseySize) joiningJerseySize.value = kid.jerseySize || "";
+    if (joiningJerseyPairs) joiningJerseyPairs.value = String(Math.max(Number(kid.jerseyPairs || 0), 0));
   }
 
   const coachingFee = readMoneyField(joiningCoachingFee, 0);
   const admissionFee = readMoneyField(joiningAdmissionFee, 0);
-  const jerseyAmount = readMoneyField(joiningJerseyAmount, 0);
+  const jerseyPairs = getChargeableJerseyPairCount(joiningJerseyPairs?.value || 0);
+  if (joiningJerseyPairs) joiningJerseyPairs.value = String(jerseyPairs);
+  const jerseyAmount = getExtraJerseyAmount(jerseyPairs);
+  writeMoneyField(joiningJerseyAmount, jerseyAmount);
   const totalFeeAmount = coachingFee + admissionFee + jerseyAmount;
   writeMoneyField(joiningTotalFeeAmount, totalFeeAmount);
   if (updateAmount && renewalAmount && renewalPlan?.value !== "custom") {
     renewalAmount.value = String(totalFeeAmount);
   }
-  return { coachingFee, admissionFee, jerseyAmount, totalFeeAmount };
+  return {
+    coachingFee,
+    admissionFee,
+    jerseyAmount,
+    totalFeeAmount,
+    jerseySize: joiningJerseySize?.value || "",
+    jerseyPairs,
+  };
 };
 
 const rupees = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
@@ -2753,7 +2809,7 @@ const renderKids = () => {
                 <div class="mobile-card-name" title="${safeKidName}">${safeKidName}</div>
                 <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">${kid.discontinued ? "Discontinued" : "Active"}</span>
                 <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
-                <span class="status-pill ${feeDisplay.className}">${feeDisplay.label}</span>
+                <span class="status-pill ${feeDisplay.className}" title="${escapeHtml(feeDisplay.title || feeDisplay.label)}">${feeDisplay.label}</span>
                 <span class="alert-pill ${feeDueIsSafe ? "safe" : ""} ${shouldPulseDuePill ? "critical-pulse" : ""}">${renewalStatus}</span>
                 ${mobileRenewButton}
                 ${mobileJerseyEditor}
@@ -2801,7 +2857,7 @@ const renderKids = () => {
       <td data-label="Join date">${formatDate(kid.joinDate)}</td>
       <td data-label="Latest renewal">${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
       <td data-label="Fees paid">
-        <span class="status-pill ${feeDisplay.className}">
+        <span class="status-pill ${feeDisplay.className}" title="${escapeHtml(feeDisplay.title || feeDisplay.label)}">
           ${feeDisplay.label}
         </span>
       </td>
@@ -2978,10 +3034,12 @@ const loadPaymentFollowUps = async () => {
     return;
   }
 
+  const reminderSelect =
+    "id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response,meta_error,failed_at,delivered_at,read_at";
   const [reminderResult, linkResult] = await Promise.all([
     supabaseClient
       .from("reminder_events")
-      .select("id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response")
+      .select(reminderSelect)
       .order("created_at", { ascending: false })
       .limit(300),
     supabaseClient
@@ -2990,6 +3048,16 @@ const loadPaymentFollowUps = async () => {
       .order("created_at", { ascending: false })
       .limit(300),
   ]);
+
+  if (reminderResult.error && isMissingReminderTrackingColumnError(reminderResult.error)) {
+    const { data, error } = await supabaseClient
+      .from("reminder_events")
+      .select("id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    reminderResult.data = data;
+    reminderResult.error = error;
+  }
 
   if (reminderResult.error || linkResult.error) {
     paymentFollowUps = [];
@@ -3106,11 +3174,45 @@ const loadPlayerTimeline = async (studentId) => {
     .order("created_at", { ascending: false })
     .limit(30);
 
-  if (error) {
-    return [];
+  const timelineRows = error ? [] : (data || []);
+  let reminderFailures = [];
+  let reminderResult = await supabaseClient
+    .from("reminder_events")
+    .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at")
+    .eq("student_id", studentId)
+    .in("status", [...REMINDER_FAILED_STATUSES])
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (reminderResult.error && isMissingReminderTrackingColumnError(reminderResult.error)) {
+    reminderResult = await supabaseClient
+      .from("reminder_events")
+      .select("id,student_id,reminder_type,status,due_date,created_at,created_by")
+      .eq("student_id", studentId)
+      .in("status", [...REMINDER_FAILED_STATUSES])
+      .order("created_at", { ascending: false })
+      .limit(10);
+  }
+  if (!reminderResult.error) {
+    reminderFailures = (reminderResult.data || []).map((reminder) => {
+      const followUp = normalizePaymentFollowUp(reminder, null);
+      return {
+        id: `reminder-failure-${reminder.id}`,
+        student_id: studentId,
+        event_type: "whatsapp_reminder_failed",
+        event_date: (reminder.failed_at || reminder.created_at || "").slice(0, 10),
+        title: "Reminder failed",
+        details: describeReminderFailure(followUp),
+        changed_by: reminder.created_by || "WhatsApp",
+        created_at: reminder.failed_at || reminder.created_at || "",
+      };
+    });
   }
 
-  return Promise.all((data || []).map(async (item) => {
+  const mergedRows = [...timelineRows, ...reminderFailures]
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
+    .slice(0, 30);
+
+  return Promise.all(mergedRows.map(async (item) => {
     const proofPath = extractPaymentProofPath(item.details || "");
     if (!proofPath) return item;
     const proofUrl = await createPaymentProofSignedUrl(proofPath);
@@ -3571,6 +3673,8 @@ const openRenewalPopup = (kid, mode = "renewal") => {
     syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
   } else {
     if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = true;
+    if (renewalAmountField) renewalAmountField.hidden = false;
+    if (renewalAmount) renewalAmount.required = true;
     renewalAmount.value = String(RENEWAL_PLANS.monthly.amount);
   }
   if (renewalPaymentDate) renewalPaymentDate.value = toLocalIsoDate();
@@ -4805,8 +4909,9 @@ renewalPlan?.addEventListener("change", () => {
   }
   renewalAmount.readOnly = false; // Always allow manual adjustment
 });
-[joiningCoachingFee, joiningAdmissionFee, joiningJerseyAmount].forEach((input) => {
+[joiningCoachingFee, joiningAdmissionFee, joiningJerseySize, joiningJerseyPairs].forEach((input) => {
   input?.addEventListener("input", () => syncJoiningFeeBreakdown());
+  input?.addEventListener("change", () => syncJoiningFeeBreakdown());
 });
 closeRenewalButton?.addEventListener("click", closeRenewalPopup);
 renewalPopup?.addEventListener("click", (event) => {
@@ -4817,12 +4922,15 @@ renewalForm?.addEventListener("submit", async (event) => {
   const kid = kids.find((item) => item.id === renewalStudentId.value);
   if (!kid) return;
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
-  const amount = getRenewalAmountForPlan();
+  const isJoiningFee = renewalPaymentMode?.value === "joining";
+  const joiningFeeSplit = isJoiningFee
+    ? syncJoiningFeeBreakdown()
+    : { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0, jerseySize: "", jerseyPairs: 0 };
+  const amount = isJoiningFee ? joiningFeeSplit.totalFeeAmount : getRenewalAmountForPlan();
   if (amount <= 0) {
-    renewalMessage.textContent = "Enter a valid renewal amount.";
+    renewalMessage.textContent = isJoiningFee ? "Joining fee total must be greater than zero." : "Enter a valid renewal amount.";
     return;
   }
-  const isJoiningFee = renewalPaymentMode?.value === "joining";
   const paymentDate = renewalPaymentDate?.value || toLocalIsoDate();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
     renewalMessage.textContent = "Choose a valid payment date.";
@@ -4830,9 +4938,6 @@ renewalForm?.addEventListener("submit", async (event) => {
   }
   const cycleDate = isJoiningFee ? kid.joinDate : getDueCycleDate(kid);
   const renewals = [...kid.renewals, cycleDate];
-  const joiningFeeSplit = isJoiningFee
-    ? syncJoiningFeeBreakdown()
-    : { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0 };
   const paymentPayload = {
     student_id: kid.id,
     payment_type: isJoiningFee ? "joining" : "renewal",
@@ -4849,6 +4954,8 @@ renewalForm?.addEventListener("submit", async (event) => {
           admission_fee: joiningFeeSplit.admissionFee,
           jersey_amount: joiningFeeSplit.jerseyAmount,
           total_fee_amount: joiningFeeSplit.totalFeeAmount,
+          jersey_size: joiningFeeSplit.jerseySize,
+          jersey_pairs: joiningFeeSplit.jerseyPairs,
         }
       : {}),
   };
@@ -4860,6 +4967,8 @@ renewalForm?.addEventListener("submit", async (event) => {
     delete legacyPaymentPayload.admission_fee;
     delete legacyPaymentPayload.jersey_amount;
     delete legacyPaymentPayload.total_fee_amount;
+    delete legacyPaymentPayload.jersey_size;
+    delete legacyPaymentPayload.jersey_pairs;
     ({ data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert(legacyPaymentPayload).select("*").single());
     savedWithoutPaymentFeeFields = !paymentError;
   }
@@ -4878,6 +4987,8 @@ renewalForm?.addEventListener("submit", async (event) => {
           admission_fee: joiningFeeSplit.admissionFee,
           jersey_amount: joiningFeeSplit.jerseyAmount,
           total_fee_amount: joiningFeeSplit.totalFeeAmount,
+          jersey_size: joiningFeeSplit.jerseySize,
+          jersey_pairs: joiningFeeSplit.jerseyPairs,
         }
       : { renewals }),
     discontinued: false,
@@ -4919,8 +5030,8 @@ renewalForm?.addEventListener("submit", async (event) => {
   latestAdmissionReceipt = isJoiningFee ? buildReceiptFromKid(kid, {
     amountPaid: amount,
     paidOn: paymentDate,
-    jerseySize: kid.jerseySize,
-    jerseyPairs: kid.jerseyPairs,
+    jerseySize: joiningFeeSplit.jerseySize || kid.jerseySize,
+    jerseyPairs: joiningFeeSplit.jerseyPairs,
   }) : buildRenewalReceiptFromKid(kid, {
     plan: renewalPlan.value,
     planTitle: plan.title,
@@ -5199,12 +5310,12 @@ admissionReviewList.addEventListener("click", async (event) => {
         })
       });
       
-      if (response.ok) {
+      const body = await response.json().catch(() => ({}));
+      if (response.ok && body?.success !== false) {
         showToast("Reminder sent to WhatsApp!");
         remindBtn.textContent = "Sent ✓";
       } else {
-        const err = await response.json();
-        showToast(`Failed: ${err.error || "Unknown error"}`);
+        showToast(`Reminder failed: ${body.error || body.message || "Unknown error"}`);
         remindBtn.textContent = "Remind";
         remindBtn.disabled = false;
       }
