@@ -4825,6 +4825,10 @@ kidsTableBody.addEventListener("click", async (event) => {
 
   if (action === "delete") {
     const kidToDelete = kids.find((kid) => kid.id === id);
+    const playerName = kidToDelete?.name || "this player";
+    if (!window.confirm(`Delete ${playerName}? This will permanently remove the player record.`)) {
+      return;
+    }
     const { error } = await supabaseClient.from("students").delete().eq("id", id);
 
     if (error) {
