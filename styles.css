@@ -1456,9 +1456,9 @@ body.popup-open {
 }
 
 .status-failed {
-  background: rgba(185, 28, 28, 0.12);
+  background: rgba(15, 34, 64, 0.06);
   color: #b91c1c;
-  border: 1px solid rgba(185, 28, 28, 0.24);
+  border: 1px solid rgba(15, 34, 64, 0.14);
 }
 
 .alert-pill {
