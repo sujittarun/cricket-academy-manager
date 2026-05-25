@@ -3545,7 +3545,7 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
     return { success: false, message: paymentError.message };
   }
 
-  let updatePayload = { discontinued: false, discontinued_at: null, updated_by: getActiveManagerEmail() };
+  let updatePayload = { discontinued: false, updated_by: getActiveManagerEmail() };
   if (isJoiningFee) {
     updatePayload.fees_paid = true;
   } else {
@@ -5041,13 +5041,18 @@ kidsTableBody.addEventListener("click", async (event) => {
     if (!kidToUpdate) {
       return;
     }
+    const willDiscontinue = !(kidToUpdate.discontinued === true || kidToUpdate.discontinued === "true");
+    const updatePayload = {
+      discontinued: willDiscontinue,
+      updated_by: getActiveManagerEmail(),
+    };
+    if (willDiscontinue) {
+      updatePayload.discontinued_at = toLocalIsoDate();
+    }
 
     const { error } = await supabaseClient
       .from("students")
-      .update({
-        discontinued: !kidToUpdate.discontinued,
-        updated_by: getActiveManagerEmail(),
-      })
+      .update(updatePayload)
       .eq("id", id);
 
     if (error) {
@@ -5230,7 +5235,6 @@ renewalForm?.addEventListener("submit", async (event) => {
         }
       : { renewals }),
     discontinued: false,
-    discontinued_at: null,
     updated_by: getActiveManagerEmail(),
   };
   let { error: updateError } = await supabaseClient
