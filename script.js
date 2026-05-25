@@ -248,6 +248,7 @@ const rosterStatusFilterInput = document.getElementById("rosterStatusFilter");
 const rosterJerseyFilterInput = document.getElementById("rosterJerseyFilter");
 const rosterTypeFilterInput = document.getElementById("rosterTypeFilter");
 const rosterFeeDueFilterInput = document.getElementById("rosterFeeDueFilter");
+const playerProfileLayoutToggle = document.getElementById("playerProfileLayoutToggle");
 
 // Payment verify
 const paymentVerifyFlow = document.getElementById("paymentVerifyFlow");
@@ -453,22 +454,53 @@ const PLAYER_PROFILE_LAYOUT_FLAG_KEY = "genAlpha.playerProfileLayout";
 const isPlayerProfileV2Enabled = () => {
   const params = new URLSearchParams(window.location.search);
   const paramValue = params.get("playerProfileV2") || params.get("profileV2") || "";
+  const savedLayout = window.localStorage?.getItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY) || "";
+  if (savedLayout === "v2") return true;
+  if (["v1", "legacy"].includes(savedLayout)) return false;
   if (["1", "true", "v2"].includes(paramValue.toLowerCase())) return true;
   if (["0", "false", "legacy", "v1"].includes(paramValue.toLowerCase())) return false;
   return (
     window.GEN_ALPHA_FEATURE_FLAGS?.playerProfileLayout === "v2" ||
-    window.localStorage?.getItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY) === "v2"
+    savedLayout === "v2"
   );
+};
+
+const removePlayerProfileLayoutUrlFlag = () => {
+  const url = new URL(window.location.href);
+  let changed = false;
+  ["playerProfileV2", "profileV2", "playerProfileV2Mock"].forEach((key) => {
+    if (url.searchParams.has(key)) {
+      url.searchParams.delete(key);
+      changed = true;
+    }
+  });
+  if (changed) {
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+};
+
+const syncPlayerProfileLayoutControl = () => {
+  if (!playerProfileLayoutToggle) return;
+  playerProfileLayoutToggle.value = isPlayerProfileV2Enabled() ? "v2" : "v1";
+};
+
+const setPlayerProfileLayout = (layout) => {
+  const nextLayout = layout === "v2" ? "v2" : "v1";
+  window.localStorage?.setItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY, nextLayout);
+  removePlayerProfileLayoutUrlFlag();
+  syncPlayerProfileLayoutControl();
+  if (nextLayout === "v1") {
+    window.GenAlphaPlayerProfileV2?.close?.();
+  }
+  showToast(nextLayout === "v2" ? "New player profile UI enabled." : "Old player profile UI enabled.");
 };
 
 window.GenAlphaPlayerProfileFlags = {
   enableV2() {
-    window.localStorage?.setItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY, "v2");
-    showToast("Player profile V2 enabled. Open a player to test it.");
+    setPlayerProfileLayout("v2");
   },
   disableV2() {
-    window.localStorage?.removeItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY);
-    showToast("Player profile V2 disabled. Current player popup is back.");
+    setPlayerProfileLayout("v1");
   },
   isV2Enabled: isPlayerProfileV2Enabled,
 };
@@ -5392,6 +5424,9 @@ rosterFeeDueFilterInput?.addEventListener("change", (event) => {
   rosterFeeDueFilter = event.target.value || "all";
   renderKids();
 });
+playerProfileLayoutToggle?.addEventListener("change", (event) => {
+  setPlayerProfileLayout(event.target.value);
+});
 const deletePayment = async (paymentId, kidId) => {
   if (!confirm("Are you sure you want to delete this payment record? This will roll back the student's renewal date and total amount paid.")) return;
   
@@ -6286,6 +6321,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (financeExportMonth) financeExportMonth.value = currentMonthKey();
   admissionPaymentIntentId = buildPaymentIntentId();
   if (rosterStatusFilterInput) rosterStatusFilterInput.value = rosterStatusFilter;
+  syncPlayerProfileLayoutControl();
   
   // 3. UI States
   syncAdmissionAmountState();

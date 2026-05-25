@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=63" />
+    <link rel="stylesheet" href="./styles.css?v=64" />
     <link rel="stylesheet" href="./player-profile-v2/player-profile-v2.css?v=2" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -380,6 +380,13 @@
                       <option value="not-paid">Not paid</option>
                       <option value="joining-pending">Joining pending</option>
                       <option value="overdue">Overdue</option>
+                    </select>
+                  </label>
+                  <label class="roster-filter profile-layout-filter">
+                    <span>Player UI</span>
+                    <select id="playerProfileLayoutToggle" aria-label="Choose player profile UI">
+                      <option value="v1">Old UI</option>
+                      <option value="v2">New UI</option>
                     </select>
                   </label>
                 </div>
@@ -1289,7 +1296,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=63"></script>
+    <script src="./script.js?v=64"></script>
     <script src="./player-profile-v2/player-profile-v2.js?v=2"></script>
   </body>
 </html>

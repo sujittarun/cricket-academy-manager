@@ -23,6 +23,7 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Added `?playerProfileV2Mock=1` for safe visual QA without touching live player data.
 - Updated the experimental V2 view into a screenshot-inspired admin workspace with a dark academy sidebar, breadcrumb/search header, player summary strip, Billing-first tabs, fee breakdown tables, pause/reminder right rail, and mobile-responsive stacking.
 - Bumped V2 asset query strings and service-worker cache to `v64`, and made V2 assets network-first to avoid stale experimental UI during QA.
+- Added an in-roster `Player UI` switch so managers can choose Old UI or New UI without editing URL flags. The choice is saved locally and switching back to Old UI clears V2 URL test flags.
 
 ### Reminder Status and Joining Fee Simplification
 

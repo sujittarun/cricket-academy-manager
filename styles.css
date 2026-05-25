@@ -1307,6 +1307,16 @@ body.popup-open {
   padding: 0 22px 0 8px;
 }
 
+.profile-layout-filter {
+  border-color: rgba(26, 79, 157, 0.22);
+  background: rgba(26, 79, 157, 0.06);
+}
+
+.profile-layout-filter select {
+  background: var(--accent);
+  color: #ffffff;
+}
+
 .roster-search {
   min-height: 38px;
   width: min(260px, 100%);
