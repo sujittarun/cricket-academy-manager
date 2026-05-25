@@ -21,6 +21,8 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - The current player popup remains the default. V2 opens only when `?playerProfileV2=1` is present or `localStorage.setItem("genAlpha.playerProfileLayout", "v2")` is set.
 - V2 separates player identity, fee health, attendance, contact, kit/profile, and timeline into a whole-screen view with quieter action placement.
 - Added `?playerProfileV2Mock=1` for safe visual QA without touching live player data.
+- Updated the experimental V2 view into a screenshot-inspired admin workspace with a dark academy sidebar, breadcrumb/search header, player summary strip, Billing-first tabs, fee breakdown tables, pause/reminder right rail, and mobile-responsive stacking.
+- Bumped V2 asset query strings and service-worker cache to `v64`, and made V2 assets network-first to avoid stale experimental UI during QA.
 
 ### Reminder Status and Joining Fee Simplification
 
