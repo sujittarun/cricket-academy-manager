@@ -481,7 +481,11 @@ const removePlayerProfileLayoutUrlFlag = () => {
 
 const syncPlayerProfileLayoutControl = () => {
   if (!playerProfileLayoutToggle) return;
-  playerProfileLayoutToggle.value = isPlayerProfileV2Enabled() ? "v2" : "v1";
+  const layout = isPlayerProfileV2Enabled() ? "v2" : "v1";
+  playerProfileLayoutToggle.dataset.layout = layout;
+  playerProfileLayoutToggle.setAttribute("aria-checked", layout === "v2" ? "true" : "false");
+  playerProfileLayoutToggle.classList.toggle("is-new", layout === "v2");
+  playerProfileLayoutToggle.title = layout === "v2" ? "New player profile UI is active" : "Old player profile UI is active";
 };
 
 const setPlayerProfileLayout = (layout) => {
@@ -5434,8 +5438,8 @@ rosterFeeDueFilterInput?.addEventListener("change", (event) => {
   rosterFeeDueFilter = event.target.value || "all";
   renderKids();
 });
-playerProfileLayoutToggle?.addEventListener("change", (event) => {
-  setPlayerProfileLayout(event.target.value);
+playerProfileLayoutToggle?.addEventListener("click", () => {
+  setPlayerProfileLayout(playerProfileLayoutToggle.dataset.layout === "v2" ? "v1" : "v2");
 });
 const deletePayment = async (paymentId, kidId) => {
   if (!confirm("Are you sure you want to delete this payment record? This will roll back the student's renewal date and total amount paid.")) return;

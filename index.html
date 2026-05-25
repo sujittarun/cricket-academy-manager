@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=65" />
+    <link rel="stylesheet" href="./styles.css?v=66" />
     <link rel="stylesheet" href="./player-profile-v2/player-profile-v2.css?v=3" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -327,13 +327,13 @@
                 <h2>Registered players</h2>
               </div>
               <div class="records-heading-actions">
-                <label class="profile-layout-switch">
+                <div class="profile-layout-switch" aria-label="Choose player profile UI">
                   <span>Player UI</span>
-                  <select id="playerProfileLayoutToggle" aria-label="Choose player profile UI">
-                    <option value="v1">Old UI</option>
-                    <option value="v2">New UI</option>
-                  </select>
-                </label>
+                  <button id="playerProfileLayoutToggle" class="profile-layout-toggle" type="button" role="switch" aria-checked="false" data-layout="v1">
+                    <span class="profile-layout-option old">Old</span>
+                    <span class="profile-layout-option new">New</span>
+                  </button>
+                </div>
                 <p id="recordsHelper" class="records-helper">
                   View academy records here. Login as manager to add or edit players.
                 </p>
@@ -1298,7 +1298,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=33"></script>
-    <script src="./script.js?v=65"></script>
+    <script src="./script.js?v=66"></script>
     <script src="./player-profile-v2/player-profile-v2.js?v=3"></script>
   </body>
 </html>
