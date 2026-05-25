@@ -84,6 +84,15 @@
     if (["edit", "renew-open", "joining-payment-open", "toggle-status", "delete"].includes(action)) close();
   };
 
+  const navigateToAppView = (payload, view = "roster") => {
+    close();
+    if (payload.actions?.navigate) {
+      payload.actions.navigate(view);
+    } else {
+      window.GenAlphaAppNavigation?.switchView?.(view);
+    }
+  };
+
   const getPaidThrough = (payload) => {
     const label = payload.labels?.paidThrough || "";
     return /^\d{2}\s/.test(label) ? label : formatDate(payload.pendingPayment?.cycleDate || payload.kid.joinDate);
@@ -454,12 +463,13 @@
           <div><strong>GEN ALPHA</strong><small>Cricket Academy</small></div>
         </div>
         <nav class="player-v2-nav" aria-label="Player profile navigation">
-          <span>Dashboard</span>
-          <span class="active">Students</span>
-          <span>Attendance</span>
+          <button type="button" data-player-v2-view="roster">Dashboard</button>
+          <button class="active" type="button" data-player-v2-view="roster">Students</button>
+          <button type="button" data-player-v2-view="attendance">Attendance</button>
           <span>Batch Management</span>
           <span>Communication</span>
-          <span>Fees</span>
+          <button type="button" data-player-v2-view="finance">Fees</button>
+          <button type="button" data-player-v2-view="finance">Finance</button>
           <span>Reports</span>
           <span>Settings</span>
         </nav>
@@ -527,7 +537,12 @@
     shell.addEventListener("click", (event) => {
       const closeButton = event.target.closest("[data-player-v2-close]");
       if (closeButton) {
-        close();
+        navigateToAppView(payload, "roster");
+        return;
+      }
+      const viewButton = event.target.closest("[data-player-v2-view]");
+      if (viewButton) {
+        navigateToAppView(payload, viewButton.dataset.playerV2View || "roster");
         return;
       }
       const tabButton = event.target.closest("[data-player-v2-tab]");

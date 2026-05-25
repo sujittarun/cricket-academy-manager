@@ -66,21 +66,35 @@ body.player-v2-open {
   overflow: auto;
 }
 
-.player-v2-nav span {
+.player-v2-nav span,
+.player-v2-nav button {
   display: flex;
   align-items: center;
   min-height: 42px;
   padding: 0 12px;
+  border: 0;
   border-radius: 8px;
+  background: transparent;
   color: rgba(255, 255, 255, 0.82);
+  font: inherit;
   font-size: 0.86rem;
   font-weight: 760;
+  text-align: left;
+  cursor: pointer;
 }
 
-.player-v2-nav span.active {
+.player-v2-nav span.active,
+.player-v2-nav button.active {
   background: #0b58f4;
   color: #ffffff;
   box-shadow: 0 10px 28px rgba(8, 84, 244, 0.34);
+}
+
+.player-v2-nav button:hover,
+.player-v2-nav button:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  outline: 0;
 }
 
 .player-v2-main {

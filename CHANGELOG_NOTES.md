@@ -24,6 +24,7 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Updated the experimental V2 view into a screenshot-inspired admin workspace with a dark academy sidebar, breadcrumb/search header, player summary strip, Billing-first tabs, fee breakdown tables, pause/reminder right rail, and mobile-responsive stacking.
 - Bumped V2 asset query strings and service-worker cache to `v64`, and made V2 assets network-first to avoid stale experimental UI during QA.
 - Added an in-roster `Player UI` switch so managers can choose Old UI or New UI without editing URL flags. The choice is saved locally and switching back to Old UI clears V2 URL test flags.
+- Moved the `Player UI` switch to the top registered-players header and made V2 sidebar navigation/back controls return to the real roster, attendance, or finance app views.
 
 ### Reminder Status and Joining Fee Simplification
 

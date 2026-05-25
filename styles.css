@@ -1307,14 +1307,53 @@ body.popup-open {
   padding: 0 22px 0 8px;
 }
 
-.profile-layout-filter {
-  border-color: rgba(26, 79, 157, 0.22);
-  background: rgba(26, 79, 157, 0.06);
+.records-panel > .panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
 }
 
-.profile-layout-filter select {
+.records-heading-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: min(100%, 320px);
+}
+
+.profile-layout-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 5px 6px 5px 12px;
+  border: 1px solid rgba(26, 79, 157, 0.22);
+  border-radius: 999px;
+  background: rgba(26, 79, 157, 0.06);
+  color: var(--accent-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-layout-switch select {
+  min-height: 28px;
+  border: 0;
+  border-radius: 999px;
   background: var(--accent);
   color: #ffffff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 0 24px 0 10px;
+}
+
+.profile-layout-switch select:focus {
+  outline: 2px solid rgba(26, 79, 157, 0.24);
+  outline-offset: 2px;
 }
 
 .roster-search {
@@ -2586,6 +2625,21 @@ body.popup-open {
 }
 
 @media (max-width: 720px) {
+  .records-panel > .panel-heading {
+    display: grid;
+    gap: 10px;
+  }
+
+  .records-heading-actions {
+    justify-items: start;
+    min-width: 0;
+  }
+
+  .profile-layout-switch {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .admission-banner {
     grid-template-columns: 1fr;
     gap: 6px;

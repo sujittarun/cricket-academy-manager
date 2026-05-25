@@ -495,6 +495,15 @@ const setPlayerProfileLayout = (layout) => {
   showToast(nextLayout === "v2" ? "New player profile UI enabled." : "Old player profile UI enabled.");
 };
 
+const navigateFromPlayerProfile = (view) => {
+  const nextView = ["roster", "attendance", "finance", "admission"].includes(view) ? view : "roster";
+  switchView(nextView);
+};
+
+window.GenAlphaAppNavigation = {
+  switchView: navigateFromPlayerProfile,
+};
+
 window.GenAlphaPlayerProfileFlags = {
   enableV2() {
     setPlayerProfileLayout("v2");
@@ -3751,6 +3760,7 @@ const renderPlayerDetails = async (kid) => {
       },
       actions: {
         run: (action) => runRosterActionFromProfile(action, kid.id),
+        navigate: navigateFromPlayerProfile,
       },
     });
     if (opened) return;
