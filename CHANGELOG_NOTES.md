@@ -19,6 +19,7 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 - Fee-status pills now show `Reminder failed` for failed WhatsApp/Meta reminders instead of treating every attempted reminder as `Reminder sent`.
 - Player profile timeline loading now includes failed reminder fallback entries with provider reason details from `reminder_events` when the DB timeline trigger has not captured the update yet.
+- Player timelines now collapse reminder attempts to one `WhatsApp reminder prepared` item plus one final `Reminder failed`/`Reminder delivered` item, hiding accepted/legacy duplicates and long phone/template message bodies.
 - Simplified `Record joining fee`: joining mode hides the separate `Amount paid` field, preloads jersey size/pairs, derives jersey amount from pair count at Rs 750 each, and saves jersey size/pairs with the joining payment row.
 - Fixed admission banner spacing under the admission heading.
 - Verification done:

@@ -3250,6 +3250,85 @@ const createPaymentProofSignedUrl = async (path) => {
   }
 };
 
+const extractReminderTimelineReason = (details = "") => {
+  const text = String(details || "").trim();
+  if (!text) return "";
+  const marker = "Reminder failed:";
+  if (text.includes(marker)) return text.slice(text.indexOf(marker) + marker.length).trim();
+  const pieces = text.split("•").map((piece) => piece.trim()).filter(Boolean);
+  const reason = [...pieces].reverse().find((piece) =>
+    !/^(failed|send_failed|delivery_failed|undelivered|accepted|sent|delivered|read)$/i.test(piece) &&
+    !/^message:/i.test(piece) &&
+    !/^parent:/i.test(piece) &&
+    !/^from:/i.test(piece) &&
+    !/^to:/i.test(piece) &&
+    !/^plan:/i.test(piece) &&
+    !/^amount:/i.test(piece) &&
+    !/^months:/i.test(piece)
+  );
+  return reason || "";
+};
+
+const compactTimelineItem = (item) => {
+  const eventText = `${item.event_type || ""} ${item.title || ""} ${item.details || ""}`.toLowerCase();
+  if (eventText.includes("renewal reminder prepared") || eventText.includes("joining fee reminder prepared")) {
+    return null;
+  }
+  if (eventText.includes("reminder accepted") || eventText.includes(" accepted ")) {
+    return null;
+  }
+  if (eventText.includes("confirmation") && !eventText.includes("failed")) {
+    return null;
+  }
+  if (eventText.includes("whatsapp reminder prepared") || eventText.includes("status: queued")) {
+    return {
+      ...item,
+      title: "WhatsApp reminder prepared",
+      details: "",
+      changed_by: item.changed_by || "System",
+    };
+  }
+  if (eventText.includes("failed") || eventText.includes("send_failed") || eventText.includes("delivery_failed")) {
+    return {
+      ...item,
+      title: "Reminder failed",
+      details: extractReminderTimelineReason(item.details) || "Provider did not return a detailed reason.",
+      changed_by: item.changed_by || "WhatsApp",
+    };
+  }
+  if (eventText.includes("delivered") || eventText.includes("read")) {
+    return {
+      ...item,
+      title: "Reminder delivered",
+      details: "",
+      changed_by: item.changed_by || "WhatsApp",
+    };
+  }
+  if (eventText.includes("message: template")) {
+    return {
+      ...item,
+      details: "",
+    };
+  }
+  return item;
+};
+
+const compactPlayerTimeline = (timeline = []) => {
+  const seen = new Set();
+  return timeline
+    .map(compactTimelineItem)
+    .filter(Boolean)
+    .filter((item) => {
+      const title = String(item.title || item.event_type || "");
+      const dateKey = String(item.event_date || item.created_at || "").slice(0, 10);
+      const detailKey = title === "Reminder failed" ? String(item.details || "") : "";
+      const key = `${dateKey}|${title}|${detailKey}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
 const openPaymentProofViewer = (url) => {
   if (!url) return;
   const viewer = document.createElement("div");
@@ -3529,7 +3608,7 @@ const sendReminderDryRun = async (kid) => {
 
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
-  const timeline = await loadPlayerTimeline(kid.id);
+  const timeline = compactPlayerTimeline(await loadPlayerTimeline(kid.id));
   const paymentRows = getPlayerPaymentRows(kid);
   const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
