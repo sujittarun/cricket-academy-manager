@@ -449,6 +449,30 @@ let reminderSettings = { ...DEFAULT_REMINDER_SETTINGS };
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
 
+const PLAYER_PROFILE_LAYOUT_FLAG_KEY = "genAlpha.playerProfileLayout";
+const isPlayerProfileV2Enabled = () => {
+  const params = new URLSearchParams(window.location.search);
+  const paramValue = params.get("playerProfileV2") || params.get("profileV2") || "";
+  if (["1", "true", "v2"].includes(paramValue.toLowerCase())) return true;
+  if (["0", "false", "legacy", "v1"].includes(paramValue.toLowerCase())) return false;
+  return (
+    window.GEN_ALPHA_FEATURE_FLAGS?.playerProfileLayout === "v2" ||
+    window.localStorage?.getItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY) === "v2"
+  );
+};
+
+window.GenAlphaPlayerProfileFlags = {
+  enableV2() {
+    window.localStorage?.setItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY, "v2");
+    showToast("Player profile V2 enabled. Open a player to test it.");
+  },
+  disableV2() {
+    window.localStorage?.removeItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY);
+    showToast("Player profile V2 disabled. Current player popup is back.");
+  },
+  isV2Enabled: isPlayerProfileV2Enabled,
+};
+
 const derivePaymentStatus = ({ feesPaid, amountPaid = 0, paymentReference = "", paymentStatus = "" }) => {
   if (feesPaid === true || feesPaid === "yes" || paymentStatus === "paid") return "paid";
   if (paymentStatus === "pending_verification") return "pending_verification";
@@ -762,6 +786,12 @@ const addMonthsIso = (dateValue, months) => {
   date.setMonth(date.getMonth() + months);
   const daysInTargetMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   date.setDate(Math.min(originalDay, daysInTargetMonth));
+  return toLocalIsoDate(date);
+};
+
+const addDaysIso = (dateValue, days) => {
+  const date = new Date(`${dateValue}T00:00:00`);
+  date.setDate(date.getDate() + days);
   return toLocalIsoDate(date);
 };
 
@@ -3220,6 +3250,28 @@ const loadPlayerTimeline = async (studentId) => {
   }));
 };
 
+const loadPlayerAttendanceSummary = async (studentId) => {
+  if (!isBackendReady || !studentId) {
+    return { total: 0, last30: 0, recent: [] };
+  }
+  const since = addDaysIso(toLocalIsoDate(), -90);
+  const { data, error } = await supabaseClient
+    .from("attendance")
+    .select("attendance_date")
+    .eq("student_id", studentId)
+    .gte("attendance_date", since)
+    .order("attendance_date", { ascending: false })
+    .limit(120);
+  if (error) return { total: 0, last30: 0, recent: [] };
+  const rows = data || [];
+  const thirtyDaysAgo = addDaysIso(toLocalIsoDate(), -30);
+  return {
+    total: rows.length,
+    last30: rows.filter((row) => String(row.attendance_date || "") >= thirtyDaysAgo).length,
+    recent: rows.map((row) => row.attendance_date).filter(Boolean),
+  };
+};
+
 const extractPaymentProofPath = (details = "") => {
   const match = String(details).match(/payment-proofs\/([^\s.]+\/[^\s.]+\.(?:jpg|jpeg|png|webp|pdf))/i);
   return match?.[1] || "";
@@ -3606,10 +3658,23 @@ const sendReminderDryRun = async (kid) => {
   };
 };
 
+const runRosterActionFromProfile = (action, id) => {
+  if (!action || !id || !kidsTableBody) return;
+  const actionButton = document.createElement("button");
+  actionButton.type = "button";
+  actionButton.hidden = true;
+  actionButton.dataset.action = action;
+  actionButton.dataset.id = id;
+  kidsTableBody.appendChild(actionButton);
+  actionButton.click();
+  window.setTimeout(() => actionButton.remove(), 5000);
+};
+
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
   const timeline = compactPlayerTimeline(await loadPlayerTimeline(kid.id));
   const paymentRows = getPlayerPaymentRows(kid);
+  const attendanceSummary = await loadPlayerAttendanceSummary(kid.id);
   const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
   const reminderState = getReminderState(kid);
@@ -3620,6 +3685,44 @@ const renderPlayerDetails = async (kid) => {
   const pendingAmount = Number(pendingPaymentFollowUp?.amount || pendingPlan.amount || 0);
   const pendingCycleDate = pendingPaymentFollowUp?.cycleStartDate || getDueCycleDate(kid);
   const pendingToDate = addMonthsIso(pendingCycleDate, Number(pendingPaymentFollowUp?.monthsCovered || pendingPlan.months || 1));
+
+  if (isPlayerProfileV2Enabled() && window.GenAlphaPlayerProfileV2?.open) {
+    const opened = window.GenAlphaPlayerProfileV2.open({
+      kid,
+      timeline,
+      paymentRows,
+      attendanceSummary,
+      totalPaid,
+      totalMonths,
+      feeDisplay,
+      reminderState,
+      pendingPayment: pendingPaymentFollowUp
+        ? {
+            planTitle: pendingPlan.title,
+            amount: pendingAmount,
+            cycleDate: pendingCycleDate,
+            toDate: pendingToDate,
+          }
+        : null,
+      isManagerLoggedIn,
+      isEditMode,
+      isActive: isActiveKid(kid),
+      isFeesPending: isFeesPending(kid),
+      isRenewalPending: isRenewalPending(kid),
+      labels: {
+        trainingDuration: getTrainingDuration(kid),
+        renewalStatus: getRenewalStatusLabel(kid),
+        paidThrough: kid.discontinued ? "Paused" : formatDate(getPaidThroughDate(kid)),
+        studentType: getStudentType(kid),
+        feeStatus: feeDisplay.label,
+        jersey: formatJerseyDetails(kid),
+      },
+      actions: {
+        run: (action) => runRosterActionFromProfile(action, kid.id),
+      },
+    });
+    if (opened) return;
+  }
 
   playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `

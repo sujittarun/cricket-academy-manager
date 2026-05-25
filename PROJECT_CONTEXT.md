@@ -25,6 +25,7 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
 - Do not blindly copy UI/code between apps. Understand each app's project structure, data flow, design language, navigation, and user flow, then fit the change exactly where it belongs in that app.
 - If a shared change truly does not apply to one app, note why in the final response and, when meaningful, in `CHANGELOG_NOTES.md`.
 - If a field is added, check Supabase schema/RPC, web form/render/edit flows, Android models/repository/UI, receipts/finance/timeline if relevant.
+- Experimental browser player profile V2 lives under `player-profile-v2/` and is gated by `playerProfileV2=1` or `localStorage["genAlpha.playerProfileLayout"] = "v2"`. Do not remove the legacy player popup until the user explicitly approves replacing it.
 - For code/UI changes, do a proper audit before finishing: inspect the diff, think through edge cases, and test rough UI edges such as small screens, long text, flipped/expanded states, empty or optional values, and stale-cache behavior when relevant.
 - For browser UI changes, verify the rendered app at the affected viewport(s), including mobile when the bug is mobile-only. A passing syntax/build check is not enough for visible layout work.
 - Going forward, completed code changes should be committed and pushed to GitHub after verification unless the user explicitly says to keep the work local, skip pushing, or pause before publishing.

@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-05-25
 
+### Experimental Player Profile V2
+
+- Added a browser-only A/B test for a full-screen player profile under `player-profile-v2/`.
+- The current player popup remains the default. V2 opens only when `?playerProfileV2=1` is present or `localStorage.setItem("genAlpha.playerProfileLayout", "v2")` is set.
+- V2 separates player identity, fee health, attendance, contact, kit/profile, and timeline into a whole-screen view with quieter action placement.
+- Added `?playerProfileV2Mock=1` for safe visual QA without touching live player data.
+
 ### Reminder Status and Joining Fee Simplification
 
 - Fee-status pills now show `Reminder failed` for failed WhatsApp/Meta reminders instead of treating every attempted reminder as `Reminder sent`.

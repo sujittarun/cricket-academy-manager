@@ -1,10 +1,12 @@
-const CACHE_NAME = "gen-alpha-academy-v62";
+const CACHE_NAME = "gen-alpha-academy-v63";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./pay.html",
   "./styles.css",
   "./script.js",
+  "./player-profile-v2/player-profile-v2.css",
+  "./player-profile-v2/player-profile-v2.js",
   "./supabase-config.js",
   "./manifest.webmanifest",
   "./assets/og-image.jpg",
