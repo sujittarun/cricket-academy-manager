@@ -3297,23 +3297,29 @@ const loadPlayerTimeline = async (studentId) => {
 
 const loadPlayerAttendanceSummary = async (studentId) => {
   if (!isBackendReady || !studentId) {
-    return { total: 0, last30: 0, recent: [] };
+    return { total: 0, last30: 0, currentMonth: 0, lastAttended: "", recent: [] };
   }
-  const since = addDaysIso(toLocalIsoDate(), -90);
+  const today = new Date();
+  const sixMonthStart = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+  const since = toLocalIsoDate(sixMonthStart);
   const { data, error } = await supabaseClient
     .from("attendance")
     .select("attendance_date")
     .eq("student_id", studentId)
     .gte("attendance_date", since)
     .order("attendance_date", { ascending: false })
-    .limit(120);
-  if (error) return { total: 0, last30: 0, recent: [] };
+    .limit(220);
+  if (error) return { total: 0, last30: 0, currentMonth: 0, lastAttended: "", recent: [] };
   const rows = data || [];
   const thirtyDaysAgo = addDaysIso(toLocalIsoDate(), -30);
+  const currentMonthKey = toLocalIsoDate().slice(0, 7);
+  const recent = rows.map((row) => row.attendance_date).filter(Boolean);
   return {
     total: rows.length,
     last30: rows.filter((row) => String(row.attendance_date || "") >= thirtyDaysAgo).length,
-    recent: rows.map((row) => row.attendance_date).filter(Boolean),
+    currentMonth: rows.filter((row) => String(row.attendance_date || "").startsWith(currentMonthKey)).length,
+    lastAttended: recent[0] || "",
+    recent,
   };
 };
 

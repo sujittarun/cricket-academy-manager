@@ -117,6 +117,64 @@
       .join("");
   };
 
+  const monthLabel = (year, month) =>
+    new Date(year, month, 1).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+
+  const monthKey = (year, month) => `${year}-${String(month + 1).padStart(2, "0")}`;
+
+  const buildAttendanceMonths = () => {
+    const month = new Date();
+    month.setDate(1);
+    return Array.from({ length: 6 }, (_, index) => {
+      const current = new Date(month.getFullYear(), month.getMonth() - index, 1);
+      return { year: current.getFullYear(), month: current.getMonth() };
+    });
+  };
+
+  const buildAttendanceCalendar = (dates = []) => {
+    const present = new Set(dates.filter(Boolean));
+    return buildAttendanceMonths().map(({ year, month }) => {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstOffset = new Date(year, month, 1).getDay();
+      const totalCells = Math.ceil((firstOffset + daysInMonth) / 7) * 7;
+      const key = monthKey(year, month);
+      const count = dates.filter((date) => String(date || "").startsWith(key)).length;
+      const cells = Array.from({ length: totalCells }, (_, index) => {
+        const day = index - firstOffset + 1;
+        const validDay = day >= 1 && day <= daysInMonth;
+        const iso = validDay ? `${key}-${String(day).padStart(2, "0")}` : "";
+        const attended = validDay && present.has(iso);
+        return `<span class="${attended ? "present" : ""} ${validDay ? "" : "empty"}">${validDay ? day : ""}</span>`;
+      }).join("");
+      return `
+        <article class="player-v2-month-card">
+          <div>
+            <strong>${monthLabel(year, month)}</strong>
+            <small>${count} day${count === 1 ? "" : "s"}</small>
+          </div>
+          <div class="player-v2-weekdays"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+          <div class="player-v2-month-grid">${cells}</div>
+        </article>
+      `;
+    }).join("");
+  };
+
+  const timelineCategory = (item) => {
+    const text = `${item.event_type || ""} ${item.title || ""} ${item.details || ""}`.toLowerCase();
+    if (text.includes("whatsapp") || text.includes("reminder") || text.includes("message")) return "whatsapp";
+    if (text.includes("payment") || text.includes("fee") || text.includes("renewal") || text.includes("paid") || text.includes("refund")) return "payments";
+    if (text.includes("discontinued") || text.includes("active") || text.includes("pause") || text.includes("rejoin") || text.includes("status")) return "status";
+    return "profile";
+  };
+
+  const timelineTitleForCategory = (category) => ({
+    all: "All activity",
+    payments: "Payments",
+    status: "Status",
+    profile: "Profile",
+    whatsapp: "WhatsApp",
+  }[category] || "Activity");
+
   const getFeeSplit = (kid) => {
     const plan = PLAN_LABELS[kid.feePlan] || PLAN_LABELS.monthly;
     const jerseyPairs = Math.max(Number(kid.jerseyPairs || 0), 0);
@@ -295,8 +353,9 @@
   const compactTimeline = (timeline = []) =>
     timeline.slice(0, 8).map((item) => {
       const text = `${item.title || item.event_type || ""} ${item.details || ""}`;
+      const category = timelineCategory(item);
       return `
-        <li>
+        <li data-player-v2-timeline-category="${safe(category)}">
           <span class="player-v2-timeline-dot ${safe(statusTone(text))}"></span>
           <div>
             <strong>${safe(item.title || item.event_type || "Timeline event")}</strong>
@@ -306,6 +365,14 @@
         </li>
       `;
     }).join("");
+
+  const buildTimelineFilters = (active = "all") => `
+    <div class="player-v2-timeline-filters" aria-label="Timeline filters">
+      ${["all", "payments", "status", "profile", "whatsapp"].map((category) =>
+        `<button type="button" class="${category === active ? "active" : ""}" data-player-v2-timeline-filter="${safe(category)}">${safe(timelineTitleForCategory(category))}</button>`
+      ).join("")}
+    </div>
+  `;
 
   const buildOverviewPanel = (payload) => {
     const { kid } = payload;
@@ -338,15 +405,23 @@
 
   const buildAttendancePanel = (payload) => `
     <section class="player-v2-tab-panel" data-player-v2-panel="attendance">
-      <article class="player-v2-card">
+      <article class="player-v2-card player-v2-attendance-card">
         <div class="player-v2-card-head">
           <h3>Attendance</h3>
-          <strong>${Number(payload.attendanceSummary?.last30 || 0)} recent days</strong>
+          <strong>${Number(payload.attendanceSummary?.total || 0)} days</strong>
         </div>
-        <div class="player-v2-attendance-bars">${buildAttendanceBars(payload.attendanceSummary?.recent || [])}</div>
         <div class="player-v2-totals">
           <div><span>Last 30 days</span><strong>${Number(payload.attendanceSummary?.last30 || 0)}</strong></div>
-          <div><span>Last 90 days</span><strong>${Number(payload.attendanceSummary?.total || 0)}</strong></div>
+          <div><span>This month</span><strong>${Number(payload.attendanceSummary?.currentMonth || 0)}</strong></div>
+          <div><span>Last attended</span><strong>${payload.attendanceSummary?.lastAttended ? formatDate(payload.attendanceSummary.lastAttended) : "-"}</strong></div>
+        </div>
+        <div class="player-v2-attendance-calendar">
+          ${buildAttendanceCalendar(payload.attendanceSummary?.recent || [])}
+        </div>
+        <div class="player-v2-attendance-bars">${buildAttendanceBars(payload.attendanceSummary?.recent || [])}</div>
+        <div class="player-v2-totals compact">
+          <div><span>Calendar range</span><strong>6 months</strong></div>
+          <div><span>Tracked days</span><strong>${Number(payload.attendanceSummary?.total || 0)}</strong></div>
           <div><span>Today</span><strong>${payload.attendanceSummary?.recent?.includes(new Date().toISOString().slice(0, 10)) ? "Present" : "Not marked"}</strong></div>
         </div>
       </article>
@@ -354,9 +429,10 @@
   `;
 
   const buildTimelinePanel = (payload, panel, title) => `
-    <section class="player-v2-tab-panel" data-player-v2-panel="${safe(panel)}">
+    <section class="player-v2-tab-panel" data-player-v2-panel="${safe(panel)}" data-player-v2-timeline-active="${panel === "communication" ? "whatsapp" : "all"}">
       <article class="player-v2-card">
         <div class="player-v2-card-head"><h3>${safe(title)}</h3></div>
+        ${buildTimelineFilters(panel === "communication" ? "whatsapp" : "all")}
         ${
           payload.timeline?.length
             ? `<ol class="player-v2-timeline">${compactTimeline(payload.timeline)}</ol>`
@@ -433,6 +509,18 @@
         ${actionButton("delete", "Delete", "danger")}
       </div>
     `;
+  };
+
+  const applyTimelineFilter = (panel, category) => {
+    if (!panel) return;
+    const activeCategory = category || panel.dataset.playerV2TimelineActive || "all";
+    panel.dataset.playerV2TimelineActive = activeCategory;
+    panel.querySelectorAll("[data-player-v2-timeline-filter]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.playerV2TimelineFilter === activeCategory);
+    });
+    panel.querySelectorAll("[data-player-v2-timeline-category]").forEach((item) => {
+      item.hidden = activeCategory !== "all" && item.dataset.playerV2TimelineCategory !== activeCategory;
+    });
   };
 
   const close = () => {
@@ -552,12 +640,18 @@
         shell.querySelectorAll("[data-player-v2-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.playerV2Panel === key));
         return;
       }
+      const timelineFilterButton = event.target.closest("[data-player-v2-timeline-filter]");
+      if (timelineFilterButton) {
+        applyTimelineFilter(timelineFilterButton.closest("[data-player-v2-panel]"), timelineFilterButton.dataset.playerV2TimelineFilter || "all");
+        return;
+      }
       const actionButtonEl = event.target.closest("[data-player-v2-action]");
       if (actionButtonEl) runAction(payload, actionButtonEl.dataset.playerV2Action);
     });
 
     document.body.appendChild(shell);
     document.body.classList.add("player-v2-open");
+    shell.querySelectorAll("[data-player-v2-timeline-active]").forEach((panel) => applyTimelineFilter(panel));
     return true;
   };
 
@@ -597,16 +691,30 @@
           jersey: "Jersey M - 2 pairs",
         },
         timeline: [
+          { event_type: "student_created", title: "Player record created", event_date: "2026-03-05", changed_by: "Admin", details: "Joined 5:30PM. Fee plan: monthly." },
+          { event_type: "renewal_paid", title: "Renewal fee paid", event_date: "2026-05-15", changed_by: "Admin", details: "Rs 3,500 - monthly - 1 month - cycle from 2026-05-15" },
+          { event_type: "student_rejoined", title: "Player marked active", event_date: "2026-05-14", changed_by: "Admin", details: "Student is active again." },
           { title: "WhatsApp reminder prepared", event_date: "2026-05-24", changed_by: "System" },
           { title: "Reminder delivered", event_date: "2026-05-24", changed_by: "Meta" },
-          { title: "Joining payment recorded", event_date: "2026-03-05", changed_by: "Admin" },
         ],
         paymentRows: [
           { date: "2026-05-15", title: "Renewal payment", plan: "Monthly", months: 1, amount: 3500 },
           { date: "2026-04-15", title: "Renewal payment", plan: "Monthly", months: 1, amount: 3500 },
           { date: "2026-03-05", title: "Joining payment", plan: "Monthly + admission + jersey", months: 1, amount: 5500 },
         ],
-        attendanceSummary: { total: 18, last30: 8, recent: ["2026-05-20", "2026-05-21", "2026-05-22", "2026-05-24"] },
+        attendanceSummary: {
+          total: 18,
+          last30: 8,
+          currentMonth: 4,
+          lastAttended: "2026-05-24",
+          recent: [
+            "2026-05-24", "2026-05-22", "2026-05-21", "2026-05-20",
+            "2026-04-29", "2026-04-25", "2026-04-20", "2026-04-18",
+            "2026-03-29", "2026-03-22", "2026-03-15", "2026-03-08",
+            "2026-02-23", "2026-02-16", "2026-02-09",
+            "2026-01-20", "2025-12-21", "2025-12-14",
+          ],
+        },
         totalPaid: 12500,
         totalMonths: 3,
         isManagerLoggedIn: true,

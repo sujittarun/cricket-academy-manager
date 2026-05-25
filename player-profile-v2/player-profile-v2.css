@@ -541,6 +541,15 @@ body.player-v2-open {
   color: #0e8f3d;
 }
 
+.player-v2-totals.compact {
+  margin-top: 12px;
+}
+
+.player-v2-totals.compact strong {
+  color: #0d1b33;
+  font-size: 0.94rem;
+}
+
 .player-v2-rail {
   display: grid;
   gap: 12px;
@@ -642,6 +651,110 @@ body.player-v2-open {
   height: var(--bar, 10%);
   border-radius: 8px 8px 4px 4px;
   background: linear-gradient(180deg, #0b58f4, #22c55e);
+}
+
+.player-v2-attendance-card {
+  overflow: hidden;
+}
+
+.player-v2-attendance-calendar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 176px;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #e5ebf4;
+  border-radius: 8px;
+  background: #f8fbff;
+  overflow-x: auto;
+}
+
+.player-v2-month-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e6ebf3;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.player-v2-month-card > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.player-v2-month-card strong {
+  color: #0d1b33;
+  font-size: 0.86rem;
+}
+
+.player-v2-month-card small {
+  color: #0b58f4;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.player-v2-weekdays,
+.player-v2-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.player-v2-weekdays span {
+  color: rgba(15, 34, 64, 0.42);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.player-v2-month-grid span {
+  display: grid;
+  place-items: center;
+  min-height: 22px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: rgba(15, 34, 64, 0.74);
+  font-size: 0.68rem;
+  font-weight: 760;
+}
+
+.player-v2-month-grid span.present {
+  background: rgba(11, 88, 244, 0.13);
+  color: #0b45c9;
+  font-weight: 950;
+}
+
+.player-v2-month-grid span.empty {
+  background: transparent;
+  color: transparent;
+}
+
+.player-v2-timeline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.player-v2-timeline-filters button {
+  min-height: 30px;
+  border: 1px solid #dbe4f0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #40536f;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.player-v2-timeline-filters button.active {
+  border-color: #0b58f4;
+  background: #0b58f4;
+  color: #ffffff;
 }
 
 .player-v2-timeline {
@@ -889,6 +1002,11 @@ body.player-v2-open {
   .player-v2-facts div,
   .player-v2-facts.compact div {
     grid-template-columns: 1fr;
+  }
+
+  .player-v2-attendance-calendar {
+    grid-auto-columns: 164px;
+    padding: 10px;
   }
 
   .player-v2-totals div {
