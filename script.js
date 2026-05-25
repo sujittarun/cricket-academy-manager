@@ -651,6 +651,8 @@ const normalizeKid = (kid) => {
     renewals,
     addedBy: kid.added_by || "Unknown",
     updatedBy: kid.updated_by || kid.added_by || "Unknown",
+    createdAt: kid.created_at || "",
+    updatedAt: kid.updated_at || "",
     discontinued: Boolean(kid.discontinued),
     discontinuedAt: kid.discontinued_at || "",
     paymentMethod: kid.payment_method || "",
@@ -1632,7 +1634,12 @@ const getDaysSinceDate = (dateValue) => {
   return Math.floor((new Date() - targetDate) / msPerDay);
 };
 
-const parseIsoDate = (value) => (value ? new Date(`${value}T00:00:00`) : null);
+const parseIsoDate = (value) => {
+  const datePart = String(value || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return null;
+  const date = new Date(`${datePart}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
 const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
 
@@ -1643,6 +1650,14 @@ const monthKeyFromDate = (date) =>
 
 const monthLabelFromDate = (date) =>
   date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+
+const getDiscontinuedMovementDate = (kid) => {
+  const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+  if (discontinuedAt) return discontinuedAt;
+  const isDiscontinued = kid.discontinued === true || kid.discontinued === "true";
+  if (!isDiscontinued) return null;
+  return parseIsoDate(kid.updatedAt) || parseIsoDate(kid.createdAt) || parseIsoDate(kid.joinDate);
+};
 
 const buildStudentMovement = (students, monthCount = 6) => {
   const now = new Date();
@@ -1660,7 +1675,7 @@ const buildStudentMovement = (students, monthCount = 6) => {
 
     const continuing = students.filter((kid) => {
       const joinDate = parseIsoDate(kid.joinDate);
-      const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+      const discontinuedAt = getDiscontinuedMovementDate(kid);
       const isDiscontinued = kid.discontinued === true || kid.discontinued === "true";
       
       return joinDate && joinDate <= previousMonthEnd && 
@@ -1668,7 +1683,7 @@ const buildStudentMovement = (students, monthCount = 6) => {
     }).length;
 
     const discontinued = students.filter((kid) => {
-      const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+      const discontinuedAt = getDiscontinuedMovementDate(kid);
       return discontinuedAt && discontinuedAt >= monthStart && discontinuedAt <= monthEnd;
     }).length;
 
@@ -1699,7 +1714,7 @@ const matchesMovementFilter = (kid) => {
   const range = getMovementMonthRange(rosterMovementFilter.monthKey);
   if (!range) return true;
   const joinDate = parseIsoDate(kid.joinDate);
-  const discontinuedAt = parseIsoDate(kid.discontinuedAt);
+  const discontinuedAt = getDiscontinuedMovementDate(kid);
   if (rosterMovementFilter.type === "joined") {
     return joinDate && joinDate >= range.start && joinDate <= range.end;
   }
