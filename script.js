@@ -655,6 +655,8 @@ const normalizeKid = (kid) => {
     updatedAt: kid.updated_at || "",
     discontinued: Boolean(kid.discontinued),
     discontinuedAt: kid.discontinued_at || "",
+    rejoinedAt: kid.rejoined_at || "",
+    feePauseDays: Number(kid.fee_pause_days) || 0,
     paymentMethod: kid.payment_method || "",
     paymentUpiId: kid.payment_upi_id || "",
     paymentReference,
@@ -842,6 +844,13 @@ const addDaysIso = (dateValue, days) => {
   return toLocalIsoDate(date);
 };
 
+const daysBetweenIso = (startValue, endValue) => {
+  const startDate = parseIsoDate(startValue);
+  const endDate = parseIsoDate(endValue);
+  if (!startDate || !endDate || endDate <= startDate) return 0;
+  return Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+};
+
 const getInitialCoverageMonths = (kid) => {
   if (kid.feesPaid !== "yes" || Number(kid.amountPaid || 0) <= 0) return 0;
   // First jersey pair is included in admission. Extra jersey revenue may be
@@ -871,6 +880,29 @@ const maxIsoDate = (first, second) => {
 
 const getStudentPayments = (kid) =>
   financePayments.filter((payment) => (payment.student_id || payment.studentId) === kid.id);
+
+const getStudentPauseStartDate = (kid) => {
+  const explicitDate = kid.discontinuedAt || "";
+  if (explicitDate) return explicitDate;
+  if (!(kid.discontinued === true || kid.discontinued === "true")) return "";
+  return String(kid.updatedAt || kid.createdAt || kid.joinDate || "").slice(0, 10);
+};
+
+const getCurrentPauseDays = (kid, rejoinDate = toLocalIsoDate()) =>
+  daysBetweenIso(getStudentPauseStartDate(kid), rejoinDate);
+
+const getFeePauseDays = (kid) => Math.max(Number(kid.feePauseDays || 0), 0);
+
+const getRejoinPayload = (kid, rejoinDate = toLocalIsoDate()) => ({
+  discontinued: false,
+  rejoined_at: rejoinDate,
+  fee_pause_days: getFeePauseDays(kid) + getCurrentPauseDays(kid, rejoinDate),
+});
+
+const getMembershipDateLabel = (kid) => {
+  const joined = `Joined ${formatDate(kid.joinDate)}`;
+  return kid.rejoinedAt ? `${joined} • Rejoined ${formatDate(kid.rejoinedAt)}` : joined;
+};
 
 const getPaymentTypeLabel = (paymentType) => {
   const normalized = String(paymentType || "").toLowerCase();
@@ -956,7 +988,7 @@ const getPaidThroughDate = (kid) => {
       }
     });
 
-  return paidThrough;
+  return getFeePauseDays(kid) > 0 ? addDaysIso(paidThrough, getFeePauseDays(kid)) : paidThrough;
 };
 
 const getNextRenewalCycleDate = (kid) => {
@@ -3560,7 +3592,8 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
     return { success: false, message: paymentError.message };
   }
 
-  let updatePayload = { discontinued: false, updated_by: getActiveManagerEmail() };
+  let updatePayload = { updated_by: getActiveManagerEmail() };
+  Object.assign(updatePayload, kid.discontinued ? getRejoinPayload(kid) : { discontinued: false });
   if (isJoiningFee) {
     updatePayload.fees_paid = true;
   } else {
@@ -3800,7 +3833,7 @@ const renderPlayerDetails = async (kid) => {
     }
     <div class="player-profile-grid">
       <div class="profile-stat"><span>Training duration</span><strong>${getTrainingDuration(kid)}</strong></div>
-      <div class="profile-stat"><span>Joined</span><strong>${formatDate(kid.joinDate)}</strong></div>
+      <div class="profile-stat"><span>Membership dates</span><strong>${getMembershipDateLabel(kid)}</strong></div>
       <div class="profile-stat"><span>Next fee due</span><strong>${kid.discontinued ? "Paused" : formatDate(getPaidThroughDate(kid))}</strong></div>
       <div class="profile-stat"><span>Amount paid</span><strong>Rs ${Number(kid.amountPaid).toFixed(2)}</strong></div>
       <div class="profile-stat"><span>Fee status</span><strong>${feeDisplay.label}</strong></div>
@@ -5063,6 +5096,8 @@ kidsTableBody.addEventListener("click", async (event) => {
     };
     if (willDiscontinue) {
       updatePayload.discontinued_at = toLocalIsoDate();
+    } else {
+      Object.assign(updatePayload, getRejoinPayload(kidToUpdate));
     }
 
     const { error } = await supabaseClient
@@ -5249,7 +5284,7 @@ renewalForm?.addEventListener("submit", async (event) => {
           jersey_pairs: joiningFeeSplit.jerseyPairs,
         }
       : { renewals }),
-    discontinued: false,
+    ...(kid.discontinued ? getRejoinPayload(kid) : { discontinued: false }),
     updated_by: getActiveManagerEmail(),
   };
   let { error: updateError } = await supabaseClient

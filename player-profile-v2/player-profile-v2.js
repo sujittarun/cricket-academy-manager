@@ -467,7 +467,7 @@
             <div><dt>Status</dt><dd>${badge(pauseStatus)}</dd></div>
             <div><dt>Paused from</dt><dd>${kid.discontinuedAt ? formatDate(kid.discontinuedAt) : "-"}</dd></div>
             <div><dt>Paused till</dt><dd>-</dd></div>
-            <div><dt>Rejoined on</dt><dd>${kid.discontinued ? "-" : formatDate(kid.joinDate)}</dd></div>
+            <div><dt>Rejoined on</dt><dd>${kid.rejoinedAt ? formatDate(kid.rejoinedAt) : "-"}</dd></div>
           </dl>
           ${
             payload.isManagerLoggedIn && payload.isEditMode
@@ -589,7 +589,7 @@
             <p><strong>Guardian:</strong> ${safe(kid.fatherGuardianName || "Not saved")}</p>
           </div>
           <div class="player-v2-metrics">
-            <div><span>Joining Date</span><strong>${formatDate(kid.joinDate)}</strong></div>
+            <div><span>Membership Dates</span><strong>Joined ${formatDate(kid.joinDate)}${kid.rejoinedAt ? ` • Rejoined ${formatDate(kid.rejoinedAt)}` : ""}</strong></div>
             <div><span>Plan</span><strong>${safe(split.plan)}</strong></div>
             <div><span>Renewal Date</span><strong>${safe(getPaidThrough(payload))}</strong></div>
             <div><span>Next Due</span><strong class="${dueDays !== null && dueDays <= 0 ? "danger-text" : ""}">${nextDue ? formatDate(nextDue) : "-"}</strong>${dueDays !== null ? `<small>${dueDays < 0 ? `${Math.abs(dueDays)} days overdue` : `${dueDays} days`}</small>` : ""}</div>
@@ -666,6 +666,7 @@
           age: 12,
           timeSlot: "5:30PM",
           joinDate: "2026-03-05",
+          rejoinedAt: "2026-05-31",
           fatherGuardianName: "Rajesh Sharma",
           parentContactNo: "9876543210",
           schoolCollege: "Gen Alpha School",
