@@ -2240,14 +2240,29 @@ const ATTENDANCE_STREAK_MILESTONES = [
   { days: 7, label: "Star", className: "star" },
 ];
 
+const isAttendanceWeekday = (dateValue) => {
+  const date = parseIsoDate(dateValue);
+  if (!date) return false;
+  const day = date.getDay();
+  return day !== 0 && day !== 6;
+};
+
+const previousAttendanceWeekdayIso = (dateValue) => {
+  let cursor = addDaysIso(dateValue, -1);
+  while (!isAttendanceWeekday(cursor)) {
+    cursor = addDaysIso(cursor, -1);
+  }
+  return cursor;
+};
+
 const attendanceDateSetForStudent = (studentId, attendedIds, referenceIso) => {
   const dates = new Set(
     recentAttendanceRows
       .filter((row) => (row.student_id || row.studentId) === studentId)
       .map((row) => String(row.attendance_date || row.attendanceDate || "").slice(0, 10))
-      .filter(Boolean)
+      .filter((date) => date && isAttendanceWeekday(date))
   );
-  if (attendedIds.has(studentId)) dates.add(referenceIso);
+  if (attendedIds.has(studentId) && isAttendanceWeekday(referenceIso)) dates.add(referenceIso);
   return dates;
 };
 
@@ -2256,11 +2271,13 @@ const getAttendanceStreakCount = (studentId, attendedIds, referenceDate = attend
   if (!reference) return 0;
   const referenceIso = toLocalIsoDate(reference);
   const dates = attendanceDateSetForStudent(studentId, attendedIds, referenceIso);
-  let cursorIso = attendedIds.has(studentId) ? referenceIso : addDaysIso(referenceIso, -1);
+  let cursorIso = isAttendanceWeekday(referenceIso) && attendedIds.has(studentId)
+    ? referenceIso
+    : previousAttendanceWeekdayIso(referenceIso);
   let streak = 0;
   while (dates.has(cursorIso)) {
     streak += 1;
-    cursorIso = addDaysIso(cursorIso, -1);
+    cursorIso = previousAttendanceWeekdayIso(cursorIso);
   }
   return streak;
 };
