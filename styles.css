@@ -4420,88 +4420,6 @@ body.popup-open {
   line-height: 1.3;
 }
 
-.attendance-streak-panel {
-  display: grid;
-  grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1.45fr);
-  gap: 12px;
-  align-items: stretch;
-  margin: -6px 0 16px;
-  padding: 14px;
-  border: 1px solid rgba(37, 99, 235, 0.14);
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.92), rgba(236, 253, 245, 0.72));
-}
-
-.streak-panel-copy {
-  display: grid;
-  gap: 4px;
-  align-content: center;
-}
-
-.streak-panel-copy strong {
-  color: #1e3a8a;
-  font-size: 0.95rem;
-}
-
-.streak-panel-copy span {
-  color: #416184;
-  font-size: 0.82rem;
-}
-
-.streak-podium {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.streak-podium-card {
-  position: relative;
-  display: grid;
-  gap: 4px;
-  min-height: 88px;
-  padding: 12px 12px 10px 44px;
-  border-radius: 13px;
-  border: 1px solid rgba(37, 99, 235, 0.12);
-  background: rgba(255, 255, 255, 0.78);
-  overflow: hidden;
-}
-
-.streak-podium-card.rank-1 {
-  border-color: rgba(217, 119, 6, 0.28);
-  background: linear-gradient(135deg, #fff7ed, #ffffff);
-}
-
-.streak-rank {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: #1d4ed8;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 900;
-}
-
-.streak-podium-card.rank-1 .streak-rank {
-  background: #d97706;
-}
-
-.streak-podium-card strong {
-  color: #12315f;
-  font-size: 0.88rem;
-  line-height: 1.15;
-}
-
-.streak-podium-card small {
-  color: #54708f;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
 .attendance-streak-badge {
   display: inline-flex;
   width: fit-content;
@@ -4553,9 +4471,9 @@ body.popup-open {
   align-items: center;
   margin: -6px 0 16px;
   padding: 14px;
-  border: 1px solid rgba(217, 119, 6, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.16);
   border-radius: 14px;
-  background: #fff7ed;
+  background: #eff6ff;
 }
 
 .absence-nudge-copy {
@@ -4564,12 +4482,12 @@ body.popup-open {
 }
 
 .absence-nudge-copy strong {
-  color: #92400e;
+  color: #1e3a8a;
   font-size: 0.94rem;
 }
 
 .absence-nudge-copy span {
-  color: #9a5b12;
+  color: #416184;
   font-size: 0.82rem;
 }
 
@@ -4588,15 +4506,15 @@ body.popup-open {
   min-height: 30px;
   padding: 5px 9px;
   border-radius: 999px;
-  border: 1px solid rgba(217, 119, 6, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.16);
   background: rgba(255, 255, 255, 0.72);
-  color: #7c2d12;
+  color: #1d4ed8;
   font-size: 0.78rem;
   font-weight: 800;
 }
 
 .absence-nudge-pill small {
-  color: #9a5b12;
+  color: #416184;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -5185,20 +5103,6 @@ body.popup-open {
     margin-bottom: 12px;
     padding: 10px 12px;
     border-radius: 12px;
-  }
-
-  .attendance-streak-panel {
-    grid-template-columns: 1fr;
-    margin-bottom: 12px;
-    padding: 12px;
-  }
-
-  .streak-podium {
-    grid-template-columns: 1fr;
-  }
-
-  .streak-podium-card {
-    min-height: 0;
   }
 
   .attendance-absence-nudge {

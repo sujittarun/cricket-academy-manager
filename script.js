@@ -237,7 +237,6 @@ const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
 const attendancePresentCount = document.getElementById("attendancePresentCount");
 const attendanceTotalCount = document.getElementById("attendanceTotalCount");
-const attendanceStreakPanel = document.getElementById("attendanceStreakPanel");
 const attendanceAbsenceNudge = document.getElementById("attendanceAbsenceNudge");
 const attendanceFilterBar = document.getElementById("attendanceFilterBar");
 const attendanceSearchInput = document.getElementById("attendanceSearchInput");
@@ -2286,36 +2285,6 @@ const buildAttendanceStreakRows = (activePlayers, attendedIds) =>
     }))
     .filter((row) => row.streak > 0)
     .sort((a, b) => b.streak - a.streak || a.kid.name.localeCompare(b.kid.name));
-
-const renderAttendanceStreakPanel = (activePlayers, attendedIds) => {
-  if (!attendanceStreakPanel) return;
-  const rows = buildAttendanceStreakRows(activePlayers, attendedIds);
-  const topRows = rows.slice(0, 3);
-  attendanceStreakPanel.hidden = topRows.length === 0;
-  if (topRows.length === 0) {
-    attendanceStreakPanel.innerHTML = "";
-    return;
-  }
-  attendanceStreakPanel.innerHTML = `
-    <div class="streak-panel-copy">
-      <strong>Consistency stars</strong>
-      <span>Daily attendance streak leaders and milestone badges.</span>
-    </div>
-    <div class="streak-podium">
-      ${topRows.map((row, index) => {
-        const badge = getAttendanceStreakBadge(row.streak);
-        return `
-          <div class="streak-podium-card rank-${index + 1}">
-            <span class="streak-rank">${index + 1}</span>
-            <strong>${escapeHtml(row.kid.name)}</strong>
-            <small>${row.streak} day streak</small>
-            ${badge ? `<em class="attendance-streak-badge ${badge.className}"><i>★</i>${badge.label}</em>` : ""}
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
-};
 
 const showToast = (message) => {
   if (!globalToast) {
@@ -6063,7 +6032,6 @@ const renderAttendance = (attendedIds) => {
 
   if (!managerReady) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
-    if (attendanceStreakPanel) attendanceStreakPanel.hidden = true;
     if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = true;
@@ -6083,7 +6051,6 @@ const renderAttendance = (attendedIds) => {
 
   if (activePlayers.length === 0) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
-    if (attendanceStreakPanel) attendanceStreakPanel.hidden = true;
     if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = false;
@@ -6092,7 +6059,6 @@ const renderAttendance = (attendedIds) => {
   }
 
   if (attendanceSummaryBar) attendanceSummaryBar.hidden = false;
-  renderAttendanceStreakPanel(activePlayers, attendedIds);
   renderAttendanceAbsenceNudge(activePlayers, attendedIds);
   if (attendanceFilterBar) attendanceFilterBar.hidden = false;
   if (attendanceEmptyState) {
