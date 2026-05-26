@@ -4459,11 +4459,6 @@ body.popup-open {
   border-color: rgba(5, 150, 105, 0.24);
 }
 
-.attendance-streak-badge.warmup {
-  background: #f8fafc;
-  color: #475569;
-}
-
 .attendance-absence-nudge {
   display: grid;
   grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr);

@@ -2283,7 +2283,6 @@ const getAttendanceStreakCount = (studentId, attendedIds, referenceDate = attend
 };
 
 const getAttendanceStreakBadge = (streak) => {
-  if (streak <= 0) return null;
   const milestone = ATTENDANCE_STREAK_MILESTONES.find((item) => streak >= item.days);
   if (milestone) {
     return {
@@ -2291,7 +2290,7 @@ const getAttendanceStreakBadge = (streak) => {
       className: milestone.className,
     };
   }
-  return { label: `${streak}d streak`, className: "warmup" };
+  return null;
 };
 
 const buildAttendanceStreakRows = (activePlayers, attendedIds) =>
@@ -2300,7 +2299,7 @@ const buildAttendanceStreakRows = (activePlayers, attendedIds) =>
       kid,
       streak: getAttendanceStreakCount(kid.id, attendedIds),
     }))
-    .filter((row) => row.streak > 0)
+    .filter((row) => getAttendanceStreakBadge(row.streak))
     .sort((a, b) => b.streak - a.streak || a.kid.name.localeCompare(b.kid.name));
 
 const showToast = (message) => {
