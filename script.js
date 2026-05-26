@@ -237,6 +237,7 @@ const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
 const attendancePresentCount = document.getElementById("attendancePresentCount");
 const attendanceTotalCount = document.getElementById("attendanceTotalCount");
+const attendanceStreakPanel = document.getElementById("attendanceStreakPanel");
 const attendanceAbsenceNudge = document.getElementById("attendanceAbsenceNudge");
 const attendanceFilterBar = document.getElementById("attendanceFilterBar");
 const attendanceSearchInput = document.getElementById("attendanceSearchInput");
@@ -2230,6 +2231,88 @@ const renderAttendanceAbsenceNudge = (activePlayers, attendedIds) => {
         </span>
       `).join("")}
       ${remaining > 0 ? `<span class="absence-nudge-more">+${remaining} more</span>` : ""}
+    </div>
+  `;
+};
+
+const ATTENDANCE_STREAK_MILESTONES = [
+  { days: 30, label: "Legend", className: "legend" },
+  { days: 15, label: "Gold", className: "gold" },
+  { days: 7, label: "Star", className: "star" },
+];
+
+const attendanceDateSetForStudent = (studentId, attendedIds, referenceIso) => {
+  const dates = new Set(
+    recentAttendanceRows
+      .filter((row) => (row.student_id || row.studentId) === studentId)
+      .map((row) => String(row.attendance_date || row.attendanceDate || "").slice(0, 10))
+      .filter(Boolean)
+  );
+  if (attendedIds.has(studentId)) dates.add(referenceIso);
+  return dates;
+};
+
+const getAttendanceStreakCount = (studentId, attendedIds, referenceDate = attendanceDateValue) => {
+  const reference = parseIsoDate(referenceDate);
+  if (!reference) return 0;
+  const referenceIso = toLocalIsoDate(reference);
+  const dates = attendanceDateSetForStudent(studentId, attendedIds, referenceIso);
+  let cursorIso = attendedIds.has(studentId) ? referenceIso : addDaysIso(referenceIso, -1);
+  let streak = 0;
+  while (dates.has(cursorIso)) {
+    streak += 1;
+    cursorIso = addDaysIso(cursorIso, -1);
+  }
+  return streak;
+};
+
+const getAttendanceStreakBadge = (streak) => {
+  if (streak <= 0) return null;
+  const milestone = ATTENDANCE_STREAK_MILESTONES.find((item) => streak >= item.days);
+  if (milestone) {
+    return {
+      label: `${milestone.days}d ${milestone.label}`,
+      className: milestone.className,
+    };
+  }
+  return { label: `${streak}d streak`, className: "warmup" };
+};
+
+const buildAttendanceStreakRows = (activePlayers, attendedIds) =>
+  activePlayers
+    .map((kid) => ({
+      kid,
+      streak: getAttendanceStreakCount(kid.id, attendedIds),
+    }))
+    .filter((row) => row.streak > 0)
+    .sort((a, b) => b.streak - a.streak || a.kid.name.localeCompare(b.kid.name));
+
+const renderAttendanceStreakPanel = (activePlayers, attendedIds) => {
+  if (!attendanceStreakPanel) return;
+  const rows = buildAttendanceStreakRows(activePlayers, attendedIds);
+  const topRows = rows.slice(0, 3);
+  attendanceStreakPanel.hidden = topRows.length === 0;
+  if (topRows.length === 0) {
+    attendanceStreakPanel.innerHTML = "";
+    return;
+  }
+  attendanceStreakPanel.innerHTML = `
+    <div class="streak-panel-copy">
+      <strong>Consistency stars</strong>
+      <span>Daily attendance streak leaders and milestone badges.</span>
+    </div>
+    <div class="streak-podium">
+      ${topRows.map((row, index) => {
+        const badge = getAttendanceStreakBadge(row.streak);
+        return `
+          <div class="streak-podium-card rank-${index + 1}">
+            <span class="streak-rank">${index + 1}</span>
+            <strong>${escapeHtml(row.kid.name)}</strong>
+            <small>${row.streak} day streak</small>
+            ${badge ? `<em class="attendance-streak-badge ${badge.className}"><i>★</i>${badge.label}</em>` : ""}
+          </div>
+        `;
+      }).join("")}
     </div>
   `;
 };
@@ -5940,7 +6023,7 @@ const loadAttendance = async (date = attendanceDateValue) => {
   }
 
   try {
-    const since = addDaysIso(date, -45);
+    const since = addDaysIso(date, -120);
     const [dayResult, recentResult] = await Promise.all([
       supabaseClient
         .from("attendance")
@@ -5980,6 +6063,7 @@ const renderAttendance = (attendedIds) => {
 
   if (!managerReady) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceStreakPanel) attendanceStreakPanel.hidden = true;
     if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = true;
@@ -5999,6 +6083,7 @@ const renderAttendance = (attendedIds) => {
 
   if (activePlayers.length === 0) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
+    if (attendanceStreakPanel) attendanceStreakPanel.hidden = true;
     if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = false;
@@ -6007,6 +6092,7 @@ const renderAttendance = (attendedIds) => {
   }
 
   if (attendanceSummaryBar) attendanceSummaryBar.hidden = false;
+  renderAttendanceStreakPanel(activePlayers, attendedIds);
   renderAttendanceAbsenceNudge(activePlayers, attendedIds);
   if (attendanceFilterBar) attendanceFilterBar.hidden = false;
   if (attendanceEmptyState) {
@@ -6024,9 +6110,14 @@ const renderAttendance = (attendedIds) => {
     .map((kid) => {
       const isPresent = attendedIds.has(kid.id);
       const rowClass = isPresent ? "active-row" : "";
+      const streak = getAttendanceStreakCount(kid.id, attendedIds);
+      const streakBadge = getAttendanceStreakBadge(streak);
       return `
         <tr class="${rowClass}">
-          <td data-label="Player"><strong>${kid.name}</strong></td>
+          <td data-label="Player">
+            <strong>${kid.name}</strong>
+            ${streakBadge ? `<span class="attendance-streak-badge ${streakBadge.className}"><i>★</i>${streakBadge.label}</span>` : ""}
+          </td>
           <td data-label="Age">${kid.age}</td>
           <td data-label="Time slot"><span class="slot-pill">${kid.timeSlot || "Not set"}</span></td>
           <td data-label="Status" class="attendance-toggle-cell">
