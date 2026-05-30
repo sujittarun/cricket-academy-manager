@@ -2319,6 +2319,27 @@ const showToast = (message) => {
   }, 2800);
 };
 
+const askJerseyAdjustmentAmount = (kid, nextCount) => {
+  const previousCount = Math.max(Number(kid?.jerseyPairs || 0), 0);
+  const safeNextCount = Math.max(Number(nextCount || 0), 0);
+  const chargeableDelta = getChargeableJerseyPairCount(safeNextCount) - getChargeableJerseyPairCount(previousCount);
+  if (chargeableDelta === 0) return { cancelled: false, amount: 0 };
+
+  const defaultAmount = Math.abs(chargeableDelta) * JERSEY_PAIR_REVENUE;
+  const actionText = chargeableDelta > 0 ? "received" : "adjusted/refunded";
+  const response = window.prompt(
+    `Enter jersey amount ${actionText} for ${kid?.name || "player"}.\nCount: ${previousCount} to ${safeNextCount}`,
+    String(defaultAmount)
+  );
+  if (response === null) return { cancelled: true, amount: 0 };
+
+  const amount = parseNonNegativeNumber(response, NaN);
+  if (!Number.isFinite(amount)) {
+    return { cancelled: true, amount: 0, message: "Enter a valid jersey amount." };
+  }
+  return { cancelled: false, amount };
+};
+
 const syncAmountState = () => {
   syncManagerFeeBreakdown();
 };
@@ -4810,7 +4831,19 @@ const updateJerseyPairCount = async (kid, nextCount, options = {}) => {
   }
 
   const isIncrease = chargeableDelta > 0;
-  const amount = Math.abs(chargeableDelta) * JERSEY_PAIR_REVENUE;
+  const defaultAmount = Math.abs(chargeableDelta) * JERSEY_PAIR_REVENUE;
+  const customAmount = Number(options.adjustmentAmount);
+  const amount = Number.isFinite(customAmount)
+    ? Math.max(customAmount, 0)
+    : defaultAmount;
+  if (amount === 0) {
+    kid.jerseyPairs = safeNextCount;
+    await loadKids();
+    return {
+      success: true,
+      message: `Jersey pair count updated. No revenue entry was recorded.`,
+    };
+  }
   const { data: paymentRow, error: paymentError } = await supabaseClient
     .from("student_payments")
     .insert({
@@ -4821,7 +4854,7 @@ const updateJerseyPairCount = async (kid, nextCount, options = {}) => {
       months_covered: 1,
       amount,
       paid_on: toLocalIsoDate(),
-      comment: `${isIncrease ? "Jersey pair added" : "Jersey pair removed"}. Count ${previousCount} to ${safeNextCount}.`,
+      comment: `${isIncrease ? "Jersey pair added" : "Jersey pair removed"}. Count ${previousCount} to ${safeNextCount}. Amount ${rupees(amount)}.`,
       recorded_by: managerEmail,
     })
     .select("*")
@@ -5005,7 +5038,14 @@ kidForm.addEventListener("submit", async (event) => {
       : "Gen Alpha player record saved successfully.";
 
   if (wasEditing && currentKid && Number(currentKid.jerseyPairs || 0) !== Number(payload.jerseyPairs || 0)) {
-    const jerseyResult = await updateJerseyPairCount(currentKid, payload.jerseyPairs, { patchStudent: false });
+    const currentJerseyAmount = Number.isFinite(Number(currentKid.jerseyAmount))
+      ? parseNonNegativeNumber(currentKid.jerseyAmount, 0)
+      : getExtraJerseyAmount(currentKid.jerseyPairs || 0);
+    const jerseyAmountDelta = Math.abs(parseNonNegativeNumber(payload.jerseyAmount, 0) - currentJerseyAmount);
+    const jerseyResult = await updateJerseyPairCount(currentKid, payload.jerseyPairs, {
+      patchStudent: false,
+      adjustmentAmount: jerseyAmountDelta,
+    });
     if (!jerseyResult.success) {
       showToast(jerseyResult.message);
     }
@@ -5105,9 +5145,17 @@ kidsTableBody.addEventListener("click", async (event) => {
   if (action === "jersey-pairs-inc" || action === "jersey-pairs-dec") {
     const kidToUpdate = kids.find((kid) => kid.id === id);
     if (!kidToUpdate) return;
-    target.disabled = true;
     const delta = action === "jersey-pairs-inc" ? 1 : -1;
-    const result = await updateJerseyPairCount(kidToUpdate, Math.max(Number(kidToUpdate.jerseyPairs || 0) + delta, 0));
+    const nextPairs = Math.max(Number(kidToUpdate.jerseyPairs || 0) + delta, 0);
+    const amountChoice = askJerseyAdjustmentAmount(kidToUpdate, nextPairs);
+    if (amountChoice.cancelled) {
+      showToast(amountChoice.message || "Jersey update cancelled.");
+      return;
+    }
+    target.disabled = true;
+    const result = await updateJerseyPairCount(kidToUpdate, nextPairs, {
+      adjustmentAmount: amountChoice.amount,
+    });
     target.disabled = false;
     showToast(result.message);
     return;
