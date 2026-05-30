@@ -75,6 +75,17 @@ const admissionReviewCount = document.getElementById("admissionReviewCount");
 const admissionReviewList = document.getElementById("admissionReviewList");
 const slotFilters = document.getElementById("slotFilters");
 const globalToast = document.getElementById("globalToast");
+const jerseyAdjustmentPopup = document.getElementById("jerseyAdjustmentPopup");
+const jerseyAdjustmentForm = document.getElementById("jerseyAdjustmentForm");
+const jerseyAdjustmentTitle = document.getElementById("jerseyAdjustmentTitle");
+const jerseyAdjustmentCopy = document.getElementById("jerseyAdjustmentCopy");
+const jerseyAdjustmentPlayer = document.getElementById("jerseyAdjustmentPlayer");
+const jerseyAdjustmentCount = document.getElementById("jerseyAdjustmentCount");
+const jerseyAdjustmentAmountLabel = document.getElementById("jerseyAdjustmentAmountLabel");
+const jerseyAdjustmentAmount = document.getElementById("jerseyAdjustmentAmount");
+const jerseyAdjustmentMessage = document.getElementById("jerseyAdjustmentMessage");
+const jerseyAdjustmentCloseButton = document.getElementById("jerseyAdjustmentCloseButton");
+const jerseyAdjustmentCancelButton = document.getElementById("jerseyAdjustmentCancelButton");
 const rosterView = document.getElementById("rosterView");
 const admissionView = document.getElementById("admissionView");
 const viewSwitcher = document.getElementById("viewSwitcher");
@@ -396,6 +407,7 @@ let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
 let activeView = "roster";
+let pendingJerseyAdjustmentResolve = null;
 
 const switchView = (view, push = true) => {
   const validViews = ["roster", "admission", "attendance", "finance"];
@@ -2319,26 +2331,76 @@ const showToast = (message) => {
   }, 2800);
 };
 
-const askJerseyAdjustmentAmount = (kid, nextCount) => {
-  const previousCount = Math.max(Number(kid?.jerseyPairs || 0), 0);
-  const safeNextCount = Math.max(Number(nextCount || 0), 0);
-  const chargeableDelta = getChargeableJerseyPairCount(safeNextCount) - getChargeableJerseyPairCount(previousCount);
-  if (chargeableDelta === 0) return { cancelled: false, amount: 0 };
-
-  const defaultAmount = Math.abs(chargeableDelta) * JERSEY_PAIR_REVENUE;
-  const actionText = chargeableDelta > 0 ? "received" : "adjusted/refunded";
-  const response = window.prompt(
-    `Enter jersey amount ${actionText} for ${kid?.name || "player"}.\nCount: ${previousCount} to ${safeNextCount}`,
-    String(defaultAmount)
-  );
-  if (response === null) return { cancelled: true, amount: 0 };
-
-  const amount = parseNonNegativeNumber(response, NaN);
-  if (!Number.isFinite(amount)) {
-    return { cancelled: true, amount: 0, message: "Enter a valid jersey amount." };
+const closeJerseyAdjustmentDialog = (result = { cancelled: true, amount: 0 }) => {
+  if (jerseyAdjustmentPopup) {
+    jerseyAdjustmentPopup.hidden = true;
   }
-  return { cancelled: false, amount };
+  document.body.classList.remove("popup-open");
+  const resolve = pendingJerseyAdjustmentResolve;
+  pendingJerseyAdjustmentResolve = null;
+  if (resolve) resolve(result);
 };
+
+const askJerseyAdjustmentAmount = (kid, nextCount) =>
+  new Promise((resolve) => {
+    const previousCount = Math.max(Number(kid?.jerseyPairs || 0), 0);
+    const safeNextCount = Math.max(Number(nextCount || 0), 0);
+    const chargeableDelta = getChargeableJerseyPairCount(safeNextCount) - getChargeableJerseyPairCount(previousCount);
+    if (chargeableDelta === 0) {
+      resolve({ cancelled: false, amount: 0 });
+      return;
+    }
+
+    const defaultAmount = Math.abs(chargeableDelta) * JERSEY_PAIR_REVENUE;
+    const actionText = chargeableDelta > 0 ? "received" : "adjusted/refunded";
+    if (
+      !jerseyAdjustmentPopup ||
+      !jerseyAdjustmentForm ||
+      !(jerseyAdjustmentAmount instanceof HTMLInputElement)
+    ) {
+      const response = window.prompt(
+        `Enter jersey amount ${actionText} for ${kid?.name || "player"}.\nCount: ${previousCount} to ${safeNextCount}`,
+        String(defaultAmount)
+      );
+      if (response === null) {
+        resolve({ cancelled: true, amount: 0 });
+        return;
+      }
+
+      const amount = parseNonNegativeNumber(response, NaN);
+      resolve(Number.isFinite(amount)
+        ? { cancelled: false, amount }
+        : { cancelled: true, amount: 0, message: "Enter a valid jersey amount." });
+      return;
+    }
+
+    if (pendingJerseyAdjustmentResolve) {
+      closeJerseyAdjustmentDialog({ cancelled: true, amount: 0 });
+    }
+
+    if (jerseyAdjustmentTitle) {
+      jerseyAdjustmentTitle.textContent = chargeableDelta > 0 ? "Record jersey amount" : "Record jersey adjustment";
+    }
+    if (jerseyAdjustmentCopy) {
+      jerseyAdjustmentCopy.textContent = chargeableDelta > 0
+        ? "Confirm the amount collected before adding this jersey pair to revenue."
+        : "Confirm the amount to reverse from revenue for this jersey change.";
+    }
+    if (jerseyAdjustmentPlayer) jerseyAdjustmentPlayer.textContent = kid?.name || "Player";
+    if (jerseyAdjustmentCount) jerseyAdjustmentCount.textContent = `${previousCount} to ${safeNextCount}`;
+    if (jerseyAdjustmentAmountLabel) {
+      jerseyAdjustmentAmountLabel.textContent = chargeableDelta > 0 ? "Amount received" : "Amount adjusted";
+    }
+    if (jerseyAdjustmentMessage) jerseyAdjustmentMessage.textContent = "";
+    jerseyAdjustmentAmount.value = String(defaultAmount);
+    jerseyAdjustmentPopup.hidden = false;
+    document.body.classList.add("popup-open");
+    pendingJerseyAdjustmentResolve = resolve;
+    window.setTimeout(() => {
+      jerseyAdjustmentAmount.focus();
+      jerseyAdjustmentAmount.select();
+    }, 0);
+  });
 
 const syncAmountState = () => {
   syncManagerFeeBreakdown();
@@ -5147,7 +5209,7 @@ kidsTableBody.addEventListener("click", async (event) => {
     if (!kidToUpdate) return;
     const delta = action === "jersey-pairs-inc" ? 1 : -1;
     const nextPairs = Math.max(Number(kidToUpdate.jerseyPairs || 0) + delta, 0);
-    const amountChoice = askJerseyAdjustmentAmount(kidToUpdate, nextPairs);
+    const amountChoice = await askJerseyAdjustmentAmount(kidToUpdate, nextPairs);
     if (amountChoice.cancelled) {
       showToast(amountChoice.message || "Jersey update cancelled.");
       return;
@@ -5591,6 +5653,27 @@ closeReceiptButton?.addEventListener("click", closeReceiptPopup);
 receiptPopup?.addEventListener("click", (event) => {
   if (event.target === receiptPopup) closeReceiptPopup();
 });
+jerseyAdjustmentForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const amount = parseNonNegativeNumber(jerseyAdjustmentAmount?.value, NaN);
+  if (!Number.isFinite(amount)) {
+    if (jerseyAdjustmentMessage) jerseyAdjustmentMessage.textContent = "Enter a valid jersey amount.";
+    jerseyAdjustmentAmount?.focus();
+    return;
+  }
+  closeJerseyAdjustmentDialog({ cancelled: false, amount });
+});
+jerseyAdjustmentCancelButton?.addEventListener("click", () => {
+  closeJerseyAdjustmentDialog({ cancelled: true, amount: 0 });
+});
+jerseyAdjustmentCloseButton?.addEventListener("click", () => {
+  closeJerseyAdjustmentDialog({ cancelled: true, amount: 0 });
+});
+jerseyAdjustmentPopup?.addEventListener("click", (event) => {
+  if (event.target === jerseyAdjustmentPopup) {
+    closeJerseyAdjustmentDialog({ cancelled: true, amount: 0 });
+  }
+});
 copyReceiptButton?.addEventListener("click", async () => {
   if (!latestAdmissionReceipt) return;
   await navigator.clipboard?.writeText(buildReceiptText(latestAdmissionReceipt));
@@ -5620,6 +5703,9 @@ window.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape" && receiptPopup && !receiptPopup.hidden) {
     closeReceiptPopup();
+  }
+  if (event.key === "Escape" && jerseyAdjustmentPopup && !jerseyAdjustmentPopup.hidden) {
+    closeJerseyAdjustmentDialog({ cancelled: true, amount: 0 });
   }
 });
 document.addEventListener("visibilitychange", () => {

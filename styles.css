@@ -9164,3 +9164,359 @@ body.popup-open {
     border-color: rgba(239, 68, 68, 0.18) !important;
   }
 }
+
+.jersey-adjustment-backdrop {
+  z-index: 70;
+}
+
+.jersey-adjustment-popup {
+  width: min(460px, calc(100vw - 24px)) !important;
+  display: grid;
+  gap: 14px;
+  margin: 0 !important;
+  padding: 20px !important;
+}
+
+.jersey-adjustment-form {
+  display: grid;
+  gap: 14px;
+}
+
+.jersey-adjustment-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.jersey-adjustment-summary article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(15, 34, 64, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.jersey-adjustment-summary span,
+.jersey-adjustment-amount span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.jersey-adjustment-summary strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent-dark);
+  font-size: 0.94rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jersey-adjustment-amount {
+  display: grid;
+  gap: 8px;
+}
+
+.jersey-adjustment-amount input {
+  min-height: 46px;
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 34, 64, 0.14);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.jersey-adjustment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 520px) {
+  .jersey-adjustment-backdrop {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .jersey-adjustment-popup {
+    width: 100% !important;
+    max-height: min(88dvh, 620px);
+    padding: 16px !important;
+    border-radius: 22px;
+  }
+
+  .jersey-adjustment-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .jersey-adjustment-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1180px) {
+  .app-shell:has(#rosterView:not([hidden])) {
+    width: min(100%, calc(100vw - 20px)) !important;
+  }
+
+  #rosterView,
+  #rosterView .content-grid,
+  #rosterView .records-panel,
+  #rosterView .table-wrap {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #rosterView .content-grid {
+    width: 100% !important;
+    margin-inline: auto !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #rosterView .records-panel {
+    overflow: visible !important;
+    padding: 16px !important;
+  }
+
+  #rosterView .records-panel > .panel-heading {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  #rosterView .records-heading-actions {
+    display: grid !important;
+    justify-items: start !important;
+    gap: 8px !important;
+  }
+
+  #rosterView .slot-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  #rosterView .roster-tools {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+  }
+
+  #rosterView .roster-search {
+    width: 100% !important;
+  }
+
+  #rosterView .slot-filters {
+    display: flex !important;
+    overflow-x: auto !important;
+    max-width: 100% !important;
+  }
+
+  #rosterView .roster-filter-row {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+  }
+
+  #rosterView .roster-filter {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+  }
+
+  #rosterView .roster-filter select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #rosterView .table-wrap {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #rosterView .kids-table,
+  #rosterView .kids-table:not(.edit-mode),
+  #rosterView .kids-table.edit-mode,
+  #rosterView .kids-table tbody {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    table-layout: auto !important;
+  }
+
+  #rosterView .kids-table thead {
+    display: none !important;
+  }
+
+  #rosterView .kids-table tbody {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  #rosterView .kids-table tr {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "player status"
+      "slot status"
+      "jersey due"
+      "fee due" !important;
+    gap: 9px 10px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 14px 56px 14px 14px !important;
+    border: 1px solid rgba(13, 46, 91, 0.12) !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    box-shadow: 0 10px 24px rgba(13, 46, 91, 0.08) !important;
+  }
+
+  #rosterView .kids-table tr.alert-row {
+    border-color: rgba(244, 191, 42, 0.26) !important;
+    background: linear-gradient(145deg, rgba(255, 253, 246, 0.96), rgba(255, 255, 255, 0.96)) !important;
+  }
+
+  #rosterView .kids-table tr.critical-row {
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    background: linear-gradient(145deg, rgba(255, 250, 250, 0.96), rgba(255, 255, 255, 0.96)) !important;
+    box-shadow: inset 3px 0 0 rgba(239, 68, 68, 0.44), 0 10px 24px rgba(13, 46, 91, 0.08) !important;
+  }
+
+  #rosterView .kids-table td {
+    display: none !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  #rosterView .kids-table td::before {
+    display: none !important;
+  }
+
+  #rosterView .kids-table td[data-label="Player"],
+  #rosterView .kids-table td[data-label="Time slot"],
+  #rosterView .kids-table td[data-label="Jersey"],
+  #rosterView .kids-table td[data-label="Status"],
+  #rosterView .kids-table td[data-label="Fees paid"],
+  #rosterView .kids-table td[data-label="Next fee due"] {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  #rosterView .kids-table td[data-label="Player"] {
+    grid-area: player !important;
+    padding-right: 0 !important;
+  }
+
+  #rosterView .kids-table td[data-label="Time slot"] {
+    grid-area: slot !important;
+  }
+
+  #rosterView .kids-table td[data-label="Jersey"] {
+    grid-area: jersey !important;
+  }
+
+  #rosterView .kids-table td[data-label="Status"] {
+    grid-area: status !important;
+    justify-content: flex-end !important;
+    align-self: start !important;
+  }
+
+  #rosterView .kids-table td[data-label="Fees paid"] {
+    grid-area: fee !important;
+  }
+
+  #rosterView .kids-table td[data-label="Next fee due"] {
+    grid-area: due !important;
+    justify-content: flex-end !important;
+    align-self: end !important;
+  }
+
+  #rosterView .kids-table td[data-label="Actions"] {
+    display: block !important;
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    z-index: 3 !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  #rosterView .player-name-cell,
+  #rosterView .player-link {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #rosterView .player-link {
+    display: inline-flex !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    color: #09285a !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    line-height: 1.16 !important;
+    overflow: hidden !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  #rosterView .jersey-inline-editor {
+    max-width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  #rosterView .slot-pill,
+  #rosterView .state-pill,
+  #rosterView .status-pill,
+  #rosterView .alert-pill,
+  #rosterView .type-pill,
+  #rosterView .tenure-pill {
+    min-height: 28px !important;
+    max-width: 158px !important;
+    padding: 0 10px !important;
+    font-size: 0.66rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  #rosterView .action-trigger-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 860px) {
+  #rosterView .roster-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #rosterView .kids-table tbody {
+    grid-template-columns: 1fr !important;
+  }
+}
