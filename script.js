@@ -3552,12 +3552,14 @@ const importantWhatsappFlowEvents = new Set([
 const whatsappFlowTitle = (eventType = "", status = "") => {
   if (eventType === "reminder_created") return "WhatsApp reminder prepared";
   if (eventType === "reminder_message_status") {
-    if (status === "delivered" || status === "read") return "Reminder delivered";
+    if (status === "delivered") return "Reminder delivered";
+    if (status === "read") return "Reminder read";
     if (status === "failed") return "Reminder failed";
     return "";
   }
   if (eventType === "whatsapp_message_status") {
-    if (status === "delivered" || status === "read") return "WhatsApp message delivered";
+    if (status === "delivered") return "WhatsApp message delivered";
+    if (status === "read") return "WhatsApp message read";
     if (status === "failed") return "WhatsApp message failed";
     return "";
   }
@@ -3619,6 +3621,9 @@ const suppressSupersededReminderFailures = (items = []) => {
     const text = getTimelineEventText(item);
     const isSuccessfulReminder =
       text.includes("reminder delivered") ||
+      text.includes("reminder read") ||
+      text.includes("whatsapp message delivered") ||
+      text.includes("whatsapp message read") ||
       text.includes("parent selected renewal plan") ||
       text.includes("payment link sent") ||
       text.includes("parent tapped pay now") ||
@@ -3812,10 +3817,18 @@ const compactTimelineItem = (item) => {
       changed_by: item.changed_by || "WhatsApp",
     };
   }
-  if (eventText.includes("delivered") || eventText.includes("read")) {
+  if (eventText.includes("read")) {
     return {
       ...item,
-      title: "Reminder delivered",
+      title: eventText.includes("whatsapp message") ? "WhatsApp message read" : "Reminder read",
+      details: "",
+      changed_by: item.changed_by || "WhatsApp",
+    };
+  }
+  if (eventText.includes("delivered")) {
+    return {
+      ...item,
+      title: eventText.includes("whatsapp message") ? "WhatsApp message delivered" : "Reminder delivered",
       details: "",
       changed_by: item.changed_by || "WhatsApp",
     };
@@ -3853,6 +3866,25 @@ const formatTimelineDate = (value) => {
   return formatDate(String(value).slice(0, 10));
 };
 
+const formatTimelineTime = (value) => {
+  if (!value || value === "unknown") return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+};
+
+const formatTimelineStamp = (value) => {
+  const date = formatTimelineDate(value);
+  const time = formatTimelineTime(value);
+  return time ? `${date} · ${time}` : date;
+};
+
 const getTimelineTone = (item = {}) => {
   const eventText = getTimelineEventText(item);
   if (eventText.includes("failed") || eventText.includes("error")) return "danger";
@@ -3888,10 +3920,12 @@ const isTimelineOperationalItem = (item = {}) => {
 
 const getTimelineClusterTitle = (category, items = []) => {
   const hasFailed = items.some((item) => getTimelineTone(item) === "danger");
-  const hasDelivered = items.some((item) => getTimelineEventText(item).includes("delivered") || getTimelineEventText(item).includes("read"));
+  const hasRead = items.some((item) => getTimelineEventText(item).includes("read"));
+  const hasDelivered = items.some((item) => getTimelineEventText(item).includes("delivered"));
   if (category === "manager-alerts") return hasFailed ? "Manager alert failed" : "Manager payment alerts";
   if (category === "whatsapp") {
     if (hasFailed) return "WhatsApp reminder failed";
+    if (hasRead) return "WhatsApp reminder read";
     if (hasDelivered) return "WhatsApp reminder delivered";
     return "WhatsApp reminder activity";
   }
@@ -3954,7 +3988,7 @@ const renderTimelineMiniEvent = (item = {}) => {
       <span class="timeline-mini-dot" aria-hidden="true"></span>
       <div class="timeline-mini-copy">
         <strong>${escapeHtml(item.title || item.event_type || "Timeline event")}</strong>
-        <span>${formatTimelineDate(item.event_date || item.created_at)}${item.changed_by ? ` · ${escapeHtml(item.changed_by)}` : ""}</span>
+        <span>${formatTimelineStamp(item.created_at || item.event_date)}${item.changed_by ? ` · ${escapeHtml(item.changed_by)}` : ""}</span>
         ${item.details ? `<p>${escapeHtml(item.details)}</p>` : ""}
         ${renderTimelineProofButton(item)}
       </div>
@@ -3970,7 +4004,7 @@ const renderTimelineEvent = (item = {}) => {
       <div class="timeline-card">
         <div class="timeline-card-head">
           <strong>${escapeHtml(item.title || item.event_type || "Timeline event")}</strong>
-          <time>${formatTimelineDate(item.event_date || item.created_at)}</time>
+          <time>${formatTimelineStamp(item.created_at || item.event_date)}</time>
         </div>
         <span class="timeline-actor">${escapeHtml(item.changed_by || "System")}</span>
         ${item.details ? `<p>${escapeHtml(item.details)}</p>` : ""}
@@ -3994,7 +4028,7 @@ const renderTimelineCluster = (cluster = {}) => {
             <strong>${escapeHtml(getTimelineClusterTitle(cluster.category, cluster.items))}</strong>
             <span>${cluster.items.length} update${cluster.items.length === 1 ? "" : "s"} folded${summary ? ` · ${escapeHtml(summary)}` : ""}</span>
           </span>
-          <time>${formatTimelineDate(latest.event_date || latest.created_at || cluster.dateKey)}</time>
+          <time>${formatTimelineStamp(latest.created_at || latest.event_date || cluster.dateKey)}</time>
           <span class="timeline-cluster-chevron" aria-hidden="true"></span>
         </summary>
         <ol class="timeline-mini-list">
