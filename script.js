@@ -562,11 +562,18 @@ const normalizePaymentFollowUp = (reminder = null, link = null) => ({
   failedAt: reminder?.failed_at || "",
   deliveredAt: reminder?.delivered_at || "",
   readAt: reminder?.read_at || "",
+  retryCount: Number(reminder?.retry_count || 0) || 0,
+  maxRetryCount: Number(reminder?.max_retry_count || 0) || 0,
+  nextRetryAt: reminder?.next_retry_at || "",
+  lastRetryAt: reminder?.last_retry_at || "",
+  retryReason: reminder?.retry_reason || "",
+  manualFollowupRequired: reminder?.manual_followup_required === true,
   reminder,
   link,
 });
 
 const REMINDER_FAILED_STATUSES = new Set(["failed", "send_failed", "delivery_failed", "undelivered"]);
+const REMINDER_RETRY_STATUSES = new Set(["retry_scheduled"]);
 const REMINDER_SENT_STATUSES = new Set([
   "queued",
   "accepted",
@@ -583,10 +590,17 @@ const isPaymentPendingFollowUp = (followUp) =>
   ["payment_pending_verification", "pending_verification"].includes(followUp?.linkStatus) ||
   ["payment_pending_verification", "pending_verification"].includes(followUp?.reminderStatus);
 
-const isReminderFailedFollowUp = (followUp) =>
-  REMINDER_FAILED_STATUSES.has(followUp?.reminderStatus) ||
-  REMINDER_FAILED_STATUSES.has(followUp?.linkStatus) ||
-  Boolean(followUp?.failedAt || followUp?.providerError || followUp?.metaError?.message || followUp?.metaError?.error?.message);
+const isReminderRetryScheduledFollowUp = (followUp) =>
+  REMINDER_RETRY_STATUSES.has(followUp?.reminderStatus) && Boolean(followUp?.nextRetryAt);
+
+const isReminderFailedFollowUp = (followUp) => {
+  if (!followUp) return false;
+  if (isReminderRetryScheduledFollowUp(followUp)) return false;
+  if (REMINDER_SENT_STATUSES.has(followUp.reminderStatus)) return false;
+  return REMINDER_FAILED_STATUSES.has(followUp.reminderStatus) ||
+    REMINDER_FAILED_STATUSES.has(followUp.linkStatus) ||
+    Boolean(followUp.manualFollowupRequired || followUp.failedAt || followUp.providerError || followUp.metaError?.message || followUp.metaError?.error?.message);
+};
 
 const isReminderSentFollowUp = (followUp) =>
   !isReminderFailedFollowUp(followUp) &&
@@ -607,6 +621,14 @@ const describeReminderFailure = (followUp = {}) => {
   return reason ? `Reminder failed: ${reason}` : `Reminder failed (${status})`;
 };
 
+const describeReminderRetry = (followUp = {}) => {
+  const retryText = followUp.nextRetryAt ? `Next retry: ${formatDateTime(followUp.nextRetryAt)}` : "Retry scheduled";
+  const countText = followUp.maxRetryCount
+    ? `Attempt ${Math.min(followUp.retryCount + 1, followUp.maxRetryCount)} of ${followUp.maxRetryCount}`
+    : "";
+  return [retryText, countText, followUp.retryReason].filter(Boolean).join(" • ");
+};
+
 const getPaymentFollowUpForKid = (kid) =>
   paymentFollowUps.find((followUp) => followUp.studentId === kid?.id) || null;
 
@@ -614,6 +636,9 @@ const getFeeDisplayState = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
   if (isPaymentPendingFollowUp(followUp) || kid?.paymentStatus === "pending_verification") {
     return { label: "Pending verification", className: "status-pending", followUp };
+  }
+  if (isReminderRetryScheduledFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
+    return { label: "Retry scheduled", className: "status-retry", followUp, title: describeReminderRetry(followUp) };
   }
   if (isReminderFailedFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
     return { label: "Reminder failed", className: "status-failed", followUp, title: describeReminderFailure(followUp) };
@@ -824,7 +849,7 @@ const isMissingReminderTrackingColumnError = (error) => {
   const message = String(error?.message || "").toLowerCase();
   return (
     message.includes("schema cache") &&
-    ["meta_error", "failed_at", "delivered_at", "read_at"].some((column) => message.includes(column))
+    ["meta_error", "failed_at", "delivered_at", "read_at", "retry_count", "max_retry_count", "next_retry_at", "last_retry_at", "retry_reason", "manual_followup_required"].some((column) => message.includes(column))
   );
 };
 
@@ -841,6 +866,19 @@ const formatDate = (value) =>
         year: "numeric",
       })
     : "Not renewed";
+
+const formatDateTime = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const addMonthsIso = (dateValue, months) => {
   const date = new Date(`${dateValue}T00:00:00`);
@@ -3370,7 +3408,7 @@ const loadPaymentFollowUps = async () => {
   }
 
   const reminderSelect =
-    "id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response,meta_error,failed_at,delivered_at,read_at";
+    "id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response,meta_error,failed_at,delivered_at,read_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required";
   const [reminderResult, linkResult] = await Promise.all([
     supabaseClient
       .from("reminder_events")
@@ -3510,12 +3548,12 @@ const loadPlayerTimeline = async (studentId) => {
     .limit(30);
 
   const timelineRows = error ? [] : (data || []);
-  let reminderFailures = [];
+  let reminderStatusEvents = [];
   let reminderResult = await supabaseClient
     .from("reminder_events")
-    .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at")
+    .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required")
     .eq("student_id", studentId)
-    .in("status", [...REMINDER_FAILED_STATUSES])
+    .in("status", [...REMINDER_FAILED_STATUSES, ...REMINDER_RETRY_STATUSES])
     .order("created_at", { ascending: false })
     .limit(10);
   if (reminderResult.error && isMissingReminderTrackingColumnError(reminderResult.error)) {
@@ -3528,22 +3566,23 @@ const loadPlayerTimeline = async (studentId) => {
       .limit(10);
   }
   if (!reminderResult.error) {
-    reminderFailures = (reminderResult.data || []).map((reminder) => {
+    reminderStatusEvents = (reminderResult.data || []).map((reminder) => {
       const followUp = normalizePaymentFollowUp(reminder, null);
+      const isRetry = isReminderRetryScheduledFollowUp(followUp);
       return {
-        id: `reminder-failure-${reminder.id}`,
+        id: `${isRetry ? "reminder-retry" : "reminder-failure"}-${reminder.id}`,
         student_id: studentId,
-        event_type: "whatsapp_reminder_failed",
-        event_date: (reminder.failed_at || reminder.created_at || "").slice(0, 10),
-        title: "Reminder failed",
-        details: describeReminderFailure(followUp),
+        event_type: isRetry ? "whatsapp_reminder_retry_scheduled" : "whatsapp_reminder_failed",
+        event_date: (reminder.failed_at || reminder.next_retry_at || reminder.created_at || "").slice(0, 10),
+        title: isRetry ? "Reminder retry scheduled" : "Reminder failed",
+        details: isRetry ? describeReminderRetry(followUp) : describeReminderFailure(followUp),
         changed_by: reminder.created_by || "WhatsApp",
-        created_at: reminder.failed_at || reminder.created_at || "",
+        created_at: reminder.failed_at || reminder.next_retry_at || reminder.created_at || "",
       };
     });
   }
 
-  const mergedRows = [...timelineRows, ...reminderFailures]
+  const mergedRows = [...timelineRows, ...reminderStatusEvents]
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
     .slice(0, 30);
 
@@ -3643,6 +3682,14 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("confirmation") && !eventText.includes("failed")) {
     return null;
   }
+  if (eventText.includes("retry scheduled")) {
+    return {
+      ...item,
+      title: "Reminder retry scheduled",
+      details: item.details || "Meta limited delivery. The reminder will retry later.",
+      changed_by: item.changed_by || "System",
+    };
+  }
   if (eventText.includes("whatsapp reminder prepared") || eventText.includes("status: queued")) {
     return {
       ...item,
@@ -3684,7 +3731,7 @@ const compactPlayerTimeline = (timeline = []) => {
     .filter((item) => {
       const title = String(item.title || item.event_type || "");
       const dateKey = String(item.event_date || item.created_at || "").slice(0, 10);
-      const detailKey = title === "Reminder failed" ? String(item.details || "") : "";
+      const detailKey = title === "Reminder failed" || title === "Reminder retry scheduled" ? String(item.details || "") : "";
       const key = `${dateKey}|${title}|${detailKey}`;
       if (seen.has(key)) return false;
       seen.add(key);

@@ -1545,6 +1545,12 @@ body.popup-open {
   border: 1px solid rgba(26, 79, 157, 0.2);
 }
 
+.status-retry {
+  background: rgba(15, 34, 64, 0.06);
+  color: #1a4f9d;
+  border: 1px solid rgba(15, 34, 64, 0.14);
+}
+
 .status-failed {
   background: rgba(15, 34, 64, 0.06);
   color: #b91c1c;
