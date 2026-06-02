@@ -3739,6 +3739,173 @@ const compactPlayerTimeline = (timeline = []) => {
     });
 };
 
+const getTimelineEventText = (item = {}) =>
+  `${item.event_type || ""} ${item.title || ""} ${item.details || ""}`.toLowerCase();
+
+const formatTimelineDate = (value) => {
+  if (!value || value === "unknown") return "No date";
+  return formatDate(String(value).slice(0, 10));
+};
+
+const getTimelineTone = (item = {}) => {
+  const eventText = getTimelineEventText(item);
+  if (eventText.includes("failed") || eventText.includes("error")) return "danger";
+  if (eventText.includes("confirmed") || eventText.includes("paid") || eventText.includes("payment") || eventText.includes("renew")) return "payment";
+  if (eventText.includes("reminder") || eventText.includes("whatsapp") || eventText.includes("message")) return "reminder";
+  if (eventText.includes("admission")) return "admission";
+  if (eventText.includes("discontinued") || eventText.includes("active") || eventText.includes("pause") || eventText.includes("rejoin") || eventText.includes("status")) return "status";
+  return "default";
+};
+
+const getTimelineCategory = (item = {}) => {
+  const eventText = getTimelineEventText(item);
+  if (eventText.includes("manager_payment_alert")) return "manager-alerts";
+  if (eventText.includes("whatsapp") || eventText.includes("reminder") || eventText.includes("message")) return "whatsapp";
+  if (eventText.includes("payment") || eventText.includes("fee") || eventText.includes("renewal") || eventText.includes("paid")) return "payment";
+  if (eventText.includes("discontinued") || eventText.includes("active") || eventText.includes("pause") || eventText.includes("rejoin") || eventText.includes("status")) return "status";
+  if (eventText.includes("admission")) return "admission";
+  return "profile";
+};
+
+const isTimelineOperationalItem = (item = {}) => {
+  const eventText = getTimelineEventText(item);
+  if (eventText.includes("payment proof received") || eventText.includes("parent payment proof") || eventText.includes("payment confirmed")) {
+    return false;
+  }
+  return (
+    eventText.includes("whatsapp") ||
+    eventText.includes("reminder") ||
+    eventText.includes("message_status") ||
+    eventText.includes("manager_payment_alert")
+  );
+};
+
+const getTimelineClusterTitle = (category, items = []) => {
+  const hasFailed = items.some((item) => getTimelineTone(item) === "danger");
+  const hasDelivered = items.some((item) => getTimelineEventText(item).includes("delivered") || getTimelineEventText(item).includes("read"));
+  if (category === "manager-alerts") return hasFailed ? "Manager alert failed" : "Manager payment alerts";
+  if (category === "whatsapp") {
+    if (hasFailed) return "WhatsApp reminder failed";
+    if (hasDelivered) return "WhatsApp reminder delivered";
+    return "WhatsApp reminder activity";
+  }
+  return "Operational updates";
+};
+
+const getTimelineClusterSummary = (items = []) => {
+  const counts = items.reduce((summary, item) => {
+    const text = getTimelineEventText(item);
+    if (text.includes("failed") || text.includes("error")) summary.failed += 1;
+    else if (text.includes("retry")) summary.retry += 1;
+    else if (text.includes("delivered") || text.includes("read")) summary.delivered += 1;
+    else if (text.includes("sent") || text.includes("accepted") || text.includes("prepared") || text.includes("queued")) summary.sent += 1;
+    else summary.other += 1;
+    return summary;
+  }, { sent: 0, delivered: 0, retry: 0, failed: 0, other: 0 });
+  return [
+    counts.failed ? `${counts.failed} failed` : "",
+    counts.retry ? `${counts.retry} retry` : "",
+    counts.delivered ? `${counts.delivered} delivered` : "",
+    counts.sent ? `${counts.sent} sent/prepared` : "",
+    counts.other ? `${counts.other} update${counts.other === 1 ? "" : "s"}` : "",
+  ].filter(Boolean).join(" · ");
+};
+
+const buildTimelineRows = (timeline = []) => {
+  const rows = [];
+  const clusters = new Map();
+  timeline.forEach((item) => {
+    if (!isTimelineOperationalItem(item)) {
+      rows.push({ type: "event", item });
+      return;
+    }
+    const category = getTimelineCategory(item);
+    const dateKey = String(item.event_date || item.created_at || "").slice(0, 10) || "unknown";
+    const key = `${dateKey}|${category}`;
+    let cluster = clusters.get(key);
+    if (!cluster) {
+      cluster = { type: "cluster", category, dateKey, items: [] };
+      clusters.set(key, cluster);
+      rows.push(cluster);
+    }
+    cluster.items.push(item);
+  });
+  return rows;
+};
+
+const renderTimelineProofButton = (item = {}) =>
+  item.proofUrl
+    ? `<button class="proof-thumb" type="button" data-proof-url="${escapeHtml(item.proofUrl)}">
+        <img src="${escapeHtml(item.proofUrl)}" alt="Payment proof thumbnail" />
+        <span>View proof</span>
+      </button>`
+    : "";
+
+const renderTimelineMiniEvent = (item = {}) => {
+  const tone = getTimelineTone(item);
+  return `
+    <li class="timeline-mini-event ${tone}">
+      <span class="timeline-mini-dot" aria-hidden="true"></span>
+      <div class="timeline-mini-copy">
+        <strong>${escapeHtml(item.title || item.event_type || "Timeline event")}</strong>
+        <span>${formatTimelineDate(item.event_date || item.created_at)}${item.changed_by ? ` · ${escapeHtml(item.changed_by)}` : ""}</span>
+        ${item.details ? `<p>${escapeHtml(item.details)}</p>` : ""}
+        ${renderTimelineProofButton(item)}
+      </div>
+    </li>
+  `;
+};
+
+const renderTimelineEvent = (item = {}) => {
+  const tone = getTimelineTone(item);
+  return `
+    <li class="timeline-event timeline-main-event ${tone}">
+      <span class="timeline-dot" aria-hidden="true"></span>
+      <div class="timeline-card">
+        <div class="timeline-card-head">
+          <strong>${escapeHtml(item.title || item.event_type || "Timeline event")}</strong>
+          <time>${formatTimelineDate(item.event_date || item.created_at)}</time>
+        </div>
+        <span class="timeline-actor">${escapeHtml(item.changed_by || "System")}</span>
+        ${item.details ? `<p>${escapeHtml(item.details)}</p>` : ""}
+        ${renderTimelineProofButton(item)}
+      </div>
+    </li>
+  `;
+};
+
+const renderTimelineCluster = (cluster = {}) => {
+  const tone = cluster.items.some((item) => getTimelineTone(item) === "danger") ? "danger" : "reminder";
+  const latest = cluster.items[0] || {};
+  const summary = getTimelineClusterSummary(cluster.items);
+  return `
+    <li class="timeline-event timeline-cluster-event ${tone}">
+      <span class="timeline-dot timeline-cluster-dot" aria-hidden="true"></span>
+      <details class="timeline-cluster-card">
+        <summary>
+          <span class="timeline-cluster-icon" aria-hidden="true"></span>
+          <span class="timeline-cluster-copy">
+            <strong>${escapeHtml(getTimelineClusterTitle(cluster.category, cluster.items))}</strong>
+            <span>${cluster.items.length} update${cluster.items.length === 1 ? "" : "s"} folded${summary ? ` · ${escapeHtml(summary)}` : ""}</span>
+          </span>
+          <time>${formatTimelineDate(latest.event_date || latest.created_at || cluster.dateKey)}</time>
+          <span class="timeline-cluster-chevron" aria-hidden="true"></span>
+        </summary>
+        <ol class="timeline-mini-list">
+          ${cluster.items.map(renderTimelineMiniEvent).join("")}
+        </ol>
+      </details>
+    </li>
+  `;
+};
+
+const renderPlayerTimeline = (timeline = []) =>
+  `<ol class="timeline-list advanced-timeline-list">
+    ${buildTimelineRows(timeline).map((row) =>
+      row.type === "cluster" ? renderTimelineCluster(row) : renderTimelineEvent(row.item)
+    ).join("")}
+  </ol>`;
+
 const openPaymentProofViewer = (url) => {
   if (!url) return;
   const viewer = document.createElement("div");
@@ -4157,43 +4324,16 @@ const renderPlayerDetails = async (kid) => {
         : ""
     }
     <div class="player-detail-section timeline-section">
-      <h4>Timeline</h4>
+      <div class="timeline-section-head">
+        <div>
+          <span>Player journey</span>
+          <h4>Timeline</h4>
+        </div>
+        <strong>${timeline.length} event${timeline.length === 1 ? "" : "s"}</strong>
+      </div>
       ${
         timeline.length > 0
-          ? `<ol class="timeline-list">${timeline.map((item) => {
-              const eventType = String(item.event_type || "").toLowerCase();
-              const eventText = `${eventType} ${item.title || ""} ${item.details || ""}`.toLowerCase();
-              let tone = "default";
-              if (eventText.includes("failed") || eventText.includes("error")) {
-                tone = "danger";
-              } else if (eventText.includes("confirmed") || eventText.includes("paid") || eventText.includes("payment") || eventText.includes("renew")) {
-                tone = "payment";
-              } else if (eventText.includes("reminder") || eventText.includes("whatsapp") || eventText.includes("message")) {
-                tone = "reminder";
-              } else if (eventText.includes("admission")) {
-                tone = "admission";
-              }
-              return `
-              <li class="timeline-event ${tone}">
-                <span class="timeline-dot" aria-hidden="true"></span>
-                <div class="timeline-card">
-                  <div class="timeline-card-head">
-                    <strong>${item.title || item.event_type}</strong>
-                    <time>${formatDate(item.event_date)}</time>
-                  </div>
-                  <span class="timeline-actor">${item.changed_by || "System"}</span>
-                  ${item.details ? `<p>${item.details}</p>` : ""}
-                ${
-                  item.proofUrl
-                    ? `<button class="proof-thumb" type="button" data-proof-url="${escapeHtml(item.proofUrl)}">
-                        <img src="${escapeHtml(item.proofUrl)}" alt="Payment proof thumbnail" />
-                        <span>View proof</span>
-                      </button>`
-                    : ""
-                }
-                </div>
-              </li>
-            `}).join("")}</ol>`
+          ? renderPlayerTimeline(timeline)
           : `<p class="sub-copy">No timeline records yet. Run the player profile timeline SQL migration to start capturing changes.</p>`
       }
     </div>
