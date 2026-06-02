@@ -3553,7 +3553,7 @@ const loadPlayerTimeline = async (studentId) => {
     .from("reminder_events")
     .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required")
     .eq("student_id", studentId)
-    .in("status", [...REMINDER_FAILED_STATUSES, ...REMINDER_RETRY_STATUSES])
+    .in("status", [...REMINDER_FAILED_STATUSES])
     .order("created_at", { ascending: false })
     .limit(10);
   if (reminderResult.error && isMissingReminderTrackingColumnError(reminderResult.error)) {
@@ -3683,12 +3683,7 @@ const compactTimelineItem = (item) => {
     return null;
   }
   if (eventText.includes("retry scheduled")) {
-    return {
-      ...item,
-      title: "Reminder retry scheduled",
-      details: item.details || "Meta limited delivery. The reminder will retry later.",
-      changed_by: item.changed_by || "System",
-    };
+    return null;
   }
   if (eventText.includes("whatsapp reminder prepared") || eventText.includes("status: queued")) {
     return {
@@ -3731,7 +3726,7 @@ const compactPlayerTimeline = (timeline = []) => {
     .filter((item) => {
       const title = String(item.title || item.event_type || "");
       const dateKey = String(item.event_date || item.created_at || "").slice(0, 10);
-      const detailKey = title === "Reminder failed" || title === "Reminder retry scheduled" ? String(item.details || "") : "";
+      const detailKey = title === "Reminder failed" ? String(item.details || "") : "";
       const key = `${dateKey}|${title}|${detailKey}`;
       if (seen.has(key)) return false;
       seen.add(key);
