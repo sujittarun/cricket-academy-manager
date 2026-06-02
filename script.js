@@ -3537,6 +3537,107 @@ const loadPendingAdmissions = async () => {
   renderAdmissionReviewQueue();
 };
 
+const importantWhatsappFlowEvents = new Set([
+  "reminder_created",
+  "reminder_message_status",
+  "whatsapp_message_status",
+  "parent_plan_selected",
+  "payment_link_sent",
+  "payment_attempted",
+  "payment_pending_verification",
+  "payment_confirmed",
+  "parent_help_requested",
+]);
+
+const whatsappFlowTitle = (eventType = "", status = "") => {
+  if (eventType === "reminder_created") return "WhatsApp reminder prepared";
+  if (eventType === "reminder_message_status") {
+    if (status === "delivered" || status === "read") return "Reminder delivered";
+    if (status === "failed") return "Reminder failed";
+    return "";
+  }
+  if (eventType === "whatsapp_message_status") {
+    if (status === "delivered" || status === "read") return "WhatsApp message delivered";
+    if (status === "failed") return "WhatsApp message failed";
+    return "";
+  }
+  if (eventType === "parent_plan_selected") return "Parent selected renewal plan";
+  if (eventType === "payment_link_sent") return "Payment link sent";
+  if (eventType === "payment_attempted") return "Parent tapped Pay Now";
+  if (eventType === "payment_pending_verification") return "Parent payment proof received";
+  if (eventType === "payment_confirmed") return "Payment confirmed by academy";
+  if (eventType === "parent_help_requested") return "Parent requested help";
+  return "";
+};
+
+const shouldShowWhatsappFlowEvent = (row = {}) => {
+  if (!importantWhatsappFlowEvents.has(row.event_type)) return false;
+  if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status") {
+    return ["delivered", "read", "failed"].includes(row.status);
+  }
+  return true;
+};
+
+const buildWhatsappFlowDetails = (row = {}) => {
+  if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status") {
+    return row.status === "failed"
+      ? row.error_message || "Provider did not return a detailed reason."
+      : "";
+  }
+  return [
+    row.payment_plan ? `Plan: ${row.payment_plan}` : "",
+    row.payment_amount ? `Amount: Rs ${Number(row.payment_amount).toLocaleString("en-IN")}` : "",
+    row.payment_months ? `Months: ${row.payment_months}` : "",
+    row.payment_from_date ? `From: ${row.payment_from_date}` : "",
+    row.payment_to_date ? `To: ${row.payment_to_date}` : "",
+    row.error_message || "",
+    row.proof_path ? `payment-proofs/${row.proof_path}` : "",
+  ].filter(Boolean).join(" • ");
+};
+
+const normalizeWhatsappFlowTimelineItem = (row = {}) => {
+  const title = whatsappFlowTitle(row.event_type, row.status);
+  if (!title || !shouldShowWhatsappFlowEvent(row)) return null;
+  const createdAt = row.status_at || row.read_at || row.delivered_at || row.failed_at || row.accepted_at || row.created_at || "";
+  return {
+    id: `whatsapp-flow-${row.id}`,
+    student_id: row.student_id,
+    event_type: row.event_type || "whatsapp_flow",
+    event_date: String(createdAt).slice(0, 10),
+    title,
+    details: buildWhatsappFlowDetails(row),
+    changed_by: row.created_by || (row.direction === "provider" ? "Meta" : "WhatsApp"),
+    created_at: createdAt,
+    reminder_event_id: row.reminder_event_id || "",
+  };
+};
+
+const suppressSupersededReminderFailures = (items = []) => {
+  const successfulReminderIds = new Set();
+  const successfulDateKeys = new Set();
+  items.forEach((item) => {
+    const text = getTimelineEventText(item);
+    const isSuccessfulReminder =
+      text.includes("reminder delivered") ||
+      text.includes("parent selected renewal plan") ||
+      text.includes("payment link sent") ||
+      text.includes("parent tapped pay now") ||
+      text.includes("parent payment proof received") ||
+      text.includes("payment confirmed");
+    if (!isSuccessfulReminder) return;
+    if (item.reminder_event_id) successfulReminderIds.add(item.reminder_event_id);
+    const dateKey = String(item.created_at || item.event_date || "").slice(0, 10);
+    if (dateKey) successfulDateKeys.add(dateKey);
+  });
+  return items.filter((item) => {
+    const text = getTimelineEventText(item);
+    if (!text.includes("reminder failed")) return true;
+    if (item.reminder_event_id && successfulReminderIds.has(item.reminder_event_id)) return false;
+    const dateKey = String(item.created_at || item.event_date || "").slice(0, 10);
+    return !successfulDateKeys.has(dateKey);
+  });
+};
+
 const loadPlayerTimeline = async (studentId) => {
   if (!isBackendReady || !isManagerLoggedIn) return [];
 
@@ -3544,6 +3645,7 @@ const loadPlayerTimeline = async (studentId) => {
     .from("student_timeline")
     .select("*")
     .eq("student_id", studentId)
+    .neq("event_type", "whatsapp_flow")
     .order("created_at", { ascending: false })
     .limit(30);
 
@@ -3582,9 +3684,18 @@ const loadPlayerTimeline = async (studentId) => {
     });
   }
 
-  const mergedRows = [...timelineRows, ...reminderStatusEvents]
+  const { data: flowRows, error: flowError } = await supabaseClient
+    .from("whatsapp_flow_events")
+    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
+    .eq("student_id", studentId)
+    .order("status_at", { ascending: false, nullsFirst: false })
+    .limit(40);
+  const whatsappFlowEvents = flowError ? [] : (flowRows || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean);
+
+  const mergedRows = suppressSupersededReminderFailures([...timelineRows, ...reminderStatusEvents, ...whatsappFlowEvents])
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
-    .slice(0, 30);
+    .slice(0, 30)
+    .sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")));
 
   return Promise.all(mergedRows.map(async (item) => {
     const proofPath = extractPaymentProofPath(item.details || "");
