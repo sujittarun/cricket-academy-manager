@@ -3699,8 +3699,7 @@ const loadPlayerTimeline = async (studentId) => {
 
   const mergedRows = suppressSupersededReminderFailures([...timelineRows, ...reminderStatusEvents, ...whatsappFlowEvents])
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
-    .slice(0, 30)
-    .sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")));
+    .slice(0, 30);
 
   return Promise.all(mergedRows.map(async (item) => {
     const proofPath = extractPaymentProofPath(item.details || "");
