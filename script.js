@@ -3542,6 +3542,9 @@ const importantWhatsappFlowEvents = new Set([
   "reminder_message_status",
   "whatsapp_message_status",
   "confirmation_message_status",
+  "manager_payment_alert_with_proof_sent",
+  "manager_payment_alert_without_proof_sent",
+  "payment_verification_reply_sent",
   "parent_plan_selected",
   "payment_link_sent",
   "payment_attempted",
@@ -3550,30 +3553,60 @@ const importantWhatsappFlowEvents = new Set([
   "parent_help_requested",
 ]);
 
-const whatsappFlowTitle = (eventType = "", status = "") => {
-  if (eventType === "reminder_created") return "WhatsApp reminder prepared";
+const whatsappStatusTitle = (status = "", labels = {}) => {
+  if (status === "delivered") return labels.delivered || "";
+  if (status === "read") return labels.read || "";
+  if (status === "failed") return labels.failed || "";
+  return "";
+};
+
+const whatsappFlowTitle = (row = {}) => {
+  const eventType = row.event_type || "";
+  const status = row.status || "";
+  const messageKind = row.message_kind || "";
+  if (eventType === "reminder_created") return "Fee reminder prepared";
   if (eventType === "reminder_message_status") {
-    if (status === "delivered") return "Reminder delivered";
-    if (status === "read") return "Reminder read";
-    if (status === "failed") return "Reminder failed";
-    return "";
+    return whatsappStatusTitle(status, {
+      delivered: "Fee reminder delivered to parent",
+      read: "Fee reminder read by parent",
+      failed: "Fee reminder failed to parent",
+    });
   }
   if (eventType === "whatsapp_message_status") {
-    if (status === "delivered") return "WhatsApp message delivered";
-    if (status === "read") return "WhatsApp message read";
-    if (status === "failed") return "WhatsApp message failed";
-    return "";
+    if (messageKind.includes("manager_alert")) {
+      return whatsappStatusTitle(status, {
+        delivered: "Manager payment alert delivered",
+        read: "Manager payment alert read",
+        failed: "Manager payment alert failed",
+      });
+    }
+    if (messageKind === "payment_link") {
+      return whatsappStatusTitle(status, {
+        delivered: "Payment link delivered to parent",
+        read: "Payment link read by parent",
+        failed: "Payment link failed to parent",
+      });
+    }
+    return whatsappStatusTitle(status, {
+      delivered: "WhatsApp follow-up delivered to parent",
+      read: "WhatsApp follow-up read by parent",
+      failed: "WhatsApp follow-up failed to parent",
+    });
   }
   if (eventType === "confirmation_message_status") {
-    if (status === "delivered") return "Payment confirmation delivered";
-    if (status === "read") return "Payment confirmation read";
-    if (status === "failed") return "Payment confirmation failed";
-    return "";
+    return whatsappStatusTitle(status, {
+      delivered: "Payment confirmation delivered to parent",
+      read: "Payment confirmation read by parent",
+      failed: "Payment confirmation failed to parent",
+    });
   }
-  if (eventType === "parent_plan_selected") return "Parent selected renewal plan";
-  if (eventType === "payment_link_sent") return "Payment link sent";
+  if (eventType === "manager_payment_alert_with_proof_sent") return "Manager payment alert sent with proof";
+  if (eventType === "manager_payment_alert_without_proof_sent") return "Manager payment alert sent";
+  if (eventType === "payment_verification_reply_sent") return "Payment proof reply sent to parent";
+  if (eventType === "parent_plan_selected") return "Parent selected payment plan";
+  if (eventType === "payment_link_sent") return "Payment link sent to parent";
   if (eventType === "payment_attempted") return "Parent tapped Pay Now";
-  if (eventType === "payment_pending_verification") return "Parent payment proof received";
+  if (eventType === "payment_pending_verification") return "Payment proof received from parent";
   if (eventType === "payment_confirmed") return "Payment confirmed by academy";
   if (eventType === "parent_help_requested") return "Parent requested help";
   return "";
@@ -3593,6 +3626,9 @@ const buildWhatsappFlowDetails = (row = {}) => {
       ? row.error_message || "Provider did not return a detailed reason."
       : row.message_body || "";
   }
+  if (row.event_type === "payment_link_sent" || row.event_type === "manager_payment_alert_with_proof_sent" || row.event_type === "manager_payment_alert_without_proof_sent" || row.event_type === "payment_verification_reply_sent") {
+    return row.message_body || "";
+  }
   return [
     row.payment_plan ? `Plan: ${row.payment_plan}` : "",
     row.payment_amount ? `Amount: Rs ${Number(row.payment_amount).toLocaleString("en-IN")}` : "",
@@ -3605,7 +3641,7 @@ const buildWhatsappFlowDetails = (row = {}) => {
 };
 
 const normalizeWhatsappFlowTimelineItem = (row = {}) => {
-  const title = whatsappFlowTitle(row.event_type, row.status);
+  const title = whatsappFlowTitle(row);
   if (!title || !shouldShowWhatsappFlowEvent(row)) return null;
   const createdAt = row.status_at || row.read_at || row.delivered_at || row.failed_at || row.accepted_at || row.created_at || "";
   return {
@@ -3629,11 +3665,15 @@ const suppressSupersededReminderFailures = (items = []) => {
     const isSuccessfulReminder =
       text.includes("reminder delivered") ||
       text.includes("reminder read") ||
-      text.includes("whatsapp message delivered") ||
-      text.includes("whatsapp message read") ||
+      text.includes("fee reminder delivered") ||
+      text.includes("fee reminder read") ||
+      text.includes("payment link delivered") ||
+      text.includes("payment link read") ||
+      text.includes("parent selected payment plan") ||
       text.includes("parent selected renewal plan") ||
       text.includes("payment link sent") ||
       text.includes("parent tapped pay now") ||
+      text.includes("payment proof received from parent") ||
       text.includes("parent payment proof received") ||
       text.includes("payment confirmed");
     if (!isSuccessfulReminder) return;
@@ -3698,7 +3738,7 @@ const loadPlayerTimeline = async (studentId) => {
 
   const { data: flowRows, error: flowError } = await supabaseClient
     .from("whatsapp_flow_events")
-    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
+    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_kind,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
     .eq("student_id", studentId)
     .order("status_at", { ascending: false, nullsFirst: false })
     .limit(40);
@@ -3801,7 +3841,7 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("reminder accepted") || eventText.includes(" accepted ")) {
     return null;
   }
-  if (eventText.includes("confirmation") && !eventText.includes("failed")) {
+  if (eventText.includes("confirmation") && !eventText.includes("failed") && !eventText.includes("delivered") && !eventText.includes("read")) {
     return null;
   }
   if (eventText.includes("retry scheduled")) {
@@ -3810,7 +3850,7 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("whatsapp reminder prepared") || eventText.includes("status: queued")) {
     return {
       ...item,
-      title: "WhatsApp reminder prepared",
+      title: "Fee reminder prepared",
       details: "",
       changed_by: item.changed_by || "System",
     };
@@ -3818,7 +3858,7 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("failed") || eventText.includes("send_failed") || eventText.includes("delivery_failed")) {
     return {
       ...item,
-      title: "Reminder failed",
+      title: item.title && item.title !== "Reminder failed" ? item.title : "Fee reminder failed to parent",
       details: extractReminderTimelineReason(item.details) || "Provider did not return a detailed reason.",
       changed_by: item.changed_by || "WhatsApp",
     };
@@ -3826,7 +3866,7 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("read")) {
     return {
       ...item,
-      title: eventText.includes("payment confirmation") ? item.title : (eventText.includes("whatsapp message") ? "WhatsApp message read" : "Reminder read"),
+      title: item.title || "WhatsApp follow-up read by parent",
       details: item.details || "",
       changed_by: item.changed_by || "WhatsApp",
     };
@@ -3834,7 +3874,7 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("delivered")) {
     return {
       ...item,
-      title: eventText.includes("payment confirmation") ? item.title : (eventText.includes("whatsapp message") ? "WhatsApp message delivered" : "Reminder delivered"),
+      title: item.title || "WhatsApp follow-up delivered to parent",
       details: item.details || "",
       changed_by: item.changed_by || "WhatsApp",
     };
@@ -3903,7 +3943,7 @@ const getTimelineTone = (item = {}) => {
 
 const getTimelineCategory = (item = {}) => {
   const eventText = getTimelineEventText(item);
-  if (eventText.includes("manager_payment_alert")) return "manager-alerts";
+  if (eventText.includes("manager_payment_alert") || eventText.includes("manager payment alert")) return "manager-alerts";
   if (eventText.includes("whatsapp") || eventText.includes("reminder") || eventText.includes("message")) return "whatsapp";
   if (eventText.includes("payment") || eventText.includes("fee") || eventText.includes("renewal") || eventText.includes("paid")) return "payment";
   if (eventText.includes("discontinued") || eventText.includes("active") || eventText.includes("pause") || eventText.includes("rejoin") || eventText.includes("status")) return "status";
@@ -3920,7 +3960,8 @@ const isTimelineOperationalItem = (item = {}) => {
     eventText.includes("whatsapp") ||
     eventText.includes("reminder") ||
     eventText.includes("message_status") ||
-    eventText.includes("manager_payment_alert")
+    eventText.includes("manager_payment_alert") ||
+    eventText.includes("manager payment alert")
   );
 };
 
@@ -3930,10 +3971,10 @@ const getTimelineClusterTitle = (category, items = []) => {
   const hasDelivered = items.some((item) => getTimelineEventText(item).includes("delivered"));
   if (category === "manager-alerts") return hasFailed ? "Manager alert failed" : "Manager payment alerts";
   if (category === "whatsapp") {
-    if (hasFailed) return "WhatsApp reminder failed";
-    if (hasRead) return "WhatsApp reminder read";
-    if (hasDelivered) return "WhatsApp reminder delivered";
-    return "WhatsApp reminder activity";
+    if (hasFailed) return "WhatsApp delivery failed";
+    if (hasRead) return "WhatsApp activity read";
+    if (hasDelivered) return "WhatsApp activity delivered";
+    return "WhatsApp activity";
   }
   return "Operational updates";
 };
