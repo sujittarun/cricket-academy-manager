@@ -3541,6 +3541,7 @@ const importantWhatsappFlowEvents = new Set([
   "reminder_created",
   "reminder_message_status",
   "whatsapp_message_status",
+  "confirmation_message_status",
   "parent_plan_selected",
   "payment_link_sent",
   "payment_attempted",
@@ -3563,6 +3564,12 @@ const whatsappFlowTitle = (eventType = "", status = "") => {
     if (status === "failed") return "WhatsApp message failed";
     return "";
   }
+  if (eventType === "confirmation_message_status") {
+    if (status === "delivered") return "Payment confirmation delivered";
+    if (status === "read") return "Payment confirmation read";
+    if (status === "failed") return "Payment confirmation failed";
+    return "";
+  }
   if (eventType === "parent_plan_selected") return "Parent selected renewal plan";
   if (eventType === "payment_link_sent") return "Payment link sent";
   if (eventType === "payment_attempted") return "Parent tapped Pay Now";
@@ -3574,17 +3581,17 @@ const whatsappFlowTitle = (eventType = "", status = "") => {
 
 const shouldShowWhatsappFlowEvent = (row = {}) => {
   if (!importantWhatsappFlowEvents.has(row.event_type)) return false;
-  if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status") {
+  if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status" || row.event_type === "confirmation_message_status") {
     return ["delivered", "read", "failed"].includes(row.status);
   }
   return true;
 };
 
 const buildWhatsappFlowDetails = (row = {}) => {
-  if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status") {
+  if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status" || row.event_type === "confirmation_message_status") {
     return row.status === "failed"
       ? row.error_message || "Provider did not return a detailed reason."
-      : "";
+      : row.message_body || "";
   }
   return [
     row.payment_plan ? `Plan: ${row.payment_plan}` : "",
@@ -3691,7 +3698,7 @@ const loadPlayerTimeline = async (studentId) => {
 
   const { data: flowRows, error: flowError } = await supabaseClient
     .from("whatsapp_flow_events")
-    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
+    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
     .eq("student_id", studentId)
     .order("status_at", { ascending: false, nullsFirst: false })
     .limit(40);
@@ -3819,16 +3826,16 @@ const compactTimelineItem = (item) => {
   if (eventText.includes("read")) {
     return {
       ...item,
-      title: eventText.includes("whatsapp message") ? "WhatsApp message read" : "Reminder read",
-      details: "",
+      title: eventText.includes("payment confirmation") ? item.title : (eventText.includes("whatsapp message") ? "WhatsApp message read" : "Reminder read"),
+      details: item.details || "",
       changed_by: item.changed_by || "WhatsApp",
     };
   }
   if (eventText.includes("delivered")) {
     return {
       ...item,
-      title: eventText.includes("whatsapp message") ? "WhatsApp message delivered" : "Reminder delivered",
-      details: "",
+      title: eventText.includes("payment confirmation") ? item.title : (eventText.includes("whatsapp message") ? "WhatsApp message delivered" : "Reminder delivered"),
+      details: item.details || "",
       changed_by: item.changed_by || "WhatsApp",
     };
   }
