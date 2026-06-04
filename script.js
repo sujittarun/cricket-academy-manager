@@ -1,6 +1,7 @@
 const SUPABASE_CONFIG = window.GEN_ALPHA_SUPABASE_CONFIG ?? {};
 const PAYMENT_CONFIG = window.GEN_ALPHA_PAYMENT_CONFIG ?? {};
 const JERSEY_PAIR_REVENUE = 750;
+const MANUAL_FOLLOWUP_OVERDUE_DAYS = 15;
 
 const parseNonNegativeNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -632,10 +633,28 @@ const describeReminderRetry = (followUp = {}) => {
 const getPaymentFollowUpForKid = (kid) =>
   paymentFollowUps.find((followUp) => followUp.studentId === kid?.id) || null;
 
+const isManualFollowUpDue = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
+  if (!kid || !isActiveKid(kid)) return false;
+  if (isPaymentPendingFollowUp(followUp) || kid.paymentStatus === "pending_verification") return false;
+  const paymentDue = isFeesPending(kid) || isRenewalPending(kid);
+  if (!paymentDue) return false;
+  const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
+  const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
+  return followUp?.manualFollowupRequired === true || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS;
+};
+
 const getFeeDisplayState = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
   if (isPaymentPendingFollowUp(followUp) || kid?.paymentStatus === "pending_verification") {
     return { label: "Pending verification", className: "status-pending", followUp };
+  }
+  if (isManualFollowUpDue(kid, followUp)) {
+    return {
+      label: "Manual follow-up",
+      className: "status-manual",
+      followUp,
+      title: `15+ days overdue. Automatic reminders are paused; follow up directly with the parent.`,
+    };
   }
   if (isReminderRetryScheduledFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
     return { label: "Retry scheduled", className: "status-retry", followUp, title: describeReminderRetry(followUp) };
@@ -1054,8 +1073,10 @@ const getDueCycleDate = (kid) => {
 const getRenewalStatusLabel = (kid) => {
   if (kid.discontinued) return "Tracking paused";
   if (kid.paymentStatus === "pending_verification") return "Pending verification";
-  if (kid.feesPaid !== "yes") return "Join fee pending";
-  const daysPastDue = getDaysSinceDate(getPaidThroughDate(kid));
+  const isJoiningFee = kid.feesPaid !== "yes";
+  const daysPastDue = getDaysSinceDate(isJoiningFee ? kid.joinDate : getPaidThroughDate(kid));
+  if (daysPastDue >= MANUAL_FOLLOWUP_OVERDUE_DAYS) return "Manual follow-up";
+  if (isJoiningFee) return "Join fee pending";
   if (daysPastDue > 1) return `${daysPastDue} days overdue`;
   if (daysPastDue === 1) return "1 day overdue";
   if (daysPastDue === 0) return "Due today";
@@ -1083,6 +1104,7 @@ const getReminderState = (kid) => {
     dueDate,
     overdueDays,
     isCritical: overdueDays > 10,
+    requiresManualFollowUp: overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS && (isJoiningFee || isRenewalPending(kid)),
     reminderType: isJoiningFee ? "joining_fee" : "renewal",
   };
 };
@@ -4441,7 +4463,9 @@ const renderPlayerDetails = async (kid) => {
   playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `
     ${
-      reminderState.isCritical
+      reminderState.requiresManualFollowUp
+        ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Automatic WhatsApp reminders are paused; manual follow-up is required.</div>`
+        : reminderState.isCritical
         ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Follow up with parent today.</div>`
         : ""
     }

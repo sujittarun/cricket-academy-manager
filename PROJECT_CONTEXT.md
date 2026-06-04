@@ -123,7 +123,7 @@ Current fee constants:
 - Utility templates:
   - `utility_fee_headsup`: 2 days before renewal date.
   - `utility_renewal_day`: renewal due day.
-  - `utility_for_fee_reminder`: joining-fee due day, overdue day 5, and daily overdue day 7+.
+  - `utility_for_fee_reminder`: joining-fee due day, overdue day 5, and daily overdue day 7 through day 14.
   - `manager_payment_alert`: manager payment alert without proof.
   - `manager_payment_alert_with_proof`: manager payment alert with proof image header.
 - Language: `en`.
@@ -131,6 +131,7 @@ Current fee constants:
   - `{{1}}`: parent/player display name.
   - `{{2}}`: due date only, e.g. `5th May`.
 - Automatic fee reminders are enabled through the Supabase WhatsApp reminder scheduler; manual reminders can also be triggered from the app.
+- Overdue day 15+ stops automatic reminders and shows `Manual follow-up` in web/Android.
 - Reminder options: 1 Month, 3 Months, 6 Months, Need Help.
 - Razorpay is paused/not used.
 - Current non-gateway UPI flow must not auto-mark paid. Treat parent payment claims as pending verification until a manager confirms.

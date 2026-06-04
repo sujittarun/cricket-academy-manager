@@ -21,6 +21,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Documented that manager alert templates `manager_payment_alert` and `manager_payment_alert_with_proof` remain unchanged because they are already utility templates.
 - Corrected the reminder notes to reflect the active automatic Supabase scheduler plus manual reminder actions.
 
+### Manual Follow-Up Cutoff
+
+- Browser roster fee chips and next-fee-due chips now show `Manual follow-up` once joining or renewal fees are 15+ days overdue.
+- The player profile banner explains that automatic WhatsApp reminders are paused after that cutoff.
+
 ## 2026-05-25
 
 ### Experimental Player Profile V2

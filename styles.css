@@ -1548,6 +1548,12 @@ body.popup-open {
   border: 1px solid rgba(15, 34, 64, 0.14);
 }
 
+.status-manual {
+  background: rgba(15, 34, 64, 0.06);
+  color: #9a5b00;
+  border: 1px solid rgba(15, 34, 64, 0.14);
+}
+
 .alert-pill {
   background: #fffbeb;
   color: #92400e;
