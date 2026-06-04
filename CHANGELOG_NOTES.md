@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-05-25
+Last updated: 2026-06-04
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,14 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-06-04
+
+### WhatsApp Utility Template Context
+
+- Updated project context to use `utility_fee_headsup`, `utility_renewal_day`, and `utility_for_fee_reminder` for parent fee reminder templates.
+- Documented that manager alert templates `manager_payment_alert` and `manager_payment_alert_with_proof` remain unchanged because they are already utility templates.
+- Corrected the reminder notes to reflect the active automatic Supabase scheduler plus manual reminder actions.
 
 ## 2026-05-25
 

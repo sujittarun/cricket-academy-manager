@@ -120,12 +120,17 @@ Current fee constants:
 ## WhatsApp Reminders and UPI
 
 - Provider: Meta WhatsApp Cloud API direct.
-- Template: `gen_alpha_fee_reminder`.
+- Utility templates:
+  - `utility_fee_headsup`: 2 days before renewal date.
+  - `utility_renewal_day`: renewal due day.
+  - `utility_for_fee_reminder`: joining-fee due day, overdue day 5, and daily overdue day 7+.
+  - `manager_payment_alert`: manager payment alert without proof.
+  - `manager_payment_alert_with_proof`: manager payment alert with proof image header.
 - Language: `en`.
-- Template has exactly 2 body variables:
+- Parent fee reminder templates have exactly 2 body variables:
   - `{{1}}`: parent/player display name.
   - `{{2}}`: due date only, e.g. `5th May`.
-- Manual reminders only for now. Do not enable automatic reminder schedule until user asks.
+- Automatic fee reminders are enabled through the Supabase WhatsApp reminder scheduler; manual reminders can also be triggered from the app.
 - Reminder options: 1 Month, 3 Months, 6 Months, Need Help.
 - Razorpay is paused/not used.
 - Current non-gateway UPI flow must not auto-mark paid. Treat parent payment claims as pending verification until a manager confirms.
