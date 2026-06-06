@@ -26,6 +26,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Browser roster fee chips and next-fee-due chips now show `Manual follow-up` once joining or renewal fees are 15+ days overdue.
 - The player profile banner explains that automatic WhatsApp reminders are paused after that cutoff.
 
+### WhatsApp Timeline Message Bodies
+
+- Player timelines now show stored reminder template message text for `Fee reminder prepared` rows when available.
+- This pairs with the Supabase function change that records rendered parent-facing template message bodies in `whatsapp_flow_events.message_body`.
+
 ## 2026-05-25
 
 ### Experimental Player Profile V2

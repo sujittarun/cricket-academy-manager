@@ -3643,6 +3643,9 @@ const shouldShowWhatsappFlowEvent = (row = {}) => {
 };
 
 const buildWhatsappFlowDetails = (row = {}) => {
+  if (row.event_type === "reminder_created") {
+    return row.message_body || "";
+  }
   if (row.event_type === "reminder_message_status" || row.event_type === "whatsapp_message_status" || row.event_type === "confirmation_message_status") {
     return row.status === "failed"
       ? row.error_message || "Provider did not return a detailed reason."
