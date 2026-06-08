@@ -31,6 +31,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Player timelines now show stored reminder template message text for `Fee reminder prepared` rows when available.
 - This pairs with the Supabase function change that records rendered parent-facing template message bodies in `whatsapp_flow_events.message_body`.
 
+### Early Renewal Payments
+
+- Browser roster actions now show `Renew Payment` for any active paid player, even before the next due date.
+- The renewal popup keeps the cycle anchored to the next due date, so early payment extends the correct future cycle.
+
 ## 2026-05-25
 
 ### Experimental Player Profile V2

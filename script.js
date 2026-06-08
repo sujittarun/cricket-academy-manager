@@ -3147,7 +3147,7 @@ const renderKids = () => {
     const renewalPending = isRenewalPending(kid);
     const feesPending = isFeesPending(kid);
     const needsAttention = feesPending || renewalPending;
-    const canRenew = renewalPending && isActiveKid(kid);
+    const canRenew = !feesPending && kid.feesPaid === "yes" && isActiveKid(kid);
     const canRecordJoiningFee = feesPending && isActiveKid(kid);
     const studentType = getStudentType(kid);
     const latestRenewalRecord = getStudentPayments(kid)
@@ -4577,7 +4577,7 @@ const openRenewalPopup = (kid, mode = "renewal") => {
   renewalComment.value = "";
   renewalCycleInfo.textContent = isJoiningFee
     ? `This records the first fee from join date ${formatDate(cycleDate)} and saves the coaching/admission/jersey split on the player profile.`
-    : `This records payment for cycle starting ${formatDate(cycleDate)}. Paid late does not change the student's usual fee date.`;
+    : `This records payment for cycle starting ${formatDate(cycleDate)}. Early or late payment does not change the student's usual fee date.`;
   renewalMessage.textContent = "";
   if (renewalSaveButton) renewalSaveButton.textContent = isJoiningFee ? "Save joining payment" : "Save renewal payment";
   renewalPopup.hidden = false;
@@ -5699,8 +5699,8 @@ kidsTableBody.addEventListener("click", async (event) => {
       return;
     }
 
-    if (!isRenewalPending(kidToRenew)) {
-      formMessage.textContent = "This student is not due for renewal yet.";
+    if (!isActiveKid(kidToRenew) || kidToRenew.feesPaid !== "yes") {
+      formMessage.textContent = "Record the joining fee before renewal payment.";
       return;
     }
 
