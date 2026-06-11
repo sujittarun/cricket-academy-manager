@@ -13,6 +13,14 @@ Use this file when:
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
+## 2026-06-11
+
+### Non-Retryable Reminder Follow-Up
+
+- Manual follow-up tooltips now distinguish permanent WhatsApp delivery/template failures from the existing 15+ overdue cutoff instead of always describing the player as 15+ days overdue.
+- Updated reminder documentation to use the exact approved Meta heads-up template name `utlity_fee_headsup`; the previous spelling caused Meta error `132001`.
+- Bumped the browser script/service-worker cache version to ensure the updated reminder status wording is loaded instead of stale code.
+
 ## 2026-06-04
 
 ### WhatsApp Utility Template Context

@@ -121,7 +121,7 @@ Current fee constants:
 
 - Provider: Meta WhatsApp Cloud API direct.
 - Utility templates:
-  - `utility_fee_headsup`: 2 days before renewal date.
+  - `utlity_fee_headsup`: 2 days before renewal date. Keep this exact spelling because it matches the Meta template name.
   - `utility_renewal_day`: renewal due day.
   - `utility_for_fee_reminder`: joining-fee due day, overdue day 5, and daily overdue day 7 through day 14.
   - `manager_payment_alert`: manager payment alert without proof.

@@ -649,11 +649,15 @@ const getFeeDisplayState = (kid) => {
     return { label: "Pending verification", className: "status-pending", followUp };
   }
   if (isManualFollowUpDue(kid, followUp)) {
+    const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
+    const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
     return {
       label: "Manual follow-up",
       className: "status-manual",
       followUp,
-      title: `15+ days overdue. Automatic reminders are paused; follow up directly with the parent.`,
+      title: overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS
+        ? "15+ days overdue. Automatic reminders are paused; follow up directly with the parent."
+        : `${describeReminderFailure(followUp)} Automatic retry is not appropriate; follow up directly with the parent.`,
     };
   }
   if (isReminderRetryScheduledFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
