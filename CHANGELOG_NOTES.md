@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-06-04
+Last updated: 2026-06-14
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,15 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-06-14
+
+### Separate Fee Follow-Up And Due Labels
+
+- The Fees paid column keeps `Manual follow-up` for players whose automatic reminders have stopped.
+- The Next fee due column now continues to show the calendar status (`15 days overdue`, `Due today`, or days left) for both joining and renewal fees.
+- This is presentation-only: the 15-day reminder cutoff, manual-follow-up flag, retry behavior, payment state, and due-date calculations are unchanged.
+- Bumped browser assets to `v72` so the corrected roster label is not hidden by an older service-worker cache.
 
 ## 2026-06-11
 

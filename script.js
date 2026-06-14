@@ -1079,8 +1079,6 @@ const getRenewalStatusLabel = (kid) => {
   if (kid.paymentStatus === "pending_verification") return "Pending verification";
   const isJoiningFee = kid.feesPaid !== "yes";
   const daysPastDue = getDaysSinceDate(isJoiningFee ? kid.joinDate : getPaidThroughDate(kid));
-  if (daysPastDue >= MANUAL_FOLLOWUP_OVERDUE_DAYS) return "Manual follow-up";
-  if (isJoiningFee) return "Join fee pending";
   if (daysPastDue > 1) return `${daysPastDue} days overdue`;
   if (daysPastDue === 1) return "1 day overdue";
   if (daysPastDue === 0) return "Due today";
