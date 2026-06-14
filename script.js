@@ -48,6 +48,8 @@ const managerJerseyAmount = document.getElementById("managerJerseyAmount");
 const managerTotalAmount = document.getElementById("managerTotalAmount");
 const managerFeeSummary = document.getElementById("managerFeeSummary");
 const joinDateInput = document.getElementById("joinDate");
+const whatsappContactStatusField = document.getElementById("whatsappContactStatusField");
+const whatsappWrongNumber = document.getElementById("whatsappWrongNumber");
 const formMessage = document.getElementById("formMessage");
 const saveButton = document.getElementById("saveButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
@@ -569,6 +571,7 @@ const normalizePaymentFollowUp = (reminder = null, link = null) => ({
   lastRetryAt: reminder?.last_retry_at || "",
   retryReason: reminder?.retry_reason || "",
   manualFollowupRequired: reminder?.manual_followup_required === true,
+  manualFollowupReason: reminder?.manual_followup_reason || "",
   reminder,
   link,
 });
@@ -633,11 +636,29 @@ const describeReminderRetry = (followUp = {}) => {
 const getPaymentFollowUpForKid = (kid) =>
   paymentFollowUps.find((followUp) => followUp.studentId === kid?.id) || null;
 
+const hasBlockedWhatsappContact = (kid) =>
+  ["wrong_number", "opted_out"].includes(String(kid?.whatsappContactStatus || "active"));
+
+const getManualFollowUpReason = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
+  if (kid?.whatsappContactStatus === "wrong_number") return "Wrong phone number";
+  if (kid?.whatsappContactStatus === "opted_out") return "WhatsApp opted out";
+  const dueDate = isFeesPending(kid) ? kid?.joinDate : getPaidThroughDate(kid);
+  const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
+  if (followUp?.manualFollowupReason === "overdue_15_days" || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS) {
+    return "15+ days overdue";
+  }
+  if (followUp?.manualFollowupReason === "retry_exhausted") return "Retry limit reached";
+  if (followUp?.manualFollowupReason === "missing_phone") return "Phone number missing";
+  if (followUp?.manualFollowupReason === "delivery_failure") return "WhatsApp delivery failed";
+  return followUp?.manualFollowupRequired ? "Delivery needs staff review" : "";
+};
+
 const isManualFollowUpDue = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
   if (!kid || !isActiveKid(kid)) return false;
   if (isPaymentPendingFollowUp(followUp) || kid.paymentStatus === "pending_verification") return false;
   const paymentDue = isFeesPending(kid) || isRenewalPending(kid);
   if (!paymentDue) return false;
+  if (hasBlockedWhatsappContact(kid)) return true;
   const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
   const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
   return followUp?.manualFollowupRequired === true || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS;
@@ -651,13 +672,17 @@ const getFeeDisplayState = (kid) => {
   if (isManualFollowUpDue(kid, followUp)) {
     const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
     const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
+    const reasonLabel = getManualFollowUpReason(kid, followUp);
     return {
       label: "Manual follow-up",
       className: "status-manual",
       followUp,
-      title: overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS
-        ? "15+ days overdue. Automatic reminders are paused; follow up directly with the parent."
-        : `${describeReminderFailure(followUp)} Automatic retry is not appropriate; follow up directly with the parent.`,
+      reasonLabel,
+      title: hasBlockedWhatsappContact(kid)
+        ? `${reasonLabel}. Automatic WhatsApp reminders and retries are paused until the contact is corrected.`
+        : overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS
+          ? "15+ days overdue. Automatic reminders are paused; follow up directly with the parent."
+          : `${describeReminderFailure(followUp)} Automatic retry is not appropriate; follow up directly with the parent.`,
     };
   }
   if (isReminderRetryScheduledFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
@@ -732,6 +757,7 @@ const normalizeKid = (kid) => {
     filledBy: kid.filled_by || "",
     fatherGuardianName: kid.father_guardian_name || "",
     parentContactNo: kid.parent_contact_no || "",
+    whatsappContactStatus: kid.whatsapp_contact_status || "active",
     alternateContactNo: kid.alternate_contact_no || "",
     schoolCollege: kid.school_college || "",
     grade: kid.grade || "",
@@ -794,6 +820,7 @@ const toDatabasePayload = ({
   discontinued,
   fatherGuardianName = "",
   parentContactNo = "",
+  whatsappContactStatus = "active",
   alternateContactNo = "",
   schoolCollege = "",
   grade = "",
@@ -831,6 +858,7 @@ const toDatabasePayload = ({
     Object.assign(databasePayload, {
       father_guardian_name: fatherGuardianName,
       parent_contact_no: parentContactNo,
+      whatsapp_contact_status: whatsappContactStatus,
       alternate_contact_no: alternateContactNo,
       school_college: schoolCollege,
       grade,
@@ -845,7 +873,7 @@ const isMissingStudentProfileColumnError = (error) => {
   const message = String(error?.message || "").toLowerCase();
   return (
     message.includes("schema cache") &&
-    ["father_guardian_name", "parent_contact_no", "alternate_contact_no", "school_college", "grade", "address"]
+    ["father_guardian_name", "parent_contact_no", "alternate_contact_no", "school_college", "grade", "address", "whatsapp_contact_status"]
       .some((column) => message.includes(column))
   );
 };
@@ -872,7 +900,7 @@ const isMissingReminderTrackingColumnError = (error) => {
   const message = String(error?.message || "").toLowerCase();
   return (
     message.includes("schema cache") &&
-    ["meta_error", "failed_at", "delivered_at", "read_at", "retry_count", "max_retry_count", "next_retry_at", "last_retry_at", "retry_reason", "manual_followup_required"].some((column) => message.includes(column))
+    ["meta_error", "failed_at", "delivered_at", "read_at", "retry_count", "max_retry_count", "next_retry_at", "last_retry_at", "retry_reason", "manual_followup_required", "manual_followup_reason"].some((column) => message.includes(column))
   );
 };
 
@@ -1106,7 +1134,7 @@ const getReminderState = (kid) => {
     dueDate,
     overdueDays,
     isCritical: overdueDays > 10,
-    requiresManualFollowUp: overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS && (isJoiningFee || isRenewalPending(kid)),
+    requiresManualFollowUp: (hasBlockedWhatsappContact(kid) || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS) && (isJoiningFee || isRenewalPending(kid)),
     reminderType: isJoiningFee ? "joining_fee" : "renewal",
   };
 };
@@ -2569,6 +2597,8 @@ const syncAdmissionStyleState = () => {
 const resetFormState = () => {
   editingKidId = null;
   kidForm.reset();
+  if (whatsappContactStatusField) whatsappContactStatusField.hidden = true;
+  if (whatsappWrongNumber) whatsappWrongNumber.checked = false;
   saveButton.disabled = false;
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
@@ -3160,6 +3190,9 @@ const renderKids = () => {
     const latestRenewal = maxIsoDate(latestRenewalFromTable, latestRenewalFromArray);
     const renewalStatus = getRenewalStatusLabel(kid);
     const feeDisplay = getFeeDisplayState(kid);
+    const feeReasonMarkup = feeDisplay.reasonLabel
+      ? `<small class="manual-followup-reason">${escapeHtml(feeDisplay.reasonLabel)}</small>`
+      : "";
     const reminderState = getReminderState(kid);
     const feeDueIsSafe = !feesPending && !renewalPending;
     const shouldPulseDuePill = reminderState.overdueDays >= 7;
@@ -3206,7 +3239,10 @@ const renderKids = () => {
                 <div class="mobile-card-name" title="${safeKidName}">${safeKidName}</div>
                 <span class="state-pill ${kid.discontinued ? "discontinued" : "active"}">${kid.discontinued ? "Discontinued" : "Active"}</span>
                 <span class="slot-pill">${kid.timeSlot || "Not set"}</span>
-                <span class="status-pill ${feeDisplay.className}" title="${escapeHtml(feeDisplay.title || feeDisplay.label)}">${feeDisplay.label}</span>
+                <span class="mobile-fee-state">
+                  <span class="status-pill ${feeDisplay.className}" title="${escapeHtml(feeDisplay.title || feeDisplay.label)}">${feeDisplay.label}</span>
+                  ${feeReasonMarkup}
+                </span>
                 <span class="alert-pill ${feeDueIsSafe ? "safe" : ""} ${shouldPulseDuePill ? "critical-pulse" : ""}">${renewalStatus}</span>
                 ${mobileRenewButton}
                 ${mobileJerseyEditor}
@@ -3216,7 +3252,7 @@ const renderKids = () => {
                 <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
                 <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
                 ${canRecordJoiningFee ? `<button class="menu-item renew-item" data-action="joining-payment-open" data-id="${kid.id}" type="button">Record Joining Fee</button>` : ""}
-                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">Send Reminder</button>
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button" ${hasBlockedWhatsappContact(kid) ? 'disabled title="Correct the parent phone number before sending reminders."' : ""}>${hasBlockedWhatsappContact(kid) ? "Fix Phone First" : "Send Reminder"}</button>
                 <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
               </div>
             </div>
@@ -3254,8 +3290,11 @@ const renderKids = () => {
       <td data-label="Join date">${formatDate(kid.joinDate)}</td>
       <td data-label="Latest renewal">${latestRenewal ? formatDate(latestRenewal) : "<span class=\"sub-copy\">Not renewed</span>"}</td>
       <td data-label="Fees paid">
-        <span class="status-pill ${feeDisplay.className}" title="${escapeHtml(feeDisplay.title || feeDisplay.label)}">
-          ${feeDisplay.label}
+        <span class="fee-status-stack">
+          <span class="status-pill ${feeDisplay.className}" title="${escapeHtml(feeDisplay.title || feeDisplay.label)}">
+            ${feeDisplay.label}
+          </span>
+          ${feeReasonMarkup}
         </span>
       </td>
       <td data-label="Amount paid">Rs ${Number(lastPaymentAmount).toFixed(2)}</td>
@@ -3296,9 +3335,9 @@ const renderKids = () => {
                       </button>`
                     : ""
                 }
-                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button">
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button" ${hasBlockedWhatsappContact(kid) ? 'disabled title="Correct the parent phone number before sending reminders."' : ""}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                  Send Reminder
+                  ${hasBlockedWhatsappContact(kid) ? "Fix Phone First" : "Send Reminder"}
                 </button>
                 <div class="menu-divider"></div>
                 <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">
@@ -3432,7 +3471,7 @@ const loadPaymentFollowUps = async () => {
   }
 
   const reminderSelect =
-    "id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response,meta_error,failed_at,delivered_at,read_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required";
+    "id,student_id,reminder_type,status,due_date,selected_plan,amount,payment_link_url,created_at,meta_response,meta_error,failed_at,delivered_at,read_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required,manual_followup_reason";
   const [reminderResult, linkResult] = await Promise.all([
     supabaseClient
       .from("reminder_events")
@@ -3732,7 +3771,7 @@ const loadPlayerTimeline = async (studentId) => {
   let reminderStatusEvents = [];
   let reminderResult = await supabaseClient
     .from("reminder_events")
-    .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required")
+    .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required,manual_followup_reason")
     .eq("student_id", studentId)
     .in("status", [...REMINDER_FAILED_STATUSES])
     .order("created_at", { ascending: false })
@@ -4299,6 +4338,12 @@ const sendReminderDryRun = async (kid) => {
   if (!isBackendReady || !isManagerLoggedIn) {
     return { success: false, message: "Login as manager before logging reminders." };
   }
+  if (hasBlockedWhatsappContact(kid)) {
+    return {
+      success: false,
+      message: `${getManualFollowUpReason(kid)}. Update the player contact before sending another reminder.`,
+    };
+  }
   const reminderState = getReminderState(kid);
   if (!reminderState.isDue) {
     return { success: false, message: `${kid.name} is not due for a fee reminder.` };
@@ -4469,7 +4514,7 @@ const renderPlayerDetails = async (kid) => {
   playerDetailContent.innerHTML = `
     ${
       reminderState.requiresManualFollowUp
-        ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Automatic WhatsApp reminders are paused; manual follow-up is required.</div>`
+        ? `<div class="critical-reminder-banner">${escapeHtml(feeDisplay.reasonLabel || `Overdue for ${reminderState.overdueDays} days`)}. Automatic WhatsApp reminders are paused; manual follow-up is required.</div>`
         : reminderState.isCritical
         ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Follow up with parent today.</div>`
         : ""
@@ -5390,6 +5435,7 @@ kidForm.addEventListener("submit", async (event) => {
     discontinued: false,
     fatherGuardianName: String(formData.get("fatherGuardianName") || "").trim(),
     parentContactNo: String(formData.get("parentContactNo") || "").replace(/\D/g, "").slice(0, 10),
+    whatsappContactStatus: wasEditing && whatsappWrongNumber?.checked ? "wrong_number" : "active",
     alternateContactNo: "",
     schoolCollege: String(formData.get("schoolCollege") || "").trim(),
     grade: String(formData.get("grade") || "").trim(),
@@ -5638,6 +5684,8 @@ kidsTableBody.addEventListener("click", async (event) => {
     document.getElementById("age").value = String(kidToEdit.age);
     document.getElementById("fatherGuardianName").value = kidToEdit.fatherGuardianName || "";
     document.getElementById("parentContactNo").value = kidToEdit.parentContactNo || "";
+    if (whatsappContactStatusField) whatsappContactStatusField.hidden = false;
+    if (whatsappWrongNumber) whatsappWrongNumber.checked = kidToEdit.whatsappContactStatus === "wrong_number";
     document.getElementById("schoolCollege").value = kidToEdit.schoolCollege || "";
     document.getElementById("grade").value = kidToEdit.grade || "";
     document.getElementById("address").value = kidToEdit.address || "";

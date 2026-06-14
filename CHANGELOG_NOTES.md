@@ -22,6 +22,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - This is presentation-only: the 15-day reminder cutoff, manual-follow-up flag, retry behavior, payment state, and due-date calculations are unchanged.
 - Bumped browser assets to `v72` so the corrected roster label is not hidden by an older service-worker cache.
 
+### Wrong WhatsApp Number Follow-Up
+
+- Player edit mode now includes a `Wrong phone number` switch for the saved WhatsApp contact.
+- Wrong-number players remain in `Manual follow-up`, with `Wrong phone number` shown beneath the fee-status pill while Next fee due continues showing its day count.
+- Reminder actions are disabled until the number is corrected; the shared Edge Function and database trigger also block automatic sends and queued retries.
+- Bumped browser script, styles, and service-worker cache to `v73`.
+
 ## 2026-06-11
 
 ### Non-Retryable Reminder Follow-Up

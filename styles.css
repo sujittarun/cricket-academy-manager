@@ -1554,6 +1554,73 @@ body.popup-open {
   border: 1px solid rgba(15, 34, 64, 0.14);
 }
 
+.fee-status-stack,
+.mobile-fee-state {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.manual-followup-reason {
+  color: #8a4b08;
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.whatsapp-contact-status-field {
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px !important;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 34, 64, 0.13);
+  border-radius: 10px;
+  background: rgba(15, 34, 64, 0.035);
+}
+
+.whatsapp-contact-status-field > span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.whatsapp-contact-status-field small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.whatsapp-contact-status-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: #9a3412;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+#formPanel .whatsapp-contact-status-switch input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: #c2410c;
+}
+
+@media (max-width: 720px) {
+  .whatsapp-contact-status-field {
+    flex-direction: column !important;
+    align-items: stretch;
+  }
+
+  .whatsapp-contact-status-switch {
+    justify-content: space-between;
+  }
+}
+
 .alert-pill {
   background: #fffbeb;
   color: #92400e;
@@ -9321,8 +9388,13 @@ body.popup-open {
   }
 
   #rosterView .mobile-edit-card-front .status-pill {
+    grid-area: unset;
+  }
+
+  #rosterView .mobile-edit-card-front .mobile-fee-state {
     grid-area: fee;
     justify-self: start;
+    min-width: 0;
   }
 
   #rosterView .mobile-edit-card-front .alert-pill {
