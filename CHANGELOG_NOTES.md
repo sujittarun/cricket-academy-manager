@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-06-15
 
+### Removed Experimental Player Profile V2
+
+- Removed the browser-only V2 player profile implementation and its `player-profile-v2/` assets.
+- Removed the Old/New UI switch, query/localStorage feature flags, V2 navigation bridge, render branch, and service-worker entries.
+- The existing player profile popup is now the only player-detail experience, including when an old `playerProfileV2=1` URL is opened.
+- Bumped browser assets and service-worker cache to `v76`.
+
 ### Contextual Wrong-Number Management
 
 - Removed the wrong-number checkbox from the standard Edit Player form.

@@ -262,7 +262,6 @@ const rosterStatusFilterInput = document.getElementById("rosterStatusFilter");
 const rosterJerseyFilterInput = document.getElementById("rosterJerseyFilter");
 const rosterTypeFilterInput = document.getElementById("rosterTypeFilter");
 const rosterFeeDueFilterInput = document.getElementById("rosterFeeDueFilter");
-const playerProfileLayoutToggle = document.getElementById("playerProfileLayoutToggle");
 
 // Payment verify
 const paymentVerifyFlow = document.getElementById("paymentVerifyFlow");
@@ -465,74 +464,6 @@ let latestAdmissionReceipt = null;
 let reminderSettings = { ...DEFAULT_REMINDER_SETTINGS };
 
 const getActiveManagerEmail = () => lastManagerEmail || "manager";
-
-const PLAYER_PROFILE_LAYOUT_FLAG_KEY = "genAlpha.playerProfileLayout";
-const isPlayerProfileV2Enabled = () => {
-  const params = new URLSearchParams(window.location.search);
-  const paramValue = params.get("playerProfileV2") || params.get("profileV2") || "";
-  const savedLayout = window.localStorage?.getItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY) || "";
-  if (savedLayout === "v2") return true;
-  if (["v1", "legacy"].includes(savedLayout)) return false;
-  if (["1", "true", "v2"].includes(paramValue.toLowerCase())) return true;
-  if (["0", "false", "legacy", "v1"].includes(paramValue.toLowerCase())) return false;
-  return (
-    window.GEN_ALPHA_FEATURE_FLAGS?.playerProfileLayout === "v2" ||
-    savedLayout === "v2"
-  );
-};
-
-const removePlayerProfileLayoutUrlFlag = () => {
-  const url = new URL(window.location.href);
-  let changed = false;
-  ["playerProfileV2", "profileV2", "playerProfileV2Mock"].forEach((key) => {
-    if (url.searchParams.has(key)) {
-      url.searchParams.delete(key);
-      changed = true;
-    }
-  });
-  if (changed) {
-    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  }
-};
-
-const syncPlayerProfileLayoutControl = () => {
-  if (!playerProfileLayoutToggle) return;
-  const layout = isPlayerProfileV2Enabled() ? "v2" : "v1";
-  playerProfileLayoutToggle.dataset.layout = layout;
-  playerProfileLayoutToggle.setAttribute("aria-checked", layout === "v2" ? "true" : "false");
-  playerProfileLayoutToggle.classList.toggle("is-new", layout === "v2");
-  playerProfileLayoutToggle.title = layout === "v2" ? "New player profile UI is active" : "Old player profile UI is active";
-};
-
-const setPlayerProfileLayout = (layout) => {
-  const nextLayout = layout === "v2" ? "v2" : "v1";
-  window.localStorage?.setItem(PLAYER_PROFILE_LAYOUT_FLAG_KEY, nextLayout);
-  removePlayerProfileLayoutUrlFlag();
-  syncPlayerProfileLayoutControl();
-  if (nextLayout === "v1") {
-    window.GenAlphaPlayerProfileV2?.close?.();
-  }
-  showToast(nextLayout === "v2" ? "New player profile UI enabled." : "Old player profile UI enabled.");
-};
-
-const navigateFromPlayerProfile = (view) => {
-  const nextView = ["roster", "attendance", "finance", "admission"].includes(view) ? view : "roster";
-  switchView(nextView);
-};
-
-window.GenAlphaAppNavigation = {
-  switchView: navigateFromPlayerProfile,
-};
-
-window.GenAlphaPlayerProfileFlags = {
-  enableV2() {
-    setPlayerProfileLayout("v2");
-  },
-  disableV2() {
-    setPlayerProfileLayout("v1");
-  },
-  isV2Enabled: isPlayerProfileV2Enabled,
-};
 
 const derivePaymentStatus = ({ feesPaid, amountPaid = 0, paymentReference = "", paymentStatus = "" }) => {
   if (feesPaid === true || feesPaid === "yes" || paymentStatus === "paid") return "paid";
@@ -4441,18 +4372,6 @@ const sendReminderDryRun = async (kid) => {
   };
 };
 
-const runRosterActionFromProfile = (action, id) => {
-  if (!action || !id || !kidsTableBody) return;
-  const actionButton = document.createElement("button");
-  actionButton.type = "button";
-  actionButton.hidden = true;
-  actionButton.dataset.action = action;
-  actionButton.dataset.id = id;
-  kidsTableBody.appendChild(actionButton);
-  actionButton.click();
-  window.setTimeout(() => actionButton.remove(), 5000);
-};
-
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
   const timeline = compactPlayerTimeline(await loadPlayerTimeline(kid.id));
@@ -4468,45 +4387,6 @@ const renderPlayerDetails = async (kid) => {
   const pendingAmount = Number(pendingPaymentFollowUp?.amount || pendingPlan.amount || 0);
   const pendingCycleDate = pendingPaymentFollowUp?.cycleStartDate || getDueCycleDate(kid);
   const pendingToDate = addMonthsIso(pendingCycleDate, Number(pendingPaymentFollowUp?.monthsCovered || pendingPlan.months || 1));
-
-  if (isPlayerProfileV2Enabled() && window.GenAlphaPlayerProfileV2?.open) {
-    const opened = window.GenAlphaPlayerProfileV2.open({
-      kid,
-      timeline,
-      paymentRows,
-      attendanceSummary,
-      totalPaid,
-      totalMonths,
-      feeDisplay,
-      reminderState,
-      pendingPayment: pendingPaymentFollowUp
-        ? {
-            planTitle: pendingPlan.title,
-            amount: pendingAmount,
-            cycleDate: pendingCycleDate,
-            toDate: pendingToDate,
-          }
-        : null,
-      isManagerLoggedIn,
-      isEditMode,
-      isActive: isActiveKid(kid),
-      isFeesPending: isFeesPending(kid),
-      isRenewalPending: isRenewalPending(kid),
-      labels: {
-        trainingDuration: getTrainingDuration(kid),
-        renewalStatus: getRenewalStatusLabel(kid),
-        paidThrough: kid.discontinued ? "Paused" : formatDate(getPaidThroughDate(kid)),
-        studentType: getStudentType(kid),
-        feeStatus: feeDisplay.label,
-        jersey: formatJerseyDetails(kid),
-      },
-      actions: {
-        run: (action) => runRosterActionFromProfile(action, kid.id),
-        navigate: navigateFromPlayerProfile,
-      },
-    });
-    if (opened) return;
-  }
 
   playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `
@@ -6228,9 +6108,6 @@ rosterFeeDueFilterInput?.addEventListener("change", (event) => {
   rosterFeeDueFilter = event.target.value || "all";
   renderKids();
 });
-playerProfileLayoutToggle?.addEventListener("click", () => {
-  setPlayerProfileLayout(playerProfileLayoutToggle.dataset.layout === "v2" ? "v1" : "v2");
-});
 const deletePayment = async (paymentId, kidId) => {
   if (!confirm("Are you sure you want to delete this payment record? This will roll back the student's renewal date and total amount paid.")) return;
   
@@ -7192,8 +7069,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (financeExportMonth) financeExportMonth.value = currentMonthKey();
   admissionPaymentIntentId = buildPaymentIntentId();
   if (rosterStatusFilterInput) rosterStatusFilterInput.value = rosterStatusFilter;
-  syncPlayerProfileLayoutControl();
-  
   // 3. UI States
   syncAdmissionAmountState();
   syncAdmissionStyleState();
