@@ -18,10 +18,9 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 ### Contextual Wrong-Number Management
 
 - Removed the wrong-number checkbox from the standard Edit Player form.
-- Added `Mark phone incorrect` / `Phone number corrected` to the player Actions menu with confirmation.
-- Only flagged players see a compact correction note; saving a different valid 10-digit number automatically resumes future reminders.
-- Reworded the disabled reminder action from `Fix Phone First` to the calmer `Reminders paused`.
-- Bumped browser assets and service-worker cache to `v74`.
+- Removed wrong-number actions and disabled reminder labels from player action menus.
+- Only flagged players see a compact correction note in Edit Player; saving a different valid 10-digit number automatically resumes future reminders and shows a confirmation.
+- Bumped browser assets and service-worker cache to `v75`.
 
 ## 2026-06-14
 
