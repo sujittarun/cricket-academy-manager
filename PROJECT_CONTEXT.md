@@ -132,6 +132,7 @@ Current fee constants:
   - `{{2}}`: due date only, e.g. `5th May`.
 - Automatic fee reminders are enabled through the Supabase WhatsApp reminder scheduler; manual reminders can also be triggered from the app.
 - `students.whatsapp_contact_status` is the durable parent-contact gate. `wrong_number` and `opted_out` block automatic reminders, manual sends, queued retries, and payment confirmation WhatsApp until staff reactivate the contact.
+- Manage wrong numbers from the player Actions menu. Do not show a standard wrong-number checkbox for every Edit Player form; only flagged players get a compact correction note beside the phone field.
 - `reminder_events.manual_followup_reason` explains manual follow-up (`wrong_phone_number`, `whatsapp_opted_out`, `overdue_15_days`, `retry_exhausted`, `delivery_failure`, or `missing_phone`). Keep this reason visible while Next fee due continues showing its independent day count.
 - Overdue day 15+ stops automatic reminders and shows `Manual follow-up` in web/Android.
 - Reminder options: 1 Month, 3 Months, 6 Months, Need Help.

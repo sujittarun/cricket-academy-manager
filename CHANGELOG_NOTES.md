@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-06-14
+Last updated: 2026-06-15
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,16 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-06-15
+
+### Contextual Wrong-Number Management
+
+- Removed the wrong-number checkbox from the standard Edit Player form.
+- Added `Mark phone incorrect` / `Phone number corrected` to the player Actions menu with confirmation.
+- Only flagged players see a compact correction note; saving a different valid 10-digit number automatically resumes future reminders.
+- Reworded the disabled reminder action from `Fix Phone First` to the calmer `Reminders paused`.
+- Bumped browser assets and service-worker cache to `v74`.
 
 ## 2026-06-14
 

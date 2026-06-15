@@ -1570,55 +1570,30 @@ body.popup-open {
   white-space: normal;
 }
 
-.whatsapp-contact-status-field {
-  flex-direction: row !important;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px !important;
-  padding: 10px 12px;
-  border: 1px solid rgba(15, 34, 64, 0.13);
-  border-radius: 10px;
-  background: rgba(15, 34, 64, 0.035);
-}
-
-.whatsapp-contact-status-field > span:first-child {
+.whatsapp-contact-warning {
   display: grid;
-  gap: 2px;
+  gap: 3px;
+  padding: 10px 12px;
+  border-left: 3px solid #d97706;
+  border-radius: 6px;
+  background: rgba(217, 119, 6, 0.07);
+  color: #7c2d12;
 }
 
-.whatsapp-contact-status-field small {
+.whatsapp-contact-warning[hidden] {
+  display: none;
+}
+
+.whatsapp-contact-warning strong {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.whatsapp-contact-warning small {
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 600;
-}
-
-.whatsapp-contact-status-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-  color: #9a3412;
-  font-size: 0.76rem;
-  font-weight: 850;
-}
-
-#formPanel .whatsapp-contact-status-switch input {
-  width: 18px;
-  min-height: 18px;
-  margin: 0;
-  padding: 0;
-  accent-color: #c2410c;
-}
-
-@media (max-width: 720px) {
-  .whatsapp-contact-status-field {
-    flex-direction: column !important;
-    align-items: stretch;
-  }
-
-  .whatsapp-contact-status-switch {
-    justify-content: space-between;
-  }
+  line-height: 1.35;
 }
 
 .alert-pill {

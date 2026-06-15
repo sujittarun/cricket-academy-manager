@@ -49,7 +49,6 @@ const managerTotalAmount = document.getElementById("managerTotalAmount");
 const managerFeeSummary = document.getElementById("managerFeeSummary");
 const joinDateInput = document.getElementById("joinDate");
 const whatsappContactStatusField = document.getElementById("whatsappContactStatusField");
-const whatsappWrongNumber = document.getElementById("whatsappWrongNumber");
 const formMessage = document.getElementById("formMessage");
 const saveButton = document.getElementById("saveButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
@@ -638,6 +637,12 @@ const getPaymentFollowUpForKid = (kid) =>
 
 const hasBlockedWhatsappContact = (kid) =>
   ["wrong_number", "opted_out"].includes(String(kid?.whatsappContactStatus || "active"));
+
+const getWhatsappContactActionLabel = (kid) => {
+  if (kid?.whatsappContactStatus === "wrong_number") return "Phone number corrected";
+  if (kid?.whatsappContactStatus === "opted_out") return "WhatsApp opted out";
+  return "Mark phone incorrect";
+};
 
 const getManualFollowUpReason = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
   if (kid?.whatsappContactStatus === "wrong_number") return "Wrong phone number";
@@ -2598,7 +2603,6 @@ const resetFormState = () => {
   editingKidId = null;
   kidForm.reset();
   if (whatsappContactStatusField) whatsappContactStatusField.hidden = true;
-  if (whatsappWrongNumber) whatsappWrongNumber.checked = false;
   saveButton.disabled = false;
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
@@ -3252,7 +3256,8 @@ const renderKids = () => {
                 <button class="menu-item edit-item" data-action="edit" data-id="${kid.id}" type="button">Edit Details</button>
                 <button class="menu-item status-item" data-action="toggle-status" data-id="${kid.id}" type="button">${kid.discontinued ? "Mark Active" : "Discontinue"}</button>
                 ${canRecordJoiningFee ? `<button class="menu-item renew-item" data-action="joining-payment-open" data-id="${kid.id}" type="button">Record Joining Fee</button>` : ""}
-                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button" ${hasBlockedWhatsappContact(kid) ? 'disabled title="Correct the parent phone number before sending reminders."' : ""}>${hasBlockedWhatsappContact(kid) ? "Fix Phone First" : "Send Reminder"}</button>
+                <button class="menu-item phone-status-item" data-action="toggle-whatsapp-contact" data-id="${kid.id}" type="button" ${kid.whatsappContactStatus === "opted_out" ? "disabled" : ""}>${getWhatsappContactActionLabel(kid)}</button>
+                <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button" ${hasBlockedWhatsappContact(kid) ? 'disabled title="Correct the parent phone number before sending reminders."' : ""}>${hasBlockedWhatsappContact(kid) ? "Reminders paused" : "Send Reminder"}</button>
                 <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">Delete Record</button>
               </div>
             </div>
@@ -3337,7 +3342,11 @@ const renderKids = () => {
                 }
                 <button class="menu-item reminder-item" data-action="send-reminder" data-id="${kid.id}" type="button" ${hasBlockedWhatsappContact(kid) ? 'disabled title="Correct the parent phone number before sending reminders."' : ""}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                  ${hasBlockedWhatsappContact(kid) ? "Fix Phone First" : "Send Reminder"}
+                  ${hasBlockedWhatsappContact(kid) ? "Reminders paused" : "Send Reminder"}
+                </button>
+                <button class="menu-item phone-status-item" data-action="toggle-whatsapp-contact" data-id="${kid.id}" type="button" ${kid.whatsappContactStatus === "opted_out" ? "disabled" : ""}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.33 1.85.56 2.81.69A2 2 0 0 1 22 16.92z"/></svg>
+                  ${getWhatsappContactActionLabel(kid)}
                 </button>
                 <div class="menu-divider"></div>
                 <button class="menu-item delete-item" data-action="delete" data-id="${kid.id}" type="button">
@@ -5435,7 +5444,15 @@ kidForm.addEventListener("submit", async (event) => {
     discontinued: false,
     fatherGuardianName: String(formData.get("fatherGuardianName") || "").trim(),
     parentContactNo: String(formData.get("parentContactNo") || "").replace(/\D/g, "").slice(0, 10),
-    whatsappContactStatus: wasEditing && whatsappWrongNumber?.checked ? "wrong_number" : "active",
+    whatsappContactStatus: (() => {
+      if (!currentKid) return "active";
+      if (currentKid.whatsappContactStatus !== "wrong_number") {
+        return currentKid.whatsappContactStatus || "active";
+      }
+      const previousPhone = String(currentKid.parentContactNo || "").replace(/\D/g, "").slice(0, 10);
+      const nextPhone = String(formData.get("parentContactNo") || "").replace(/\D/g, "").slice(0, 10);
+      return nextPhone.length === 10 && nextPhone !== previousPhone ? "active" : "wrong_number";
+    })(),
     alternateContactNo: "",
     schoolCollege: String(formData.get("schoolCollege") || "").trim(),
     grade: String(formData.get("grade") || "").trim(),
@@ -5672,6 +5689,37 @@ kidsTableBody.addEventListener("click", async (event) => {
     return;
   }
 
+  if (action === "toggle-whatsapp-contact") {
+    const kidToUpdate = kids.find((kid) => kid.id === id);
+    if (!kidToUpdate || kidToUpdate.whatsappContactStatus === "opted_out") return;
+    const isCurrentlyWrong = kidToUpdate.whatsappContactStatus === "wrong_number";
+    const confirmed = window.confirm(
+      isCurrentlyWrong
+        ? `Mark ${kidToUpdate.name}'s phone number as corrected? Future WhatsApp reminders will resume on the normal schedule.`
+        : `Mark ${kidToUpdate.name}'s saved phone number as incorrect? WhatsApp reminders and retries will stop.`
+    );
+    if (!confirmed) return;
+
+    target.disabled = true;
+    const { error } = await supabaseClient
+      .from("students")
+      .update({
+        whatsapp_contact_status: isCurrentlyWrong ? "active" : "wrong_number",
+        updated_by: getActiveManagerEmail(),
+      })
+      .eq("id", kidToUpdate.id);
+
+    if (error) {
+      target.disabled = false;
+      showToast(error.message || "Unable to update the WhatsApp number status.");
+      return;
+    }
+
+    await Promise.all([loadKids(), loadPaymentFollowUps()]);
+    showToast(isCurrentlyWrong ? "Phone number marked corrected." : "Phone number marked incorrect. Reminders paused.");
+    return;
+  }
+
   if (action === "edit") {
     const kidToEdit = kids.find((kid) => kid.id === id);
 
@@ -5684,8 +5732,9 @@ kidsTableBody.addEventListener("click", async (event) => {
     document.getElementById("age").value = String(kidToEdit.age);
     document.getElementById("fatherGuardianName").value = kidToEdit.fatherGuardianName || "";
     document.getElementById("parentContactNo").value = kidToEdit.parentContactNo || "";
-    if (whatsappContactStatusField) whatsappContactStatusField.hidden = false;
-    if (whatsappWrongNumber) whatsappWrongNumber.checked = kidToEdit.whatsappContactStatus === "wrong_number";
+    if (whatsappContactStatusField) {
+      whatsappContactStatusField.hidden = kidToEdit.whatsappContactStatus !== "wrong_number";
+    }
     document.getElementById("schoolCollege").value = kidToEdit.schoolCollege || "";
     document.getElementById("grade").value = kidToEdit.grade || "";
     document.getElementById("address").value = kidToEdit.address || "";
