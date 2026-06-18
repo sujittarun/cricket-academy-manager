@@ -1686,7 +1686,8 @@ const printReceipt = () => {
 };
 
 const getTrainingDuration = (kid) => {
-  const days = Math.max(getDaysSinceDate(kid.joinDate), 0);
+  const pauseDays = getFeePauseDays(kid) + (kid.discontinued ? getCurrentPauseDays(kid) : 0);
+  const days = Math.max(getDaysSinceDate(kid.joinDate) - pauseDays, 0);
   const months = Math.floor(days / 30);
   const remainingDays = days % 30;
   if (months <= 0) return `${days} day${days === 1 ? "" : "s"}`;
@@ -1694,7 +1695,8 @@ const getTrainingDuration = (kid) => {
 };
 
 const getTenureBadge = (kid) => {
-  const days = Math.max(getDaysSinceDate(kid.joinDate), 0);
+  const pauseDays = getFeePauseDays(kid) + (kid.discontinued ? getCurrentPauseDays(kid) : 0);
+  const days = Math.max(getDaysSinceDate(kid.joinDate) - pauseDays, 0);
   const months = Math.floor(days / 30);
   if (months <= 0) return `${days}d`;
   return `${months}m`;
