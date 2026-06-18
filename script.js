@@ -1006,8 +1006,10 @@ const getPaidThroughDate = (kid) => {
   let paidThrough = kid.feesPaid === "yes"
     ? addMonthsIso(kid.joinDate, getInitialCoverageMonths(kid))
     : kid.joinDate;
+  const paidCycleStarts = [];
 
   kid.renewals.forEach((renewalDate) => {
+    if (renewalDate) paidCycleStarts.push(renewalDate);
     paidThrough = maxIsoDate(paidThrough, addMonthsIso(renewalDate, 1));
   });
 
@@ -1017,11 +1019,15 @@ const getPaidThroughDate = (kid) => {
       const cycleStart = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on || payment.paidOn;
       const monthsCovered = getPaymentMonthsCovered(payment);
       if (cycleStart) {
+        paidCycleStarts.push(cycleStart);
         paidThrough = maxIsoDate(paidThrough, addMonthsIso(cycleStart, monthsCovered));
       }
     });
 
-  return getFeePauseDays(kid) > 0 ? addDaysIso(paidThrough, getFeePauseDays(kid)) : paidThrough;
+  const hasRenewalAfterRejoin = kid.rejoinedAt
+    ? paidCycleStarts.some((cycleStart) => String(cycleStart).slice(0, 10) >= kid.rejoinedAt)
+    : false;
+  return getFeePauseDays(kid) > 0 && !hasRenewalAfterRejoin ? addDaysIso(paidThrough, getFeePauseDays(kid)) : paidThrough;
 };
 
 const getNextRenewalCycleDate = (kid) => {
@@ -5683,7 +5689,18 @@ kidsTableBody.addEventListener("click", async (event) => {
     if (willDiscontinue) {
       updatePayload.discontinued_at = toLocalIsoDate();
     } else {
-      Object.assign(updatePayload, getRejoinPayload(kidToUpdate));
+      const defaultRejoinDate = toLocalIsoDate();
+      const selectedRejoinDate = window.prompt(
+        `Rejoin date for ${kidToUpdate.name} (YYYY-MM-DD)`,
+        defaultRejoinDate,
+      );
+      if (selectedRejoinDate === null) return;
+      const rejoinDate = selectedRejoinDate.trim() || defaultRejoinDate;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(rejoinDate)) {
+        formMessage.textContent = "Choose a valid rejoin date in YYYY-MM-DD format.";
+        return;
+      }
+      Object.assign(updatePayload, getRejoinPayload(kidToUpdate, rejoinDate));
     }
 
     const { error } = await supabaseClient

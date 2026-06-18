@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-06-15
+Last updated: 2026-06-18
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,15 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-06-18
+
+### Rejoin Renewal Correction
+
+- Corrected the Shreyas K and Mahasvin K live rejoin/payment data with a saved Supabase SQL script in the root project.
+- Browser due-date logic now treats an explicit renewal cycle on or after `rejoined_at` as the new billing anchor, so old pause days do not push the next due date past the paid renewal month.
+- Marking a discontinued player active in the browser asks for the rejoin date before saving `rejoined_at` and `fee_pause_days`.
+- Bumped browser service-worker cache to `v77`.
 
 ## 2026-06-15
 
