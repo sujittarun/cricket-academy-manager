@@ -8,6 +8,11 @@ const parseNonNegativeNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 };
 
+const getPositiveInteger = (value, fallback = 1) => {
+  const parsed = Math.floor(parseNonNegativeNumber(value, fallback));
+  return Math.max(parsed || fallback, 1);
+};
+
 const getChargeableJerseyPairCount = (pairCount) =>
   Math.floor(parseNonNegativeNumber(pairCount, 0));
 
@@ -120,6 +125,8 @@ const admissionTimeSlot = document.getElementById("admissionTimeSlot");
 const admissionJoinDate = document.getElementById("admissionJoinDate");
 const admissionFeesPaid = document.getElementById("admissionFeesPaid");
 const admissionFeePlan = document.getElementById("admissionFeePlan");
+const admissionSpecialMonthsLabel = document.getElementById("admissionSpecialMonthsLabel");
+const admissionSpecialMonths = document.getElementById("admissionSpecialMonths");
 const admissionCustomAmountLabel = document.getElementById("admissionCustomAmountLabel");
 const admissionCustomAmount = document.getElementById("admissionCustomAmount");
 const admissionCoachingFee = document.getElementById("admissionCoachingFee");
@@ -167,6 +174,8 @@ const renewalTitle = document.getElementById("renewalTitle");
 const renewalStudentId = document.getElementById("renewalStudentId");
 const renewalPaymentMode = document.getElementById("renewalPaymentMode");
 const renewalPlan = document.getElementById("renewalPlan");
+const renewalSpecialMonthsField = document.getElementById("renewalSpecialMonthsField");
+const renewalSpecialMonths = document.getElementById("renewalSpecialMonths");
 const renewalAmountField = document.getElementById("renewalAmountField");
 const renewalAmount = document.getElementById("renewalAmount");
 const joiningFeeBreakdown = document.getElementById("joiningFeeBreakdown");
@@ -298,11 +307,12 @@ const ADMISSION_FEE_PLANS = {
   special: { title: "Special training", base: 10000 },
   custom: { title: "Custom amount", base: 0 },
 };
+const SPECIAL_TRAINING_MONTHLY_FEE = 10000;
 const RENEWAL_PLANS = {
   monthly: { title: "Monthly", amount: 3500, months: 1 },
   quarterly: { title: "3 months", amount: 9975, months: 3 },
   halfyearly: { title: "6 months", amount: 18900, months: 6 },
-  special: { title: "Special training", amount: 10000, months: 1 },
+  special: { title: "Special training", amount: SPECIAL_TRAINING_MONTHLY_FEE, months: 1 },
   custom: { title: "Custom amount", amount: 0, months: 1 },
 };
 const PLAN_DISCOUNT_LABELS = {
@@ -312,9 +322,12 @@ const PLAN_DISCOUNT_LABELS = {
 const getAdmissionFeeBreakdown = () => {
   const planKey = admissionFeePlan?.value || "monthly";
   const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  const specialMonths = planKey === "special" ? getPositiveInteger(admissionSpecialMonths?.value, 1) : 1;
   const defaultCoachingFee = planKey === "custom"
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
-    : selectedPlan.base;
+    : planKey === "special"
+      ? SPECIAL_TRAINING_MONTHLY_FEE * specialMonths
+      : selectedPlan.base;
   const defaultAdmissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   const hasJerseySize = Boolean(admissionJerseySize?.value);
   const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(admissionJerseyPairs?.value) : 0;
@@ -323,15 +336,22 @@ const getAdmissionFeeBreakdown = () => {
   const admissionFee = readMoneyField(admissionOneTimeFee, defaultAdmissionFee);
   const jerseyAmount = hasJerseySize ? readMoneyField(admissionJerseyAmount, defaultJerseyAmount) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
-  return { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
+  return { planKey, selectedPlan, specialMonths, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
 };
 
 const resetAdmissionFeeInputsFromPlan = () => {
   const planKey = admissionFeePlan?.value || "monthly";
   const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  if (admissionSpecialMonthsLabel) admissionSpecialMonthsLabel.hidden = planKey !== "special";
+  if (planKey === "special" && admissionSpecialMonths && !admissionSpecialMonths.value) {
+    admissionSpecialMonths.value = "1";
+  }
+  const specialMonths = planKey === "special" ? getPositiveInteger(admissionSpecialMonths?.value, 1) : 1;
   const coachingFee = planKey === "custom"
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
-    : selectedPlan.base;
+    : planKey === "special"
+      ? SPECIAL_TRAINING_MONTHLY_FEE * specialMonths
+      : selectedPlan.base;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   const jerseyAmount = admissionJerseySize?.value ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
   writeMoneyField(admissionCoachingFee, coachingFee);
@@ -889,6 +909,10 @@ const getInitialCoverageMonths = (kid) => {
   // First jersey pair is included in admission. Extra jersey revenue may be
   // paid with the first fee, so remove it before inferring paid-through months.
   const amount = Math.max(Number(kid.amountPaid || 0) - getExtraJerseyAmount(kid.jerseyPairs), 0);
+  const planKey = String(kid.feePlan || kid.fee_plan || "").toLowerCase();
+  if (planKey === "special") {
+    return Math.max(Math.round(amount / SPECIAL_TRAINING_MONTHLY_FEE), 1);
+  }
   const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
   const roundedAmount = Math.round(amount);
 
@@ -952,15 +976,21 @@ const getSignedPaymentAmount = (payment) => {
 
 const getPaymentPlanLabel = (planType, monthsCovered) => {
   const plan = RENEWAL_PLANS[planType] || ADMISSION_FEE_PLANS[planType];
-  if (plan?.title) return plan.title;
   const months = Number(monthsCovered || 1);
+  if (planType === "special" && months > 1) return `${plan?.title || "Special training"} (${months} months)`;
+  if (plan?.title) return plan.title;
   return months > 1 ? `${months} months` : "Monthly";
 };
 
 const getPaymentMonthsCovered = (payment) => {
-  const explicitMonths = Math.max(Number(payment.months_covered || payment.monthsCovered || 1), 1);
-  const planMonths = RENEWAL_PLANS[payment.plan_type || payment.planType]?.months || 1;
+  const rawMonths = Number(payment.months_covered || payment.monthsCovered || 0);
+  const explicitMonths = rawMonths > 0 ? Math.max(rawMonths, 1) : 0;
+  const planKey = String(payment.plan_type || payment.planType || "").toLowerCase();
+  const planMonths = RENEWAL_PLANS[planKey]?.months || 1;
   const amount = Math.round(Number(payment.amount || 0));
+  if (planKey === "special") {
+    return Math.max(explicitMonths, Math.round(amount / SPECIAL_TRAINING_MONTHLY_FEE), 1);
+  }
   const amountMonths = [18900, 19400, 20000, 20500, 21000].includes(amount)
     ? 6
     : [9000, 9500, 9975, 10475, 10500, 11000].includes(amount)
@@ -1175,28 +1205,51 @@ const getJoiningPaymentAmountForPlan = (kid, planKey = "monthly") => {
   const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
   if (planKey === "custom") return 0;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
-  return plan.amount + admissionFee + getExtraJerseyAmount(kid?.jerseyPairs || 0);
+  const coachingFee = planKey === "special"
+    ? SPECIAL_TRAINING_MONTHLY_FEE * getPositiveInteger(renewalSpecialMonths?.value, 1)
+    : plan.amount;
+  return coachingFee + admissionFee + getExtraJerseyAmount(kid?.jerseyPairs || 0);
 };
 
-const getJoiningPaymentDefaultSplit = (kid, planKey = "monthly") => {
+const getJoiningPaymentDefaultSplit = (kid, planKey = "monthly", specialMonths = 1) => {
   const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
-  const coachingFee = planKey === "custom" ? 0 : plan.amount;
+  const coachingFee = planKey === "special"
+    ? SPECIAL_TRAINING_MONTHLY_FEE * specialMonths
+    : planKey === "custom" ? 0 : plan.amount;
   const admissionFee = planKey === "special" || planKey === "custom" ? 0 : ADMISSION_ONE_TIME_FEE;
   const jerseyAmount = getExtraJerseyAmount(kid?.jerseyPairs || 0);
   const totalFeeAmount = coachingFee + admissionFee + jerseyAmount;
   return { coachingFee, admissionFee, jerseyAmount, totalFeeAmount };
 };
 
+const getRenewalSpecialMonths = () => getPositiveInteger(renewalSpecialMonths?.value, 1);
+
+const getRenewalDefaultAmountForPlan = () => {
+  if (renewalPlan?.value === "special") return SPECIAL_TRAINING_MONTHLY_FEE * getRenewalSpecialMonths();
+  const plan = RENEWAL_PLANS[renewalPlan?.value] || RENEWAL_PLANS.monthly;
+  return plan.amount;
+};
+
+const syncRenewalSpecialMonthsState = () => {
+  const isSpecial = renewalPlan?.value === "special";
+  if (renewalSpecialMonthsField) renewalSpecialMonthsField.hidden = !isSpecial;
+  if (isSpecial && renewalSpecialMonths) {
+    renewalSpecialMonths.value = String(getRenewalSpecialMonths());
+  }
+  return isSpecial ? getRenewalSpecialMonths() : 1;
+};
+
 const syncJoiningFeeBreakdown = ({ resetFromPlan = false, updateAmount = false } = {}) => {
   const kid = kids.find((item) => item.id === renewalStudentId?.value);
   const isJoiningFee = renewalPaymentMode?.value === "joining";
+  const specialMonths = syncRenewalSpecialMonthsState();
   if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = !isJoiningFee;
   if (renewalAmountField) renewalAmountField.hidden = isJoiningFee;
   if (renewalAmount) renewalAmount.required = !isJoiningFee;
   if (!isJoiningFee || !kid) return { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0 };
 
   if (resetFromPlan) {
-    const defaults = getJoiningPaymentDefaultSplit(kid, renewalPlan?.value || "monthly");
+    const defaults = getJoiningPaymentDefaultSplit(kid, renewalPlan?.value || "monthly", specialMonths);
     writeMoneyField(joiningCoachingFee, defaults.coachingFee);
     writeMoneyField(joiningAdmissionFee, defaults.admissionFee);
     if (joiningJerseySize) joiningJerseySize.value = kid.jerseySize || "";
@@ -2479,9 +2532,15 @@ const syncAdmissionAmountState = () => {
     }
     admissionJerseyPairs.placeholder = hasJerseySize ? "e.g. 1" : "Select jersey size first";
   }
-  const { planKey, selectedPlan, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total } = getAdmissionFeeBreakdown();
+  const { planKey, selectedPlan, specialMonths, jerseyPairs, total } = getAdmissionFeeBreakdown();
   if (admissionCustomAmountLabel) {
     admissionCustomAmountLabel.hidden = admissionFeePlan?.value !== "custom";
+  }
+  if (admissionSpecialMonthsLabel) {
+    admissionSpecialMonthsLabel.hidden = planKey !== "special";
+  }
+  if (planKey === "special" && admissionSpecialMonths) {
+    admissionSpecialMonths.value = String(getPositiveInteger(admissionSpecialMonths.value, 1));
   }
   if (!hasJerseySize) {
     writeMoneyField(admissionJerseyAmount, 0);
@@ -2497,7 +2556,7 @@ const syncAdmissionAmountState = () => {
     admissionFeeSummary.textContent = planKey === "custom"
       ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
       : planKey === "special"
-        ? `${selectedPlan.title}: ${rupees(selectedPlan.base)} for 1 month.${jerseyCopy} Payment marked made is submitted for manager verification.`
+        ? `${selectedPlan.title}: ${rupees(SPECIAL_TRAINING_MONTHLY_FEE)} x ${specialMonths} month${specialMonths === 1 ? "" : "s"} = ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
         : `${selectedPlan.title}${discountLabel ? ` (${discountLabel})` : ""}: total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`;
   }
   updatePaymentAssist();
@@ -2935,6 +2994,9 @@ const updateAuthPanel = () => {
 };
 
 const isSpecialTraining = (kid) => {
+  if (String(kid.feePlan || kid.fee_plan || "").toLowerCase() === "special") {
+    return true;
+  }
   const payments = getStudentPayments(kid);
   if (payments.some((payment) => (payment.plan_type || payment.planType) === "special")) {
     return true;
@@ -4498,13 +4560,15 @@ const openRenewalPopup = (kid, mode = "renewal") => {
   if (renewalKicker) renewalKicker.textContent = isJoiningFee ? "Joining Payment" : "Renewal Payment";
   if (renewalTitle) renewalTitle.textContent = isJoiningFee ? "Record joining fee" : "Record fee payment";
   renewalPlan.value = "monthly";
+  if (renewalSpecialMonths) renewalSpecialMonths.value = "1";
+  syncRenewalSpecialMonthsState();
   if (isJoiningFee) {
     syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
   } else {
     if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = true;
     if (renewalAmountField) renewalAmountField.hidden = false;
     if (renewalAmount) renewalAmount.required = true;
-    renewalAmount.value = String(RENEWAL_PLANS.monthly.amount);
+    renewalAmount.value = String(getRenewalDefaultAmountForPlan());
   }
   if (renewalPaymentDate) renewalPaymentDate.value = toLocalIsoDate();
   renewalComment.value = "";
@@ -5777,6 +5841,14 @@ admissionCustomAmount?.addEventListener("input", () => {
   resetAdmissionFeeInputsFromPlan();
   syncAdmissionAmountState();
 });
+admissionSpecialMonths?.addEventListener("input", () => {
+  resetAdmissionFeeInputsFromPlan();
+  syncAdmissionAmountState();
+});
+admissionSpecialMonths?.addEventListener("change", () => {
+  resetAdmissionFeeInputsFromPlan();
+  syncAdmissionAmountState();
+});
 admissionCoachingFee?.addEventListener("input", syncAdmissionAmountState);
 admissionOneTimeFee?.addEventListener("input", syncAdmissionAmountState);
 admissionJerseyAmount?.addEventListener("input", syncAdmissionAmountState);
@@ -5790,14 +5862,13 @@ admissionJerseyPairs?.addEventListener("input", () => {
 });
 admissionApplicantName.addEventListener("input", updatePaymentAssist);
 renewalPlan?.addEventListener("change", () => {
-  const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
-  const kid = kids.find((item) => item.id === renewalStudentId?.value);
   const isJoiningFee = renewalPaymentMode?.value === "joining";
+  syncRenewalSpecialMonthsState();
   if (renewalPlan.value !== "custom") {
     if (isJoiningFee) {
       syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
     } else {
-      renewalAmount.value = String(plan.amount);
+      renewalAmount.value = String(getRenewalDefaultAmountForPlan());
     }
   } else if (isJoiningFee) {
     syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: false });
@@ -5806,6 +5877,24 @@ renewalPlan?.addEventListener("change", () => {
     renewalAmount.value = "";
   }
   renewalAmount.readOnly = false; // Always allow manual adjustment
+});
+renewalSpecialMonths?.addEventListener("input", () => {
+  syncRenewalSpecialMonthsState();
+  const isJoiningFee = renewalPaymentMode?.value === "joining";
+  if (isJoiningFee) {
+    syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
+  } else if (renewalPlan?.value === "special" && renewalAmount) {
+    renewalAmount.value = String(getRenewalDefaultAmountForPlan());
+  }
+});
+renewalSpecialMonths?.addEventListener("change", () => {
+  syncRenewalSpecialMonthsState();
+  const isJoiningFee = renewalPaymentMode?.value === "joining";
+  if (isJoiningFee) {
+    syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
+  } else if (renewalPlan?.value === "special" && renewalAmount) {
+    renewalAmount.value = String(getRenewalDefaultAmountForPlan());
+  }
 });
 [joiningCoachingFee, joiningAdmissionFee, joiningJerseySize, joiningJerseyPairs].forEach((input) => {
   input?.addEventListener("input", () => syncJoiningFeeBreakdown());
@@ -5820,6 +5909,7 @@ renewalForm?.addEventListener("submit", async (event) => {
   const kid = kids.find((item) => item.id === renewalStudentId.value);
   if (!kid) return;
   const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
+  const monthsCovered = renewalPlan.value === "special" ? getRenewalSpecialMonths() : plan.months;
   const isJoiningFee = renewalPaymentMode?.value === "joining";
   const joiningFeeSplit = isJoiningFee
     ? syncJoiningFeeBreakdown()
@@ -5841,7 +5931,7 @@ renewalForm?.addEventListener("submit", async (event) => {
     payment_type: isJoiningFee ? "joining" : "renewal",
     plan_type: renewalPlan.value,
     cycle_start_date: cycleDate,
-    months_covered: plan.months,
+    months_covered: monthsCovered,
     amount,
     paid_on: paymentDate,
     comment: renewalComment.value.trim(),
@@ -5920,7 +6010,7 @@ renewalForm?.addEventListener("submit", async (event) => {
   if (paymentRow) {
     financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
   }
-  const renewalToDate = addMonthsIso(cycleDate, plan.months);
+  const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
   
   // 3. Show Receipt and Close Popup Instantly
   closeRenewalPopup();
@@ -5931,8 +6021,8 @@ renewalForm?.addEventListener("submit", async (event) => {
     jerseyPairs: joiningFeeSplit.jerseyPairs,
   }) : buildRenewalReceiptFromKid(kid, {
     plan: renewalPlan.value,
-    planTitle: plan.title,
-    monthsCovered: plan.months,
+    planTitle: getPaymentPlanLabel(renewalPlan.value, monthsCovered),
+    monthsCovered,
     amount,
     cycleDate,
     paidOn: paymentDate,
@@ -5946,7 +6036,7 @@ renewalForm?.addEventListener("submit", async (event) => {
       if (accessToken) {
         await callRenewalVerifiedFunction({
           kid,
-          planTitle: isJoiningFee ? "Joining Fee" : plan.title,
+          planTitle: isJoiningFee ? "Joining Fee" : getPaymentPlanLabel(renewalPlan.value, monthsCovered),
           amount,
           cycleDate,
           toDate: renewalToDate,
