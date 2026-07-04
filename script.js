@@ -356,8 +356,8 @@ const getAdmissionFeeBreakdown = () => {
   const hasJerseySize = Boolean(admissionJerseySize?.value);
   const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(admissionJerseyPairs?.value) : 0;
   const defaultJerseyAmount = hasJerseySize ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
-  const coachingFee = readMoneyField(admissionCoachingFee, defaultCoachingFee);
-  const admissionFee = readMoneyField(admissionOneTimeFee, defaultAdmissionFee);
+  const coachingFee = planKey === "special" ? defaultCoachingFee : readMoneyField(admissionCoachingFee, defaultCoachingFee);
+  const admissionFee = planKey === "special" ? defaultAdmissionFee : readMoneyField(admissionOneTimeFee, defaultAdmissionFee);
   const jerseyAmount = hasJerseySize ? readMoneyField(admissionJerseyAmount, defaultJerseyAmount) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
   return { planKey, selectedPlan, specialMonths, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
