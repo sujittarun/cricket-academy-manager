@@ -308,6 +308,30 @@ const ADMISSION_FEE_PLANS = {
   custom: { title: "Custom amount", base: 0 },
 };
 const SPECIAL_TRAINING_MONTHLY_FEE = 10000;
+const getSpecialTrainingDiscountRate = (months) => {
+  const safeMonths = getPositiveInteger(months, 1);
+  if (safeMonths >= 6) return 0.1;
+  if (safeMonths >= 3) return 0.05;
+  return 0;
+};
+const getSpecialTrainingAmountForMonths = (months) => {
+  const safeMonths = getPositiveInteger(months, 1);
+  return Math.round(SPECIAL_TRAINING_MONTHLY_FEE * safeMonths * (1 - getSpecialTrainingDiscountRate(safeMonths)));
+};
+const inferSpecialTrainingMonthsFromAmount = (amount) => {
+  const roundedAmount = Math.round(Number(amount || 0));
+  if (roundedAmount <= 0) return 1;
+  for (let months = 1; months <= 36; months += 1) {
+    if (getSpecialTrainingAmountForMonths(months) === roundedAmount) return months;
+  }
+  if (roundedAmount >= getSpecialTrainingAmountForMonths(6)) {
+    return Math.max(Math.round(roundedAmount / (SPECIAL_TRAINING_MONTHLY_FEE * 0.9)), 1);
+  }
+  if (roundedAmount >= getSpecialTrainingAmountForMonths(3)) {
+    return Math.max(Math.round(roundedAmount / (SPECIAL_TRAINING_MONTHLY_FEE * 0.95)), 1);
+  }
+  return Math.max(Math.round(roundedAmount / SPECIAL_TRAINING_MONTHLY_FEE), 1);
+};
 const RENEWAL_PLANS = {
   monthly: { title: "Monthly", amount: 3500, months: 1 },
   quarterly: { title: "3 months", amount: 9975, months: 3 },
@@ -326,7 +350,7 @@ const getAdmissionFeeBreakdown = () => {
   const defaultCoachingFee = planKey === "custom"
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
     : planKey === "special"
-      ? SPECIAL_TRAINING_MONTHLY_FEE * specialMonths
+      ? getSpecialTrainingAmountForMonths(specialMonths)
       : selectedPlan.base;
   const defaultAdmissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   const hasJerseySize = Boolean(admissionJerseySize?.value);
@@ -350,7 +374,7 @@ const resetAdmissionFeeInputsFromPlan = () => {
   const coachingFee = planKey === "custom"
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
     : planKey === "special"
-      ? SPECIAL_TRAINING_MONTHLY_FEE * specialMonths
+      ? getSpecialTrainingAmountForMonths(specialMonths)
       : selectedPlan.base;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   const jerseyAmount = admissionJerseySize?.value ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
@@ -911,7 +935,7 @@ const getInitialCoverageMonths = (kid) => {
   const amount = Math.max(Number(kid.amountPaid || 0) - getExtraJerseyAmount(kid.jerseyPairs), 0);
   const planKey = String(kid.feePlan || kid.fee_plan || "").toLowerCase();
   if (planKey === "special") {
-    return Math.max(Math.round(amount / SPECIAL_TRAINING_MONTHLY_FEE), 1);
+    return inferSpecialTrainingMonthsFromAmount(amount);
   }
   const withoutAdmissionFee = Math.max(amount - ADMISSION_ONE_TIME_FEE, 0);
   const roundedAmount = Math.round(amount);
@@ -989,7 +1013,7 @@ const getPaymentMonthsCovered = (payment) => {
   const planMonths = RENEWAL_PLANS[planKey]?.months || 1;
   const amount = Math.round(Number(payment.amount || 0));
   if (planKey === "special") {
-    return Math.max(explicitMonths, Math.round(amount / SPECIAL_TRAINING_MONTHLY_FEE), 1);
+    return Math.max(explicitMonths, inferSpecialTrainingMonthsFromAmount(amount), 1);
   }
   const amountMonths = [18900, 19400, 20000, 20500, 21000].includes(amount)
     ? 6
@@ -1206,7 +1230,7 @@ const getJoiningPaymentAmountForPlan = (kid, planKey = "monthly") => {
   if (planKey === "custom") return 0;
   const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
   const coachingFee = planKey === "special"
-    ? SPECIAL_TRAINING_MONTHLY_FEE * getPositiveInteger(renewalSpecialMonths?.value, 1)
+    ? getSpecialTrainingAmountForMonths(getPositiveInteger(renewalSpecialMonths?.value, 1))
     : plan.amount;
   return coachingFee + admissionFee + getExtraJerseyAmount(kid?.jerseyPairs || 0);
 };
@@ -1214,7 +1238,7 @@ const getJoiningPaymentAmountForPlan = (kid, planKey = "monthly") => {
 const getJoiningPaymentDefaultSplit = (kid, planKey = "monthly", specialMonths = 1) => {
   const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
   const coachingFee = planKey === "special"
-    ? SPECIAL_TRAINING_MONTHLY_FEE * specialMonths
+    ? getSpecialTrainingAmountForMonths(specialMonths)
     : planKey === "custom" ? 0 : plan.amount;
   const admissionFee = planKey === "special" || planKey === "custom" ? 0 : ADMISSION_ONE_TIME_FEE;
   const jerseyAmount = getExtraJerseyAmount(kid?.jerseyPairs || 0);
@@ -1225,7 +1249,7 @@ const getJoiningPaymentDefaultSplit = (kid, planKey = "monthly", specialMonths =
 const getRenewalSpecialMonths = () => getPositiveInteger(renewalSpecialMonths?.value, 1);
 
 const getRenewalDefaultAmountForPlan = () => {
-  if (renewalPlan?.value === "special") return SPECIAL_TRAINING_MONTHLY_FEE * getRenewalSpecialMonths();
+  if (renewalPlan?.value === "special") return getSpecialTrainingAmountForMonths(getRenewalSpecialMonths());
   const plan = RENEWAL_PLANS[renewalPlan?.value] || RENEWAL_PLANS.monthly;
   return plan.amount;
 };
@@ -2556,7 +2580,7 @@ const syncAdmissionAmountState = () => {
     admissionFeeSummary.textContent = planKey === "custom"
       ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
       : planKey === "special"
-        ? `${selectedPlan.title}: ${rupees(SPECIAL_TRAINING_MONTHLY_FEE)} x ${specialMonths} month${specialMonths === 1 ? "" : "s"} = ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
+        ? `${selectedPlan.title}: total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
         : `${selectedPlan.title}${discountLabel ? ` (${discountLabel})` : ""}: total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`;
   }
   updatePaymentAssist();
