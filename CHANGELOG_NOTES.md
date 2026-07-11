@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-06-18
+Last updated: 2026-07-11
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,15 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-07-11
+
+### iOS UPI Payment Handoff
+
+- Updated `pay.html` so iPhone/iPad users see an in-page UPI app selector instead of relying on the Android-style system chooser.
+- Kept Android on the direct generic `upi://pay` handoff, while iOS buttons launch PhonePe, Google Pay, Paytm, BHIM, or a generic UPI URL from the user's tap.
+- Payment-attempt tracking now runs in the background before app handoff instead of being awaited, which avoids losing the iOS user gesture needed to open payment apps.
+- Bumped browser service-worker cache to `v82`.
 
 ## 2026-06-18
 

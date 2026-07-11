@@ -166,6 +166,53 @@
         margin-top: 11px;
       }
 
+      .upi-options {
+        display: none;
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #ffffff;
+      }
+
+      .upi-options.is-visible {
+        display: block;
+      }
+
+      .upi-options-title {
+        margin: 0 0 10px;
+        color: var(--deep);
+        font-size: 0.9rem;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .upi-app-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .upi-app-button {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-height: 46px;
+        padding: 10px 12px;
+        color: var(--ink);
+        background: var(--soft);
+        font-size: 0.9rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .upi-options-note {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 0.8rem;
+        line-height: 1.35;
+        text-align: center;
+      }
+
       .secondary {
         border: 1px solid var(--line);
         border-radius: 14px;
@@ -208,6 +255,10 @@
         .secondary-row {
           grid-template-columns: 1fr;
         }
+
+        .upi-app-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -238,6 +289,17 @@
       </div>
 
       <button class="pay-button" id="payButton" type="button">Pay Now</button>
+      <section class="upi-options" id="upiOptions" aria-live="polite">
+        <p class="upi-options-title">Choose your UPI app</p>
+        <div class="upi-app-grid">
+          <button class="upi-app-button" type="button" data-upi-app="phonepe">PhonePe</button>
+          <button class="upi-app-button" type="button" data-upi-app="gpay">Google Pay</button>
+          <button class="upi-app-button" type="button" data-upi-app="paytm">Paytm</button>
+          <button class="upi-app-button" type="button" data-upi-app="bhim">BHIM</button>
+          <button class="upi-app-button" type="button" data-upi-app="generic">Other UPI app</button>
+        </div>
+        <p class="upi-options-note">If an app does not open, copy the UPI ID and amount below.</p>
+      </section>
       <div class="secondary-row">
         <button class="secondary" id="copyUpiButton" type="button">Copy UPI</button>
         <button class="secondary" id="copyAmountButton" type="button">Copy Amount</button>
@@ -259,6 +321,7 @@
       const playerText = document.getElementById("playerText");
       const upiText = document.getElementById("upiText");
       const messageText = document.getElementById("messageText");
+      const upiOptions = document.getElementById("upiOptions");
 
       const formatAmount = (value) =>
         Number.isFinite(value) && value > 0
@@ -276,10 +339,21 @@
       ]
         .filter(Boolean)
         .join("&");
+      const upiLinks = {
+        generic: `upi://pay?${upiUri}`,
+        phonepe: `phonepe://pay?${upiUri}`,
+        gpay: `gpay://upi/pay?${upiUri}`,
+        paytm: `paytmmp://pay?${upiUri}`,
+        bhim: `bhim://upi/pay?${upiUri}`,
+      };
 
       amountText.textContent = formatAmount(amount);
       playerText.textContent = player;
       upiText.textContent = upiId || "Not configured";
+
+      const isAppleTouchDevice = () =>
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
       const copyText = async (value, label) => {
         try {
@@ -324,17 +398,41 @@
         ]);
       };
 
-      document.getElementById("payButton").addEventListener("click", async () => {
+      const showUpiOptions = () => {
+        upiOptions.classList.add("is-visible");
+        messageText.textContent = "Choose your UPI app. If it does not open, copy the UPI ID and amount.";
+      };
+
+      const openUpiApp = (appName = "generic") => {
+        void notifyPaymentAttempt();
+        const targetUrl = upiLinks[appName] || upiLinks.generic;
+        messageText.textContent = "Opening your UPI app...";
+        window.location.href = targetUrl;
+        window.setTimeout(() => {
+          messageText.textContent = 'After payment, reply "Paid" on WhatsApp or send the payment screenshot.';
+        }, 1600);
+      };
+
+      document.getElementById("payButton").addEventListener("click", () => {
         if (!upiId) {
           messageText.textContent = "UPI payment is not configured. Please contact academy staff.";
           return;
         }
-        messageText.textContent = "Opening your UPI app...";
-        await notifyPaymentAttempt();
-        window.location.href = `upi://pay?${upiUri}`;
-        window.setTimeout(() => {
-          messageText.textContent = 'After payment, reply "Paid" on WhatsApp or send the payment screenshot.';
-        }, 1600);
+        if (isAppleTouchDevice()) {
+          showUpiOptions();
+          return;
+        }
+        openUpiApp("generic");
+      });
+
+      document.querySelectorAll("[data-upi-app]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!upiId) {
+            messageText.textContent = "UPI payment is not configured. Please contact academy staff.";
+            return;
+          }
+          openUpiApp(button.dataset.upiApp || "generic");
+        });
       });
 
       document.getElementById("copyUpiButton").addEventListener("click", () => copyText(upiId, "UPI ID"));
