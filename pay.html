@@ -112,7 +112,58 @@
         font-size: clamp(2.65rem, 11vw, 4.35rem);
         line-height: 0.95;
         font-weight: 900;
-        letter-spacing: -0.04em;
+        letter-spacing: 0;
+      }
+
+      .plan-section {
+        margin: 0 0 14px;
+      }
+
+      .plan-title {
+        margin: 0 0 9px;
+        color: var(--deep);
+        font-size: 0.92rem;
+        font-weight: 900;
+      }
+
+      .plan-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .plan-button {
+        min-height: 68px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 10px 8px;
+        background: #ffffff;
+        color: var(--ink);
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .plan-button.is-selected {
+        border-color: var(--blue);
+        background: #edf5ff;
+        box-shadow: 0 0 0 3px rgba(21, 87, 166, 0.13);
+      }
+
+      .plan-button strong,
+      .plan-button span {
+        display: block;
+      }
+
+      .plan-button strong {
+        font-size: 0.92rem;
+        font-weight: 900;
+      }
+
+      .plan-button span {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 800;
       }
 
       .detail-grid {
@@ -248,6 +299,10 @@
           grid-template-columns: 1fr;
         }
 
+        .plan-grid {
+          grid-template-columns: 1fr;
+        }
+
         .brand {
           align-items: flex-start;
         }
@@ -275,6 +330,11 @@
       <section class="amount-box">
         <p class="amount-label">Amount to pay</p>
         <p class="amount" id="amountText">Rs 0</p>
+      </section>
+
+      <section class="plan-section" id="planSection">
+        <p class="plan-title">Choose payment period</p>
+        <div class="plan-grid" id="planGrid"></div>
       </section>
 
       <div class="detail-grid">
@@ -322,38 +382,117 @@
       const upiText = document.getElementById("upiText");
       const messageText = document.getElementById("messageText");
       const upiOptions = document.getElementById("upiOptions");
+      const planGrid = document.getElementById("planGrid");
+      const planSection = document.getElementById("planSection");
+      const basePlanOptions = [
+        { id: "monthly", label: "1 Month", months: 1, amount: 3500 },
+        { id: "quarterly", label: "3 Months", months: 3, amount: 9975 },
+        { id: "halfyearly", label: "6 Months", months: 6, amount: 18900 },
+      ];
+      const planLabelToId = {
+        "1 month": "monthly",
+        monthly: "monthly",
+        "3 months": "quarterly",
+        quarterly: "quarterly",
+        "6 months": "halfyearly",
+        halfyearly: "halfyearly",
+      };
+      let paymentOptions = basePlanOptions;
+      let selectedPlanId = planLabelToId[plan.toLowerCase()] || "";
+      let selectedAmount = Number.isFinite(amount) && amount > 0 ? amount : 0;
+      let selectedPlanLabel = plan || "fees";
+      let playerName = player;
 
       const formatAmount = (value) =>
         Number.isFinite(value) && value > 0
           ? `Rs ${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
           : "Enter amount in UPI app";
 
+      const rupees = (value) =>
+        Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+
       const encode = (value) => encodeURIComponent(String(value || ""));
-      const note = `Gen Alpha ${plan} fee - ${player}`;
-      const upiUri = [
-        `pa=${upiId}`,
-        `pn=${encode(payeeName)}`,
-        `tn=${encode(note)}`,
-        amount > 0 ? `am=${amount.toFixed(2)}` : "",
-        "cu=INR",
-      ]
-        .filter(Boolean)
-        .join("&");
-      const upiLinks = {
-        generic: `upi://pay?${upiUri}`,
-        phonepe: `phonepe://pay?${upiUri}`,
-        gpay: `gpay://upi/pay?${upiUri}`,
-        paytm: `paytmmp://pay?${upiUri}`,
-        bhim: `bhim://upi/pay?${upiUri}`,
+
+      const currentOption = () =>
+        paymentOptions.find((option) => option.id === selectedPlanId) ||
+        paymentOptions[0];
+
+      const currentAmount = () => {
+        const option = currentOption();
+        return selectedAmount || Number(option?.amount || 0);
       };
 
-      amountText.textContent = formatAmount(amount);
-      playerText.textContent = player;
+      const currentPlanLabel = () => {
+        const option = currentOption();
+        return option?.label || selectedPlanLabel || "fees";
+      };
+
+      const buildUpiUri = () => {
+        const amountDue = currentAmount();
+        const note = `Gen Alpha ${currentPlanLabel()} fee - ${playerName}`;
+        return [
+          `pa=${upiId}`,
+          `pn=${encode(payeeName)}`,
+          `tn=${encode(note)}`,
+          amountDue > 0 ? `am=${amountDue.toFixed(2)}` : "",
+          "cu=INR",
+        ]
+          .filter(Boolean)
+          .join("&");
+      };
+
+      const buildUpiLinks = () => {
+        const upiUri = buildUpiUri();
+        return {
+          generic: `upi://pay?${upiUri}`,
+          phonepe: `phonepe://pay?${upiUri}`,
+          gpay: `gpay://upi/pay?${upiUri}`,
+          paytm: `paytmmp://pay?${upiUri}`,
+          bhim: `bhim://upi/pay?${upiUri}`,
+        };
+      };
+
+      const renderPlanOptions = () => {
+        if (!paymentOptions.length) {
+          planSection.style.display = "none";
+          return;
+        }
+        planSection.style.display = "";
+        planGrid.innerHTML = paymentOptions.map((option) => `
+          <button class="plan-button${option.id === selectedPlanId ? " is-selected" : ""}" type="button" data-plan-id="${option.id}">
+            <strong>${option.label}</strong>
+            <span>Rs ${rupees(option.amount)}</span>
+          </button>
+        `).join("");
+      };
+
+      const selectPlan = (planId) => {
+        const option = paymentOptions.find((item) => item.id === planId) || paymentOptions[0];
+        if (!option) return;
+        selectedPlanId = option.id;
+        selectedPlanLabel = option.label;
+        selectedAmount = Number(option.amount || 0);
+        amountText.textContent = formatAmount(selectedAmount);
+        renderPlanOptions();
+      };
+
+      amountText.textContent = formatAmount(selectedAmount || currentAmount());
+      playerText.textContent = playerName;
       upiText.textContent = upiId || "Not configured";
 
       const isAppleTouchDevice = () =>
         /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+      if (!selectedPlanId) {
+        selectPlan("monthly");
+      } else {
+        const option = paymentOptions.find((item) => item.id === selectedPlanId);
+        if (option && !selectedAmount) {
+          selectedAmount = option.amount;
+        }
+        renderPlanOptions();
+      }
 
       const copyText = async (value, label) => {
         try {
@@ -369,7 +508,7 @@
           return;
         }
 
-        const notifyKey = `gen-alpha-payment-attempt-${reminderEventId}`;
+        const notifyKey = `gen-alpha-payment-attempt-${reminderEventId}-${selectedPlanId}`;
         if (sessionStorage.getItem(notifyKey)) {
           return;
         }
@@ -385,6 +524,7 @@
           body: JSON.stringify({
             action: "payment_attempted",
             eventId: reminderEventId,
+            selectedPlan: selectedPlanId,
           }),
         }).then((response) => {
           if (response.ok) {
@@ -398,6 +538,46 @@
         ]);
       };
 
+      const applyRemotePaymentOptions = (payload) => {
+        if (!payload?.success) return;
+        if (payload.playerName) {
+          playerName = String(payload.playerName);
+          playerText.textContent = playerName;
+        }
+        if (Array.isArray(payload.options) && payload.options.length) {
+          paymentOptions = payload.options.map((option) => ({
+            id: String(option.id || ""),
+            label: String(option.label || ""),
+            months: Number(option.months || 0),
+            amount: Number(option.amount || 0),
+          })).filter((option) => option.id && option.label && option.amount > 0);
+        }
+        selectedAmount = 0;
+        selectPlan(payload.defaultPlan || selectedPlanId || "monthly");
+      };
+
+      const loadPaymentOptions = async () => {
+        if (!reminderEventId || !supabaseConfig.url) return;
+        try {
+          const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/whatsapp-reminder`;
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(supabaseConfig.anonKey ? { apikey: supabaseConfig.anonKey } : {}),
+            },
+            body: JSON.stringify({
+              action: "payment_options",
+              eventId: reminderEventId,
+            }),
+          });
+          if (!response.ok) return;
+          applyRemotePaymentOptions(await response.json());
+        } catch {
+          // The embedded query params and default plan amounts remain usable offline.
+        }
+      };
+
       const showUpiOptions = () => {
         upiOptions.classList.add("is-visible");
         messageText.textContent = "Choose your UPI app. If it does not open, copy the UPI ID and amount.";
@@ -405,6 +585,7 @@
 
       const openUpiApp = (appName = "generic") => {
         void notifyPaymentAttempt();
+        const upiLinks = buildUpiLinks();
         const targetUrl = upiLinks[appName] || upiLinks.generic;
         messageText.textContent = "Opening your UPI app...";
         window.location.href = targetUrl;
@@ -435,8 +616,15 @@
         });
       });
 
+      planGrid.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-plan-id]");
+        if (!button) return;
+        selectPlan(button.dataset.planId);
+      });
+
       document.getElementById("copyUpiButton").addEventListener("click", () => copyText(upiId, "UPI ID"));
-      document.getElementById("copyAmountButton").addEventListener("click", () => copyText(amount > 0 ? amount.toFixed(2) : "", "Amount"));
+      document.getElementById("copyAmountButton").addEventListener("click", () => copyText(currentAmount() > 0 ? currentAmount().toFixed(2) : "", "Amount"));
+      void loadPaymentOptions();
     </script>
   </body>
 </html>

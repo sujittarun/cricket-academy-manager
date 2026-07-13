@@ -15,6 +15,12 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-07-11
 
+### Direct Pay Plan Selection
+
+- Updated `pay.html` so WhatsApp reminders can open the payment page directly with only a reminder event id.
+- The payment page now loads event-specific 1 Month, 3 Months, and 6 Months options, lets the parent choose a plan on the page, and sends the selected plan with the `payment_attempted` call before opening UPI.
+- Bumped browser service-worker cache to `v83`.
+
 ### iOS UPI Payment Handoff
 
 - Updated `pay.html` so iPhone/iPad users see an in-page UPI app selector instead of relying on the Android-style system chooser.
