@@ -3,6 +3,10 @@ window.GEN_ALPHA_SUPABASE_CONFIG = {
   anonKey: "sb_publishable_eXPI__qyWrhMr4eb8RsezQ_4RNRZ8V_",
 };
 
+window.GEN_ALPHA_FEATURES = {
+  aiIntakeEnabled: false,
+};
+
 window.GEN_ALPHA_PAYMENT_CONFIG = {
   upiId: "9059962499@ybl",
   mobileNumber: "9059962499",

@@ -3008,7 +3008,9 @@ const updateAuthPanel = () => {
   }
   quickLogoutButton.hidden = !isManagerLoggedIn;
   editModeButton.hidden = !isManagerLoggedIn;
-  if (intakeToolLink) intakeToolLink.hidden = !isManagerLoggedIn;
+  if (intakeToolLink) {
+    intakeToolLink.hidden = !isManagerLoggedIn || window.GEN_ALPHA_FEATURES?.aiIntakeEnabled !== true;
+  }
   editModeButton.textContent = isEditMode ? "Done" : "Edit";
   editModeButton.classList.toggle("active", isEditMode);
   managerIdentity.hidden = !isManagerLoggedIn || !lastManagerEmail;

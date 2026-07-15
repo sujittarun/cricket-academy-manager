@@ -7,6 +7,10 @@
   let summaryText = "";
 
   const { data: { session } } = await client.auth.getSession();
+  if (window.GEN_ALPHA_FEATURES?.aiIntakeEnabled !== true) {
+    $("intakeUnavailable").classList.remove("hide");
+    return;
+  }
   $(session ? "intakeApp" : "loginRequired").classList.remove("hide");
   if (!session) return;
 
