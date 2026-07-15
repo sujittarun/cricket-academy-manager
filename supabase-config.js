@@ -4,7 +4,7 @@ window.GEN_ALPHA_SUPABASE_CONFIG = {
 };
 
 window.GEN_ALPHA_FEATURES = {
-  aiIntakeEnabled: false,
+  aiIntakeEnabled: true,
 };
 
 window.GEN_ALPHA_PAYMENT_CONFIG = {
