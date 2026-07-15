@@ -1,7 +1,9 @@
-const CACHE_NAME = "gen-alpha-academy-v83";
+const CACHE_NAME = "gen-alpha-academy-v84";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./intake.html",
+  "./intake.js",
   "./pay.html",
   "./styles.css",
   "./script.js",
@@ -16,6 +18,8 @@ const APP_SHELL = [
 /** Match GitHub Pages project URLs (e.g. /repo/script.js), not only root-hosted /script.js */
 const NETWORK_FIRST_PATH_ENDINGS = [
   "/index.html",
+  "/intake.html",
+  "/intake.js",
   "/pay.html",
   "/styles.css",
   "/script.js",

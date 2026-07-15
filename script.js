@@ -69,6 +69,7 @@ const authToggleButton = document.getElementById("authToggleButton");
 const authCloseButton = document.getElementById("authCloseButton");
 const quickLogoutButton = document.getElementById("quickLogoutButton");
 const editModeButton = document.getElementById("editModeButton");
+const intakeToolLink = document.getElementById("intakeToolLink");
 const managerIdentity = document.getElementById("managerIdentity");
 const lastLoginHint = document.getElementById("lastLoginHint");
 const formPanel = document.getElementById("formPanel");
@@ -3007,6 +3008,7 @@ const updateAuthPanel = () => {
   }
   quickLogoutButton.hidden = !isManagerLoggedIn;
   editModeButton.hidden = !isManagerLoggedIn;
+  if (intakeToolLink) intakeToolLink.hidden = !isManagerLoggedIn;
   editModeButton.textContent = isEditMode ? "Done" : "Edit";
   editModeButton.classList.toggle("active", isEditMode);
   managerIdentity.hidden = !isManagerLoggedIn || !lastManagerEmail;

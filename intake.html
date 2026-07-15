@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#17498b" />
+    <title>Admission Intake · Gen Alpha</title>
+    <link rel="icon" href="./assets/gen-alpha-favicon-192.png" />
+    <link rel="stylesheet" href="./styles.css?v=76" />
+    <style>
+      body{background:#eef4fb}.intake-shell{width:min(920px,calc(100% - 28px));margin:28px auto 60px}.intake-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.intake-head img{width:58px;height:58px}.intake-title{display:flex;align-items:center;gap:12px}.intake-title h1{margin:0;font-size:clamp(22px,4vw,34px)}.intake-grid{display:grid;gap:16px}.intake-card{padding:22px}.intake-card label{display:grid;gap:8px;font-weight:700}.intake-card textarea{min-height:180px;resize:vertical}.intake-card input[type=file]{padding:14px;border:1px dashed #85a6ce;border-radius:12px;background:#f8fbff}.intake-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.intake-status{margin-top:14px;white-space:pre-wrap}.intake-summary{white-space:pre-wrap;background:#f6f9fd;border:1px solid #d9e5f3;border-radius:14px;padding:18px;line-height:1.6}.intake-correction{min-height:90px!important}.hide{display:none!important}@media(max-width:620px){.intake-head{align-items:flex-start;flex-direction:column}.intake-card{padding:16px}}
+    </style>
+  </head>
+  <body>
+    <main class="intake-shell">
+      <header class="intake-head">
+        <div class="intake-title">
+          <img src="./assets/gen-alpha-favicon-192.png" alt="Gen Alpha badge" />
+          <div><p class="section-kicker">Manager tool</p><h1>AI admission intake</h1></div>
+        </div>
+        <a class="secondary-btn" href="./index.html#roster">Back to manager</a>
+      </header>
+
+      <section id="loginRequired" class="panel intake-card hide">
+        <h2>Manager login required</h2>
+        <p>Open the manager dashboard, log in, then return to this tool.</p>
+        <a class="primary-btn" href="./index.html#roster">Open manager login</a>
+      </section>
+
+      <div id="intakeApp" class="intake-grid hide">
+        <section class="panel intake-card">
+          <p class="section-kicker">Conversation and files</p>
+          <h2>Paste what staff sent</h2>
+          <p class="muted">No fixed format is required. Paste the useful messages in conversation order and attach the admission form and payment proof.</p>
+          <form id="intakeForm">
+            <label>Conversation
+              <textarea id="transcript" required placeholder="Coach: New player Aarav...&#10;Fee was 5000 UPI&#10;Joining next Monday at 5:30..."></textarea>
+            </label>
+            <label>Forms and payment screenshots
+              <input id="intakeFiles" type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" />
+            </label>
+            <div class="intake-actions">
+              <button id="extractButton" class="primary-btn" type="submit">Extract admission</button>
+              <button id="resetButton" class="secondary-btn" type="button">Start another</button>
+            </div>
+            <p id="intakeStatus" class="intake-status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section id="reviewCard" class="panel intake-card hide">
+          <p class="section-kicker">Human confirmation</p>
+          <h2>Review extracted admission</h2>
+          <div id="summary" class="intake-summary"></div>
+          <div class="intake-actions">
+            <button id="confirmButton" class="primary-btn" type="button">Confirm and create pending admission</button>
+          </div>
+          <label>Or describe corrections
+            <textarea id="correction" class="intake-correction" placeholder="Student name is Aarav Reddy and batch is 7 PM"></textarea>
+          </label>
+          <button id="correctButton" class="secondary-btn" type="button">Apply correction and re-check</button>
+          <p id="reviewStatus" class="intake-status" aria-live="polite"></p>
+        </section>
+      </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=33"></script>
+    <script src="./intake.js?v=1"></script>
+  </body>
+</html>
