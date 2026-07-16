@@ -8,7 +8,7 @@
     <link rel="icon" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="stylesheet" href="./styles.css?v=76" />
     <style>
-      body{background:#eef4fb}.intake-shell{width:min(920px,calc(100% - 28px));margin:28px auto 60px}.intake-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.intake-head img{width:58px;height:58px}.intake-title{display:flex;align-items:center;gap:12px}.intake-title h1{margin:0;font-size:clamp(22px,4vw,34px)}.intake-grid{display:grid;gap:16px}.intake-card{padding:22px}.intake-card label{display:grid;gap:8px;font-weight:700}.intake-card textarea{min-height:180px;resize:vertical}.intake-card input[type=file]{padding:14px;border:1px dashed #85a6ce;border-radius:12px;background:#f8fbff}.intake-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.intake-status{margin-top:14px;white-space:pre-wrap}.intake-summary{white-space:pre-wrap;background:#f6f9fd;border:1px solid #d9e5f3;border-radius:14px;padding:18px;line-height:1.6}.intake-correction{min-height:90px!important}.hide{display:none!important}@media(max-width:620px){.intake-head{align-items:flex-start;flex-direction:column}.intake-card{padding:16px}}
+      body{background:#eef4fb}.intake-shell{width:min(920px,calc(100% - 28px));margin:28px auto 60px}.intake-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.intake-head img{width:58px;height:58px}.intake-title{display:flex;align-items:center;gap:12px}.intake-title h1{margin:0;font-size:clamp(22px,4vw,34px)}.intake-grid{display:grid;gap:16px}.intake-card{padding:22px}.intake-card label{display:grid;gap:8px;font-weight:700}.intake-card textarea{min-height:180px;resize:vertical}.intake-card input[type=file]{padding:14px;border:1px dashed #85a6ce;border-radius:12px;background:#f8fbff}.intake-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.intake-status{margin-top:14px;white-space:pre-wrap}.intake-summary{white-space:pre-wrap;background:#f6f9fd;border:1px solid #d9e5f3;border-radius:14px;padding:18px;line-height:1.6}.intake-correction{min-height:90px!important}.intake-history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.intake-history{display:grid;gap:12px;margin-top:16px}.intake-session{border:1px solid #d8e4f1;border-radius:16px;background:#f8fbff;overflow:hidden}.intake-session summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;cursor:pointer;list-style:none}.intake-session summary::-webkit-details-marker{display:none}.intake-session-title{display:grid;gap:3px}.intake-session-title strong{color:#173c6b}.intake-session-title span,.intake-session-meta{color:#63758b;font-size:.82rem}.intake-status-pill{padding:5px 9px;border-radius:999px;background:#e3edf9;color:#17498b;font-size:.75rem;font-weight:800;text-transform:capitalize}.intake-message-list{display:grid;gap:9px;padding:0 14px 14px}.intake-message{padding:11px 12px;border-radius:12px;background:white;border:1px solid #e1e9f2}.intake-message-head{display:flex;justify-content:space-between;gap:10px;color:#63758b;font-size:.75rem}.intake-message p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.intake-interpretation{margin-top:7px;padding-top:7px;border-top:1px dashed #d5dfeb;color:#36536f;font-size:.8rem}.hide{display:none!important}@media(max-width:620px){.intake-head,.intake-history-head{align-items:flex-start;flex-direction:column}.intake-card{padding:16px}.intake-session summary{align-items:flex-start;flex-direction:column}.intake-status-pill{align-self:flex-start}}
     </style>
   </head>
   <body>
@@ -34,6 +34,19 @@
       </section>
 
       <div id="intakeApp" class="intake-grid hide">
+        <section class="panel intake-card">
+          <div class="intake-history-head">
+            <div>
+              <p class="section-kicker">WhatsApp audit</p>
+              <h2>Recent AgentAlpha conversations</h2>
+              <p class="muted">Review how each message was grouped and understood before retrying.</p>
+            </div>
+            <button id="refreshHistory" class="secondary-btn" type="button">Refresh</button>
+          </div>
+          <p id="historyStatus" class="intake-status" aria-live="polite">Loading recent conversations…</p>
+          <div id="recentSessions" class="intake-history"></div>
+        </section>
+
         <section class="panel intake-card">
           <p class="section-kicker">Conversation and files</p>
           <h2>Paste what staff sent</h2>
@@ -70,6 +83,6 @@
     </main>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=34"></script>
-    <script src="./intake.js?v=2"></script>
+    <script src="./intake.js?v=3"></script>
   </body>
 </html>

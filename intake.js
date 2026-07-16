@@ -36,6 +36,130 @@
     return body;
   }
 
+  const formatWhen = (value) => value
+    ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
+    : "";
+
+  function messageText(message) {
+    if (message.text_body) return message.text_body;
+    if (message.media_filename) return `Attachment: ${message.media_filename}`;
+    return message.message_type === "image" ? "Image received" : `${message.message_type || "Message"} received`;
+  }
+
+  function renderHistory(sessions, messages, interpretations) {
+    const host = $("recentSessions");
+    host.replaceChildren();
+    const interpretationByMessage = new Map(
+      interpretations.map((item) => [item.provider_message_id, item])
+    );
+    sessions.forEach((item, index) => {
+      const details = document.createElement("details");
+      details.className = "intake-session";
+      if (index === 0) details.open = true;
+
+      const summary = document.createElement("summary");
+      const title = document.createElement("span");
+      title.className = "intake-session-title";
+      const strong = document.createElement("strong");
+      strong.textContent = `${item.display_id || "AgentAlpha"} · ${item.intake_type || "Understanding intent"}`;
+      const subtitle = document.createElement("span");
+      subtitle.textContent = `${item.source_sender_name || item.source_sender_id || "WhatsApp staff"} · ${formatWhen(item.last_message_at)}`;
+      title.append(strong, subtitle);
+      const status = document.createElement("span");
+      status.className = "intake-status-pill";
+      status.textContent = String(item.status || "unknown").replaceAll("_", " ");
+      summary.append(title, status);
+      details.append(summary);
+
+      const list = document.createElement("div");
+      list.className = "intake-message-list";
+      const sessionMessages = messages
+        .filter((message) => message.session_id === item.id)
+        .sort((a, b) => new Date(a.message_timestamp) - new Date(b.message_timestamp));
+      sessionMessages.forEach((message) => {
+        const card = document.createElement("article");
+        card.className = "intake-message";
+        const head = document.createElement("div");
+        head.className = "intake-message-head";
+        const kind = document.createElement("strong");
+        kind.textContent = `${message.message_type || "message"} · ${message.processing_status || "received"}`;
+        const when = document.createElement("span");
+        when.textContent = formatWhen(message.message_timestamp);
+        head.append(kind, when);
+        const body = document.createElement("p");
+        body.textContent = messageText(message);
+        card.append(head, body);
+        const understood = interpretationByMessage.get(message.provider_message_id);
+        if (understood) {
+          const note = document.createElement("div");
+          note.className = "intake-interpretation";
+          note.textContent = `Understood as ${understood.final_intent || "unknown"}${understood.mentioned_plan ? ` · ${understood.mentioned_plan}` : ""}${understood.reason ? ` · ${understood.reason}` : ""}`;
+          card.append(note);
+        }
+        list.append(card);
+      });
+      if (!sessionMessages.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No message records found for this session.";
+        list.append(empty);
+      }
+      const meta = document.createElement("p");
+      meta.className = "intake-session-meta";
+      meta.textContent = [
+        item.missing_fields?.length ? `Missing: ${item.missing_fields.join(", ")}` : "",
+        item.error_message ? `Error: ${item.error_message}` : "",
+      ].filter(Boolean).join(" · ") || "No recorded processing error.";
+      list.append(meta);
+      details.append(list);
+      host.append(details);
+    });
+  }
+
+  async function loadRecentHistory() {
+    const button = $("refreshHistory");
+    button.disabled = true;
+    $("historyStatus").textContent = "Loading recent WhatsApp conversations…";
+    try {
+      const { data: sessions, error: sessionError } = await client
+        .from("admission_intake_sessions")
+        .select("id,display_id,intake_type,status,source_sender_id,source_sender_name,last_message_at,missing_fields,error_message")
+        .in("channel", ["whatsapp", "whatsapp_group"])
+        .order("last_message_at", { ascending: false })
+        .limit(8);
+      if (sessionError) throw sessionError;
+      const ids = (sessions || []).map((item) => item.id);
+      if (!ids.length) {
+        renderHistory([], [], []);
+        $("historyStatus").textContent = "No recent WhatsApp AgentAlpha conversations found.";
+        return;
+      }
+      const [{ data: messages, error: messageError }, { data: interpretations, error: interpretationError }] = await Promise.all([
+        client
+          .from("admission_intake_messages")
+          .select("session_id,provider_message_id,message_type,text_body,media_filename,processing_status,message_timestamp")
+          .in("session_id", ids)
+          .order("message_timestamp", { ascending: true }),
+        client
+          .from("admission_intake_reply_interpretations")
+          .select("session_id,provider_message_id,final_intent,mentioned_plan,reason,created_at")
+          .in("session_id", ids)
+          .order("created_at", { ascending: true }),
+      ]);
+      if (messageError) throw messageError;
+      if (interpretationError) throw interpretationError;
+      renderHistory(sessions || [], messages || [], interpretations || []);
+      $("historyStatus").textContent = `${sessions.length} recent conversation${sessions.length === 1 ? "" : "s"}. Newest is open.`;
+    } catch (error) {
+      $("historyStatus").textContent = error.message || "Unable to load AgentAlpha history.";
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  $("refreshHistory").addEventListener("click", loadRecentHistory);
+  await loadRecentHistory();
+
   async function ingestText(text, processNow = false) {
     return await callIntake({
       action: "ingest",
