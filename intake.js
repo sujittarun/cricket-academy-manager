@@ -5,6 +5,7 @@
   let sessionId = "";
   let chatId = "";
   let summaryText = "";
+  let intakeType = "unknown";
 
   const { data: { session } } = await client.auth.getSession();
   if (window.GEN_ALPHA_FEATURES?.aiIntakeEnabled !== true) {
@@ -53,8 +54,13 @@
   }
 
   function render(result) {
+    intakeType = result.intakeType || intakeType;
     summaryText = result.summary || summaryText;
     if (summaryText) $("summary").textContent = summaryText;
+    $("reviewTitle").textContent = intakeType === "renewal" ? "Review extracted renewal" : "Review extracted admission";
+    $("confirmButton").textContent = intakeType === "renewal"
+      ? "Confirm and record renewal"
+      : "Confirm and create pending admission";
     $("reviewCard").classList.remove("hide");
     $("reviewCard").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -63,7 +69,7 @@
     event.preventDefault();
     const button = $("extractButton");
     button.disabled = true;
-    $("intakeStatus").textContent = "Creating a secure draft…";
+    $("intakeStatus").textContent = "Creating a secure conversation draft…";
     try {
       chatId = `web-${crypto.randomUUID()}`;
       const first = await ingestText($("transcript").value.trim(), false);
@@ -96,7 +102,7 @@
       $("intakeStatus").textContent = "Reading the conversation and attachments…";
       const result = await callIntake({ action: "process_session", session_id: sessionId });
       render(result.reprocessed || result);
-      $("intakeStatus").textContent = "Draft ready. Nothing has been saved to admissions yet.";
+      $("intakeStatus").textContent = "Draft ready. Nothing has been saved to admissions, players, or payments yet.";
     } catch (error) {
       $("intakeStatus").textContent = error.message || "Unable to extract admission.";
     } finally {
@@ -132,9 +138,13 @@
         confirmation_message_id: "web",
         confirmed_by: session.user.email || "Manager web intake",
       });
-      $("reviewStatus").textContent = `Admission ${result.result?.reg_no || ""} created in the review queue.${result.result?.payment_claim_id ? " Payment is pending manager verification." : ""}`;
+      if (result.intakeType === "renewal") {
+        $("reviewStatus").textContent = `${result.result?.student_name || "Player"} renewed from ${result.result?.cycle_start_date || ""} to ${result.result?.renewal_to_date || ""}. Payment and finance ledger updated.`;
+      } else {
+        $("reviewStatus").textContent = `Admission ${result.result?.reg_no || ""} created in the review queue.${result.result?.payment_claim_id ? " Payment is pending manager verification." : ""}`;
+      }
     } catch (error) {
-      $("reviewStatus").textContent = error.message || "Unable to create admission.";
+      $("reviewStatus").textContent = error.message || "Unable to confirm this intake.";
       $("confirmButton").disabled = false;
     }
   });
