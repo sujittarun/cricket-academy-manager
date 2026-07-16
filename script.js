@@ -679,7 +679,11 @@ const getConfirmablePaymentFollowUp = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
   if (isPaymentPendingFollowUp(followUp)) return followUp;
   if (kid?.paymentStatus === "pending_verification" && kid?.feesPaid !== "yes") {
-    return {
+    return window.GEN_ALPHA_FEE_PLAN_RULES?.buildSyntheticJoiningFee({
+      feePlan: kid.feePlan,
+      amountPaid: kid.amountPaid,
+      joinDate: kid.joinDate,
+    }) || {
       studentId: kid.id,
       selectedPlan: "monthly",
       amount: kid.amountPaid || 3500,
@@ -946,6 +950,8 @@ const getInitialCoverageMonths = (kid) => {
   // paid with the first fee, so remove it before inferring paid-through months.
   const amount = Math.max(Number(kid.amountPaid || 0) - getExtraJerseyAmount(kid.jerseyPairs), 0);
   const planKey = String(kid.feePlan || kid.fee_plan || "").toLowerCase();
+  const fixedPlanMonths = window.GEN_ALPHA_FEE_PLAN_RULES?.fixedMonthsForPlan(planKey) || 0;
+  if (fixedPlanMonths > 0) return fixedPlanMonths;
   if (planKey === "special") {
     return inferSpecialTrainingMonthsFromAmount(amount);
   }
@@ -3036,17 +3042,16 @@ const updateAuthPanel = () => {
 };
 
 const isSpecialTraining = (kid) => {
-  if (String(kid.feePlan || kid.fee_plan || "").toLowerCase() === "special") {
-    return true;
-  }
   const payments = getStudentPayments(kid);
-  if (payments.some((payment) => (payment.plan_type || payment.planType) === "special")) {
-    return true;
-  }
   const firstPaymentAmount = Math.round(
     Math.max(Number(kid.amountPaid || 0) - getExtraJerseyAmount(kid.jerseyPairs), 0),
   );
-  return kid.feesPaid === "yes" && firstPaymentAmount === 10000;
+  return window.GEN_ALPHA_FEE_PLAN_RULES?.shouldTreatAsSpecialTraining({
+    feePlan: kid.feePlan || kid.fee_plan,
+    paymentPlans: payments.map((payment) => payment.plan_type || payment.planType),
+    feesPaid: kid.feesPaid === "yes",
+    firstPaymentAmount,
+  }) ?? (String(kid.feePlan || kid.fee_plan || "").toLowerCase() === "special");
 };
 
 const renderSummary = (alertKids) => {
@@ -4313,7 +4318,7 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
   const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
   const isJoiningFee = followUp.isSyntheticJoiningFee === true;
 
-  const { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert({
+  const paymentPayload = {
     student_id: kid.id,
     payment_type: isJoiningFee ? "joining" : "renewal",
     plan_type: planKey,
@@ -4323,7 +4328,30 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
     paid_on: toLocalIsoDate(),
     comment: isJoiningFee ? "Joining fee confirmed by manager." : "Confirmed from WhatsApp payment proof.",
     recorded_by: getActiveManagerEmail(),
-  }).select("*").single();
+    ...(isJoiningFee ? {
+      coaching_fee: Number(kid.coachingFee || 0),
+      admission_fee: Number(kid.admissionFee || 0),
+      jersey_amount: Number(kid.jerseyAmount || 0),
+      total_fee_amount: Number(kid.totalFeeAmount || 0),
+      jersey_size: kid.jerseySize || "",
+      jersey_pairs: Number(kid.jerseyPairs || 0),
+    } : {}),
+  };
+  let { data: paymentRow, error: paymentError } = await supabaseClient
+    .from("student_payments")
+    .insert(paymentPayload)
+    .select("*")
+    .single();
+  if (paymentError && isJoiningFee && isMissingPaymentFeeColumnError(paymentError)) {
+    const legacyPaymentPayload = { ...paymentPayload };
+    ["coaching_fee", "admission_fee", "jersey_amount", "total_fee_amount", "jersey_size", "jersey_pairs"]
+      .forEach((field) => delete legacyPaymentPayload[field]);
+    ({ data: paymentRow, error: paymentError } = await supabaseClient
+      .from("student_payments")
+      .insert(legacyPaymentPayload)
+      .select("*")
+      .single());
+  }
   if (paymentError) {
     return { success: false, message: paymentError.message };
   }
@@ -4332,6 +4360,9 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
   Object.assign(updatePayload, kid.discontinued ? getRejoinPayload(kid) : { discontinued: false });
   if (isJoiningFee) {
     updatePayload.fees_paid = true;
+    updatePayload.amount_paid = amount;
+    updatePayload.payment_status = "paid";
+    updatePayload.fee_plan = planKey;
   } else {
     updatePayload.renewals = [...new Set([...kid.renewals, cycleDate])];
   }
