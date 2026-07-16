@@ -102,6 +102,9 @@ const heroLabel = document.getElementById("heroLabel");
 const actionHeader = document.getElementById("actionHeader");
 const exportCsvButton = document.getElementById("exportCsvButton");
 const exportPdfButton = document.getElementById("exportPdfButton");
+const whatsappSamplePanel = document.getElementById("whatsappSamplePanel");
+const whatsappSamplePhone = document.getElementById("whatsappSamplePhone");
+const sendWhatsappV2SampleButton = document.getElementById("sendWhatsappV2SampleButton");
 
 let rosterTabButtons, admissionTabButtons, attendanceTabButtons, financeTabButtons, allViewTabs;
 
@@ -4681,6 +4684,7 @@ const loadFinance = async () => {
   if (financeStats) financeStats.hidden = !managerReady;
   if (financeInsights) financeInsights.hidden = !managerReady;
   if (financeExportPanel) financeExportPanel.hidden = true; // Export panel hidden for now
+  if (whatsappSamplePanel) whatsappSamplePanel.hidden = !managerReady;
   if (financeRangePanel) financeRangePanel.hidden = !managerReady;
   if (managerReady) {
     await loadReminderSettings();
@@ -7256,6 +7260,46 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   exportCsvButton?.addEventListener("click", exportMonthlyCsv);
   exportPdfButton?.addEventListener("click", printMonthlyReport);
+  sendWhatsappV2SampleButton?.addEventListener("click", async () => {
+    const phone = String(whatsappSamplePhone?.value || "").replace(/\D/g, "");
+    if (phone.length < 10 || phone.length > 15) {
+      showToast("Enter a valid WhatsApp number.");
+      whatsappSamplePhone?.focus();
+      return;
+    }
+
+    const originalLabel = sendWhatsappV2SampleButton.textContent;
+    sendWhatsappV2SampleButton.disabled = true;
+    sendWhatsappV2SampleButton.textContent = "Sending...";
+    try {
+      const accessToken = await getFreshManagerAccessToken();
+      if (!accessToken) throw new Error("Manager login is required.");
+      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: SUPABASE_CONFIG.anonKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "send_sample_v2_reminder",
+          phone,
+          name: "Gen Alpha Parent",
+          reminderType: "renewal",
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || body?.success === false) {
+        throw new Error(body?.error || body?.message || `Sample send failed (${response.status}).`);
+      }
+      showToast(body?.message || `V2 sample sent to ${phone.slice(-10)}.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to send the V2 sample.");
+    } finally {
+      sendWhatsappV2SampleButton.disabled = false;
+      sendWhatsappV2SampleButton.textContent = originalLabel;
+    }
+  });
 
   // 1. Instantly determine and set the correct starting view to prevent any flicker
   const startingView = document.documentElement.getAttribute("data-starting-view") || 
