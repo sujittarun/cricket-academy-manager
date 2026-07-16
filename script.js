@@ -302,6 +302,7 @@ const ADMISSION_MONTHS = [
 ];
 const ADMISSION_ONE_TIME_FEE = 500;
 const ADMISSION_FEE_PLANS = {
+  pending: { title: "Decide when paying", base: 0 },
   monthly: { title: "Monthly", base: 3500 },
   quarterly: { title: "3 months", base: 9975 },
   halfyearly: { title: "6 months", base: 18900 },
@@ -345,28 +346,28 @@ const PLAN_DISCOUNT_LABELS = {
   halfyearly: "10% discount applied",
 };
 const getAdmissionFeeBreakdown = () => {
-  const planKey = admissionFeePlan?.value || "monthly";
-  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  const planKey = admissionFeePlan?.value || "pending";
+  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.pending;
   const specialMonths = planKey === "special" ? getPositiveInteger(admissionSpecialMonths?.value, 1) : 1;
   const defaultCoachingFee = planKey === "custom"
     ? parseNonNegativeNumber(admissionCustomAmount?.value, 0)
     : planKey === "special"
       ? getSpecialTrainingAmountForMonths(specialMonths)
       : selectedPlan.base;
-  const defaultAdmissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
+  const defaultAdmissionFee = ["pending", "special"].includes(planKey) ? 0 : ADMISSION_ONE_TIME_FEE;
   const hasJerseySize = Boolean(admissionJerseySize?.value);
   const jerseyPairs = hasJerseySize ? getChargeableJerseyPairCount(admissionJerseyPairs?.value) : 0;
-  const defaultJerseyAmount = hasJerseySize ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
-  const coachingFee = planKey === "special" ? defaultCoachingFee : readMoneyField(admissionCoachingFee, defaultCoachingFee);
-  const admissionFee = planKey === "special" ? defaultAdmissionFee : readMoneyField(admissionOneTimeFee, defaultAdmissionFee);
-  const jerseyAmount = hasJerseySize ? readMoneyField(admissionJerseyAmount, defaultJerseyAmount) : 0;
+  const defaultJerseyAmount = hasJerseySize && planKey !== "pending" ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
+  const coachingFee = planKey === "pending" ? 0 : planKey === "special" ? defaultCoachingFee : readMoneyField(admissionCoachingFee, defaultCoachingFee);
+  const admissionFee = planKey === "pending" ? 0 : planKey === "special" ? defaultAdmissionFee : readMoneyField(admissionOneTimeFee, defaultAdmissionFee);
+  const jerseyAmount = planKey === "pending" ? 0 : hasJerseySize ? readMoneyField(admissionJerseyAmount, defaultJerseyAmount) : 0;
   const total = coachingFee + admissionFee + jerseyAmount;
   return { planKey, selectedPlan, specialMonths, coachingFee, admissionFee, jerseyPairs, jerseyAmount, total };
 };
 
 const resetAdmissionFeeInputsFromPlan = () => {
-  const planKey = admissionFeePlan?.value || "monthly";
-  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.monthly;
+  const planKey = admissionFeePlan?.value || "pending";
+  const selectedPlan = ADMISSION_FEE_PLANS[planKey] || ADMISSION_FEE_PLANS.pending;
   if (admissionSpecialMonthsLabel) admissionSpecialMonthsLabel.hidden = planKey !== "special";
   if (planKey === "special" && admissionSpecialMonths && !admissionSpecialMonths.value) {
     admissionSpecialMonths.value = "1";
@@ -377,8 +378,8 @@ const resetAdmissionFeeInputsFromPlan = () => {
     : planKey === "special"
       ? getSpecialTrainingAmountForMonths(specialMonths)
       : selectedPlan.base;
-  const admissionFee = planKey === "special" ? 0 : ADMISSION_ONE_TIME_FEE;
-  const jerseyAmount = admissionJerseySize?.value ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
+  const admissionFee = ["pending", "special"].includes(planKey) ? 0 : ADMISSION_ONE_TIME_FEE;
+  const jerseyAmount = admissionJerseySize?.value && planKey !== "pending" ? getExtraJerseyAmount(admissionJerseyPairs?.value) : 0;
   writeMoneyField(admissionCoachingFee, coachingFee);
   writeMoneyField(admissionOneTimeFee, admissionFee);
   writeMoneyField(admissionJerseyAmount, jerseyAmount);
@@ -703,7 +704,7 @@ const normalizeKid = (kid) => {
     joinDate: kid.join_date || "",
     feesPaid,
     amountPaid,
-    feePlan: kid.fee_plan || "monthly",
+    feePlan: kid.fee_plan || "pending",
     coachingFee: Number(kid.coaching_fee) || 0,
     admissionFee: Number(kid.admission_fee) || 0,
     jerseyAmount: Number(kid.jersey_amount) || 0,
@@ -765,7 +766,7 @@ const normalizePendingAdmission = (admission) => ({
   joinDate: admission.join_date || "",
   feesPaid: Boolean(admission.fees_paid),
   amountPaid: Number(admission.amount_paid) || 0,
-  feePlan: admission.fee_plan || "monthly",
+  feePlan: admission.fee_plan || "pending",
   coachingFee: Number(admission.coaching_fee) || 0,
   admissionFee: Number(admission.admission_fee) || 0,
   jerseyAmount: Number(admission.jersey_amount) || 0,
@@ -2587,7 +2588,9 @@ const syncAdmissionAmountState = () => {
       : hasJerseySize
         ? " Jersey pair count can stay blank and be updated later."
         : " Select a jersey size only if the player is taking a jersey.";
-    admissionFeeSummary.textContent = planKey === "custom"
+    admissionFeeSummary.textContent = planKey === "pending"
+      ? "No payment recorded. The fee plan and amount will be selected when the joining fee is paid."
+      : planKey === "custom"
       ? `Custom coaching fee plus admission fee. Total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
       : planKey === "special"
         ? `${selectedPlan.title}: total due ${rupees(total)}.${jerseyCopy} Payment marked made is submitted for manager verification.`
@@ -3003,6 +3006,7 @@ const resetAdmissionForm = async () => {
   if (upiInput) upiInput.value = "";
   if (refInput) refInput.value = "";
   
+  resetAdmissionFeeInputsFromPlan();
   syncAdmissionAmountState();
   syncAdmissionStyleState();
   refreshPaymentReturnHint();
@@ -6440,6 +6444,11 @@ admissionForm.addEventListener("submit", async (event) => {
   const paymentSubmittedForVerification = String(formData.get("feesPaid") || "no") === "yes";
   const admissionJerseySizeValue = String(formData.get("jerseySize") || "").trim();
   const admissionFeeSplit = getAdmissionFeeBreakdown();
+  if (paymentSubmittedForVerification && admissionFeeSplit.planKey === "pending") {
+    submitAdmissionButton.disabled = false;
+    admissionMessage.textContent = "Choose a fee plan before marking payment as made.";
+    return;
+  }
 
   const baseAdmissionPayload = {
     p_applicant_name: String(formData.get("applicantName") || "").trim(),
@@ -7219,6 +7228,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   admissionPaymentIntentId = buildPaymentIntentId();
   if (rosterStatusFilterInput) rosterStatusFilterInput.value = rosterStatusFilter;
   // 3. UI States
+  resetAdmissionFeeInputsFromPlan();
   syncAdmissionAmountState();
   syncAdmissionStyleState();
   updatePaymentAssist();
