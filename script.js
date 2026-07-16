@@ -389,11 +389,12 @@ const resetManagerJerseyAmountFromPairs = () => {
   const jerseyAmount = jerseySizeSelect?.value ? getExtraJerseyAmount(jerseyPairsInput?.value) : 0;
   writeMoneyField(managerJerseyAmount, jerseyAmount);
 };
-const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "need_help"];
+const REMINDER_PLAN_OPTIONS = ["monthly", "quarterly", "halfyearly", "special", "need_help"];
 const REMINDER_PLAN_LABELS = {
   monthly: "1 Month",
   quarterly: "3 Months",
   halfyearly: "6 Months",
+  special: "Special Training",
   need_help: "Need Help",
 };
 const DEFAULT_REMINDER_SETTINGS = {
@@ -3735,7 +3736,19 @@ const buildWhatsappFlowDetails = (row = {}) => {
       ? row.error_message || "Provider did not return a detailed reason."
       : row.message_body || "";
   }
-  if (row.event_type === "payment_link_sent" || row.event_type === "manager_payment_alert_with_proof_sent" || row.event_type === "manager_payment_alert_without_proof_sent" || row.event_type === "payment_verification_reply_sent") {
+  if (row.event_type === "manager_payment_alert_with_proof_sent" || row.event_type === "manager_payment_alert_without_proof_sent") {
+    const storedBody = String(row.message_body || "").trim();
+    if (storedBody && !storedBody.startsWith("manager_payment_alert")) return storedBody;
+    const planLabel = REMINDER_PLAN_LABELS[row.payment_plan] || row.payment_plan || "";
+    return [
+      "Payment update sent to manager for verification.",
+      planLabel ? `Plan: ${planLabel}` : "",
+      row.payment_months ? `Duration: ${row.payment_months} month${Number(row.payment_months) === 1 ? "" : "s"}` : "",
+      row.payment_amount ? `Amount: Rs ${Number(row.payment_amount).toLocaleString("en-IN")}` : "",
+      row.event_type === "manager_payment_alert_with_proof_sent" ? "Payment proof attached." : "Payment proof was not attached.",
+    ].filter(Boolean).join("\n");
+  }
+  if (row.event_type === "payment_link_sent" || row.event_type === "payment_verification_reply_sent") {
     return row.message_body || "";
   }
   return [

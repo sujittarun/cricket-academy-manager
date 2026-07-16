@@ -166,6 +166,64 @@
         font-weight: 800;
       }
 
+      .special-months {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 10px;
+        padding: 13px 14px;
+        border: 1px solid rgba(21, 87, 166, 0.2);
+        border-radius: 16px;
+        background: #f7faff;
+      }
+
+      .special-months.is-visible {
+        display: flex;
+      }
+
+      .special-months-copy strong,
+      .special-months-copy span {
+        display: block;
+      }
+
+      .special-months-copy strong {
+        color: var(--deep);
+        font-size: 0.9rem;
+      }
+
+      .special-months-copy span {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.35;
+      }
+
+      .month-counter {
+        display: grid;
+        grid-template-columns: 42px 48px 42px;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: white;
+      }
+
+      .month-counter button {
+        min-height: 42px;
+        border: 0;
+        color: var(--blue);
+        background: white;
+        font-size: 1.35rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .month-counter strong {
+        text-align: center;
+        font-size: 1rem;
+      }
+
       .detail-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -303,6 +361,16 @@
           grid-template-columns: 1fr;
         }
 
+        .special-months {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .month-counter {
+          align-self: stretch;
+          grid-template-columns: 1fr 64px 1fr;
+        }
+
         .brand {
           align-items: flex-start;
         }
@@ -335,6 +403,17 @@
       <section class="plan-section" id="planSection">
         <p class="plan-title">Choose payment period</p>
         <div class="plan-grid" id="planGrid"></div>
+        <div class="special-months" id="specialMonthsControl">
+          <div class="special-months-copy">
+            <strong>Special Training duration</strong>
+            <span id="specialDiscountText">₹10,000 per month</span>
+          </div>
+          <div class="month-counter" aria-label="Special Training months">
+            <button id="decreaseSpecialMonths" type="button" aria-label="Decrease months">−</button>
+            <strong id="specialMonthsText">1</strong>
+            <button id="increaseSpecialMonths" type="button" aria-label="Increase months">+</button>
+          </div>
+        </div>
       </section>
 
       <div class="detail-grid">
@@ -377,6 +456,10 @@
       const player = String(params.get("name") || "Cricket fees").trim();
       const plan = String(params.get("p") || "fees").trim();
       const reminderEventId = String(params.get("e") || "").trim();
+      const requestedInitialMonths = Number(params.get("m") || 1);
+      const initialMonths = Number.isFinite(requestedInitialMonths)
+        ? Math.min(36, Math.max(1, Math.floor(requestedInitialMonths)))
+        : 1;
       const amountText = document.getElementById("amountText");
       const playerText = document.getElementById("playerText");
       const upiText = document.getElementById("upiText");
@@ -384,10 +467,14 @@
       const upiOptions = document.getElementById("upiOptions");
       const planGrid = document.getElementById("planGrid");
       const planSection = document.getElementById("planSection");
+      const specialMonthsControl = document.getElementById("specialMonthsControl");
+      const specialMonthsText = document.getElementById("specialMonthsText");
+      const specialDiscountText = document.getElementById("specialDiscountText");
       const basePlanOptions = [
         { id: "monthly", label: "1 Month", months: 1, amount: 3500 },
         { id: "quarterly", label: "3 Months", months: 3, amount: 9975 },
         { id: "halfyearly", label: "6 Months", months: 6, amount: 18900 },
+        { id: "special", label: "Special Training", months: 1, amount: 10000, customMonths: true, minMonths: 1, maxMonths: 36 },
       ];
       const planLabelToId = {
         "1 month": "monthly",
@@ -396,12 +483,19 @@
         quarterly: "quarterly",
         "6 months": "halfyearly",
         halfyearly: "halfyearly",
+        special: "special",
+        "special training": "special",
       };
       let paymentOptions = basePlanOptions;
       let selectedPlanId = planLabelToId[plan.toLowerCase()] || "";
       let selectedAmount = Number.isFinite(amount) && amount > 0 ? amount : 0;
       let selectedPlanLabel = plan || "fees";
       let playerName = player;
+      let selectedMonths = initialMonths;
+
+      const specialDiscountRate = (months) => months >= 6 ? 0.1 : (months >= 3 ? 0.05 : 0);
+      const specialAmount = (months) => Math.round(10000 * months * (1 - specialDiscountRate(months)));
+      const clampSpecialMonths = (months) => Math.min(36, Math.max(1, Math.floor(Number(months || 1))));
 
       const formatAmount = (value) =>
         Number.isFinite(value) && value > 0
@@ -424,7 +518,21 @@
 
       const currentPlanLabel = () => {
         const option = currentOption();
+        if (option?.id === "special") {
+          return `Special Training (${selectedMonths} month${selectedMonths === 1 ? "" : "s"})`;
+        }
         return option?.label || selectedPlanLabel || "fees";
+      };
+
+      const renderSpecialMonths = () => {
+        const isSpecial = selectedPlanId === "special";
+        specialMonthsControl.classList.toggle("is-visible", isSpecial);
+        if (!isSpecial) return;
+        specialMonthsText.textContent = String(selectedMonths);
+        const discount = specialDiscountRate(selectedMonths);
+        specialDiscountText.textContent = discount > 0
+          ? `₹10,000/month • ${Math.round(discount * 100)}% multi-month discount applied`
+          : "₹10,000 per month";
       };
 
       const buildUpiUri = () => {
@@ -461,17 +569,26 @@
         planGrid.innerHTML = paymentOptions.map((option) => `
           <button class="plan-button${option.id === selectedPlanId ? " is-selected" : ""}" type="button" data-plan-id="${option.id}">
             <strong>${option.label}</strong>
-            <span>Rs ${rupees(option.amount)}</span>
+            <span>${option.id === "special" ? `${option.months} mo • ` : ""}Rs ${rupees(option.amount)}</span>
           </button>
         `).join("");
+        renderSpecialMonths();
       };
 
-      const selectPlan = (planId) => {
+      const selectPlan = (planId, requestedMonths = 0, amountOverride = 0) => {
         const option = paymentOptions.find((item) => item.id === planId) || paymentOptions[0];
         if (!option) return;
         selectedPlanId = option.id;
         selectedPlanLabel = option.label;
-        selectedAmount = Number(option.amount || 0);
+        if (option.id === "special") {
+          selectedMonths = clampSpecialMonths(requestedMonths || selectedMonths || option.months || 1);
+          option.months = selectedMonths;
+          option.amount = specialAmount(selectedMonths);
+          selectedAmount = option.amount;
+        } else {
+          selectedMonths = Number(option.months || 0);
+          selectedAmount = Number(amountOverride || option.amount || 0);
+        }
         amountText.textContent = formatAmount(selectedAmount);
         renderPlanOptions();
       };
@@ -487,11 +604,7 @@
       if (!selectedPlanId) {
         selectPlan("monthly");
       } else {
-        const option = paymentOptions.find((item) => item.id === selectedPlanId);
-        if (option && !selectedAmount) {
-          selectedAmount = option.amount;
-        }
-        renderPlanOptions();
+        selectPlan(selectedPlanId, initialMonths, selectedAmount);
       }
 
       const copyText = async (value, label) => {
@@ -508,7 +621,7 @@
           return;
         }
 
-        const notifyKey = `gen-alpha-payment-attempt-${reminderEventId}-${selectedPlanId}`;
+        const notifyKey = `gen-alpha-payment-attempt-${reminderEventId}-${selectedPlanId}-${selectedMonths}`;
         if (sessionStorage.getItem(notifyKey)) {
           return;
         }
@@ -525,6 +638,7 @@
             action: "payment_attempted",
             eventId: reminderEventId,
             selectedPlan: selectedPlanId,
+            selectedMonths,
           }),
         }).then((response) => {
           if (response.ok) {
@@ -550,10 +664,16 @@
             label: String(option.label || ""),
             months: Number(option.months || 0),
             amount: Number(option.amount || 0),
+            customMonths: Boolean(option.customMonths),
+            minMonths: Number(option.minMonths || option.months || 1),
+            maxMonths: Number(option.maxMonths || option.months || 36),
           })).filter((option) => option.id && option.label && option.amount > 0);
         }
         selectedAmount = 0;
-        selectPlan(payload.defaultPlan || selectedPlanId || "monthly");
+        selectPlan(
+          payload.defaultPlan || selectedPlanId || "monthly",
+          Number(payload.selectedMonths || initialMonths),
+        );
       };
 
       const loadPaymentOptions = async () => {
@@ -620,6 +740,13 @@
         const button = event.target.closest("[data-plan-id]");
         if (!button) return;
         selectPlan(button.dataset.planId);
+      });
+
+      document.getElementById("decreaseSpecialMonths").addEventListener("click", () => {
+        selectPlan("special", selectedMonths - 1);
+      });
+      document.getElementById("increaseSpecialMonths").addEventListener("click", () => {
+        selectPlan("special", selectedMonths + 1);
       });
 
       document.getElementById("copyUpiButton").addEventListener("click", () => copyText(upiId, "UPI ID"));
