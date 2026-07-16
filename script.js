@@ -744,14 +744,23 @@ const normalizePendingAdmission = (admission) => ({
   id: admission.id,
   regNo: admission.reg_no,
   applicantName: admission.applicant_name || "",
+  nationality: admission.nationality || "",
+  dateOfBirth: admission.date_of_birth || "",
   age: Number(admission.age) || 0,
   gender: admission.gender || "",
   fatherGuardianName: admission.father_guardian_name || "",
   parentContactNo: admission.parent_contact_no || "",
   alternateContactNo: admission.emergency_contact_no || "",
   schoolCollege: admission.school_college || "",
+  grade: admission.grade || "",
   city: admission.city || "",
   address: admission.address || "",
+  parentAadhaarNo: admission.parent_aadhaar_no || "",
+  batsmanStyle: admission.batsman_style || "",
+  bowlingStyles: Array.isArray(admission.bowling_styles) ? admission.bowling_styles : [],
+  readyToStart: Boolean(admission.ready_to_start),
+  consentAccepted: Boolean(admission.consent_accepted),
+  termsAccepted: Boolean(admission.terms_accepted),
   timeSlot: admission.time_slot || "",
   joinDate: admission.join_date || "",
   feesPaid: Boolean(admission.fees_paid),
@@ -3580,15 +3589,18 @@ const renderAdmissionReviewQueue = () => {
             <div>
               <p class="review-reg">Reg ${escapeHtml(admission.regNo || "-")} · ${escapeHtml(admission.filledBy)}</p>
               <h3>${escapeHtml(admission.applicantName)}</h3>
-              <p class="review-meta">${escapeHtml(admission.age)} yrs · ${escapeHtml(admission.timeSlot || "Slot not set")} · Joining ${escapeHtml(formatDate(admission.joinDate))}</p>
+              <p class="review-meta">${escapeHtml(admission.age)} yrs · DOB ${escapeHtml(admission.dateOfBirth ? formatDate(admission.dateOfBirth) : "Not set")} · ${escapeHtml(admission.timeSlot || "Slot not set")} · Joining ${escapeHtml(formatDate(admission.joinDate))}</p>
               <div id="managerIdentity" class="manager-identity" hidden></div>
        </div>
             <span class="status-pill ${payClass}">${escapeHtml(payLabel)}</span>
           </div>
           <div class="review-details">
             <span>Parent: ${escapeHtml(admission.fatherGuardianName || "-")}</span>
-            <span>Phone: ${escapeHtml(contact)}</span>
-            <span>School: ${escapeHtml(admission.schoolCollege || "-")}</span>
+            <span>Phone: ${escapeHtml(contact)}${admission.alternateContactNo && admission.alternateContactNo !== contact ? ` · Alt ${escapeHtml(admission.alternateContactNo)}` : ""}</span>
+            <span>School: ${escapeHtml(admission.schoolCollege || "-")} · Grade ${escapeHtml(admission.grade || "-")}</span>
+            <span>Address: ${escapeHtml([admission.address, admission.city].filter(Boolean).join(", ") || "-")}</span>
+            <span>Skills: ${escapeHtml([admission.batsmanStyle, ...admission.bowlingStyles].filter(Boolean).join(" · ") || "Not set")}</span>
+            <span>Consent: ${admission.consentAccepted && admission.termsAccepted ? "Signed" : "Missing"} · Ready now: ${admission.readyToStart ? "Yes" : "No"}</span>
             <span>Jersey: ${escapeHtml(admission.jerseySize || "Not set")} · ${admission.jerseyPairs || 0} pair${admission.jerseyPairs === 1 ? "" : "s"}</span>
           </div>
           ${admission.comments ? `<p class="review-comment">${escapeHtml(admission.comments)}</p>` : ""}
