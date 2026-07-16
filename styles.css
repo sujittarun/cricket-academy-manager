@@ -2760,6 +2760,16 @@ body.popup-open {
   overflow-wrap: anywhere;
 }
 
+.timeline-cluster-copy .timeline-cluster-preview {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
 .timeline-cluster-card time {
   color: var(--accent-dark);
   font-size: 0.72rem;

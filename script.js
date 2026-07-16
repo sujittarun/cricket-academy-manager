@@ -4128,6 +4128,15 @@ const getTimelineClusterSummary = (items = []) => {
   ].filter(Boolean).join(" · ");
 };
 
+const getTimelineClusterPreview = (category, items = []) => {
+  if (category !== "manager-alerts") return "";
+  const alertWithBody = items.find((item) => {
+    const details = String(item.details || "").trim();
+    return details.includes("Player:") && details.length > "Player:".length;
+  });
+  return String(alertWithBody?.details || "").trim();
+};
+
 const buildTimelineRows = (timeline = []) => {
   const rows = [];
   const clusters = new Map();
@@ -4195,6 +4204,7 @@ const renderTimelineCluster = (cluster = {}) => {
   const tone = cluster.items.some((item) => getTimelineTone(item) === "danger") ? "danger" : "reminder";
   const latest = cluster.items[0] || {};
   const summary = getTimelineClusterSummary(cluster.items);
+  const preview = getTimelineClusterPreview(cluster.category, cluster.items);
   return `
     <li class="timeline-event timeline-cluster-event ${tone}">
       <span class="timeline-dot timeline-cluster-dot" aria-hidden="true"></span>
@@ -4204,6 +4214,7 @@ const renderTimelineCluster = (cluster = {}) => {
           <span class="timeline-cluster-copy">
             <strong>${escapeHtml(getTimelineClusterTitle(cluster.category, cluster.items))}</strong>
             <span>${cluster.items.length} update${cluster.items.length === 1 ? "" : "s"} folded${summary ? ` · ${escapeHtml(summary)}` : ""}</span>
+            ${preview ? `<span class="timeline-cluster-preview">${escapeHtml(preview)}</span>` : ""}
           </span>
           <time>${formatTimelineStamp(latest.created_at || latest.event_date || cluster.dateKey)}</time>
           <span class="timeline-cluster-chevron" aria-hidden="true"></span>
