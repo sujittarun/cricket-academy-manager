@@ -3249,14 +3249,6 @@ body.popup-open {
   margin: 2px 0 4px;
 }
 
-.whatsapp-sample-panel {
-  margin-bottom: 1rem;
-}
-
-.whatsapp-sample-panel input {
-  min-width: 11rem;
-}
-
 .finance-range-panel {
   display: grid;
   grid-template-columns: minmax(150px, 0.7fr) minmax(260px, 1.8fr) auto;
