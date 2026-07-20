@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-ui="refresh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a4f9d" />
+    <meta name="theme-color" content="#1253a4" />
     <meta name="facebook-domain-verification" content="aifhhuiznysy8dzmzkjttrkfxgz30o" />
     <meta property="og:title" content="Gen Alpha Cricket Academy" />
     <meta property="og:description" content="Best cricket coaching academy for kids in Hyderabad | Professional training | Admissions open" />
@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css?v=78" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./ui-refresh.css?v=1" />
     <script>
       (function() {
         // Prevent flicker by determining view early
@@ -140,7 +140,7 @@
       </section>
 
       <section id="rosterView" class="dashboard-view" hidden>
-        <section class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <section class="stats-grid">
           <article class="panel stat-card">
             <p class="section-kicker">Players Joined</p>
             <strong id="joinedCount" class="stat-value">0</strong>
@@ -1161,6 +1161,7 @@
     <div id="playerDetailPopup" class="player-popup-backdrop" hidden>
       <section class="player-popup panel" role="dialog" aria-modal="true" aria-labelledby="playerDetailTitle">
         <div class="payment-popup-header">
+          <div id="playerDetailAvatar" class="player-profile-avatar" aria-hidden="true">GA</div>
           <div>
             <p class="section-kicker">Player Profile</p>
             <h3 id="playerDetailTitle">Player details</h3>
@@ -1343,6 +1344,6 @@
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=34"></script>
     <script src="./fee-plan-rules.js?v=1"></script>
-    <script src="./script.js?v=81"></script>
+    <script src="./script.js?v=83"></script>
   </body>
 </html>

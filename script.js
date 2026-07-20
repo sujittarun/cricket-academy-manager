@@ -166,6 +166,7 @@ const admissionStyleOptions = document.getElementById("admissionStyleOptions");
 const playerDetailPopup = document.getElementById("playerDetailPopup");
 const playerDetailContent = document.getElementById("playerDetailContent");
 const playerDetailTitle = document.getElementById("playerDetailTitle");
+const playerDetailAvatar = document.getElementById("playerDetailAvatar");
 const closePlayerDetailButton = document.getElementById("closePlayerDetailButton");
 const renewalPopup = document.getElementById("renewalPopup");
 const renewalForm = document.getElementById("renewalForm");
@@ -503,6 +504,7 @@ let realtimeAdmissionsChannel = null;
 let realtimeRemindersChannel = null;
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
+let playerDetailRenderSeq = 0;
 let financePayments = [];
 let financeExpenses = [];
 let paymentFollowUps = [];
@@ -1334,6 +1336,15 @@ const escapeHtml = (value) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+
+const getPlayerInitials = (name) => {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("") || "GA";
+};
 
 const localIsoDate = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -3022,10 +3033,8 @@ const resetAdmissionForm = async () => {
 
 const updateAuthPanel = () => {
   authPanel.hidden = !isAuthPanelOpen;
+  authToggleButton.hidden = isManagerLoggedIn;
   authToggleButton.textContent = isManagerLoggedIn ? "" : "Manager Login";
-  if (isManagerLoggedIn) {
-    authToggleButton.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
-  }
   quickLogoutButton.hidden = !isManagerLoggedIn;
   editModeButton.hidden = !isManagerLoggedIn;
   if (intakeToolLink) {
@@ -3314,7 +3323,11 @@ const renderKids = () => {
     row.innerHTML = `
       <td data-label="Player">
         <div class="player-name-cell">
-          <button class="player-link" data-action="details" data-id="${kid.id}" type="button">${kid.name}</button>
+          <span class="player-avatar" aria-hidden="true">${escapeHtml(getPlayerInitials(kid.name))}</span>
+          <span class="player-title-stack">
+            <button class="player-link" data-action="details" data-id="${kid.id}" type="button" title="${safeKidName}">${safeKidName}</button>
+            <small>${escapeHtml(studentType)} · Joined ${escapeHtml(formatDate(kid.joinDate))}</small>
+          </span>
           ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
         </div>
         ${mobileEditCard}
@@ -3820,23 +3833,35 @@ const suppressSupersededReminderFailures = (items = []) => {
 const loadPlayerTimeline = async (studentId) => {
   if (!isBackendReady || !isManagerLoggedIn) return [];
 
-  const { data, error } = await supabaseClient
+  const timelineQuery = supabaseClient
     .from("student_timeline")
     .select("*")
     .eq("student_id", studentId)
     .neq("event_type", "whatsapp_flow")
     .order("created_at", { ascending: false })
     .limit(30);
-
-  const timelineRows = error ? [] : (data || []);
-  let reminderStatusEvents = [];
-  let reminderResult = await supabaseClient
+  const reminderQuery = supabaseClient
     .from("reminder_events")
     .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required,manual_followup_reason")
     .eq("student_id", studentId)
     .in("status", [...REMINDER_FAILED_STATUSES])
     .order("created_at", { ascending: false })
     .limit(10);
+  const flowQuery = supabaseClient
+    .from("whatsapp_flow_events")
+    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_kind,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
+    .eq("student_id", studentId)
+    .order("status_at", { ascending: false, nullsFirst: false })
+    .limit(40);
+
+  const [timelineResult, initialReminderResult, flowResult] = await Promise.all([
+    timelineQuery,
+    reminderQuery,
+    flowQuery,
+  ]);
+  const timelineRows = timelineResult.error ? [] : (timelineResult.data || []);
+  let reminderStatusEvents = [];
+  let reminderResult = initialReminderResult;
   if (reminderResult.error && isMissingReminderTrackingColumnError(reminderResult.error)) {
     reminderResult = await supabaseClient
       .from("reminder_events")
@@ -3863,13 +3888,9 @@ const loadPlayerTimeline = async (studentId) => {
     });
   }
 
-  const { data: flowRows, error: flowError } = await supabaseClient
-    .from("whatsapp_flow_events")
-    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_kind,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
-    .eq("student_id", studentId)
-    .order("status_at", { ascending: false, nullsFirst: false })
-    .limit(40);
-  const whatsappFlowEvents = flowError ? [] : (flowRows || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean);
+  const whatsappFlowEvents = flowResult.error
+    ? []
+    : (flowResult.data || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean);
 
   const mergedRows = suppressSupersededReminderFailures([...timelineRows, ...reminderStatusEvents, ...whatsappFlowEvents])
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
@@ -4543,9 +4564,29 @@ const sendReminderDryRun = async (kid) => {
 
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
+  const renderSeq = ++playerDetailRenderSeq;
+  playerDetailTitle.textContent = kid.name;
+  if (playerDetailAvatar) playerDetailAvatar.textContent = getPlayerInitials(kid.name);
+  playerDetailContent.setAttribute("aria-busy", "true");
+  playerDetailContent.innerHTML = `
+    <div class="profile-loading-shell" role="status" aria-live="polite">
+      <div class="profile-loading-grid">
+        ${Array.from({ length: 4 }, () => '<span class="profile-loading-tile"></span>').join("")}
+      </div>
+      <span class="profile-loading-block"></span>
+      <span class="profile-loading-block tall"></span>
+      <p>Loading player journey…</p>
+    </div>
+  `;
+  playerDetailPopup.hidden = false;
+  document.body.classList.add("popup-open");
+
+  // Give the browser one paint before timeline network work starts so the
+  // profile always responds immediately on mobile connections.
+  await new Promise((resolve) => requestAnimationFrame(resolve));
   const timeline = compactPlayerTimeline(await loadPlayerTimeline(kid.id));
+  if (renderSeq !== playerDetailRenderSeq || playerDetailPopup.hidden) return;
   const paymentRows = getPlayerPaymentRows(kid);
-  const attendanceSummary = await loadPlayerAttendanceSummary(kid.id);
   const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
   const reminderState = getReminderState(kid);
@@ -4557,7 +4598,6 @@ const renderPlayerDetails = async (kid) => {
   const pendingCycleDate = pendingPaymentFollowUp?.cycleStartDate || getDueCycleDate(kid);
   const pendingToDate = addMonthsIso(pendingCycleDate, Number(pendingPaymentFollowUp?.monthsCovered || pendingPlan.months || 1));
 
-  playerDetailTitle.textContent = kid.name;
   playerDetailContent.innerHTML = `
     ${
       reminderState.requiresManualFollowUp
@@ -4646,8 +4686,7 @@ const renderPlayerDetails = async (kid) => {
       }
     </div>
   `;
-  playerDetailPopup.hidden = false;
-  document.body.classList.add("popup-open");
+  playerDetailContent.removeAttribute("aria-busy");
 };
 
 const openRenewalPopup = (kid, mode = "renewal") => {
@@ -6166,6 +6205,7 @@ copyPaymentMobileButton.addEventListener("click", () =>
   copyPaymentText(academyPaymentConfig.mobileNumber, "Academy mobile number copied")
 );
 closePlayerDetailButton?.addEventListener("click", () => {
+  playerDetailRenderSeq += 1;
   playerDetailPopup.hidden = true;
   document.body.classList.remove("popup-open");
 });
@@ -6239,6 +6279,7 @@ shareReceiptButton?.addEventListener("click", () => {
 printReceiptButton?.addEventListener("click", printReceipt);
 playerDetailPopup?.addEventListener("click", (event) => {
   if (event.target === playerDetailPopup) {
+    playerDetailRenderSeq += 1;
     playerDetailPopup.hidden = true;
     document.body.classList.remove("popup-open");
   }
@@ -6249,6 +6290,7 @@ window.addEventListener("keydown", (event) => {
     closePaymentPopup();
   }
   if (event.key === "Escape" && playerDetailPopup && !playerDetailPopup.hidden) {
+    playerDetailRenderSeq += 1;
     playerDetailPopup.hidden = true;
     document.body.classList.remove("popup-open");
   }

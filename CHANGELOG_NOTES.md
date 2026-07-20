@@ -1,6 +1,6 @@
 # Gen Alpha Web App Changelog Notes
 
-Last updated: 2026-07-11
+Last updated: 2026-07-20
 
 This file records meaningful web-app changes and cross-app decisions. It is for developer/manager memory, not a public release changelog.
 
@@ -12,6 +12,16 @@ Use this file when:
 - A future agent needs to understand why a web design or business rule exists.
 
 For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
+
+## 2026-07-20
+
+### Responsive UI and Player Profile Performance
+
+- Added one scoped `ui-refresh.css` visual layer for the browser manager app so legacy mobile experiments no longer leave patchy cell backgrounds or conflicting title rules.
+- Refreshed the app background, header, bottom navigation, roster identity cards, player profile, finance cards, controls, and tablet breakpoints with a consistent blue/green/gold palette.
+- Player profiles now display a responsive loading sheet immediately instead of waiting for timeline requests before opening.
+- Removed an unused attendance request from profile opening and parallelized the remaining timeline, reminder, and WhatsApp-flow queries.
+- Added content visibility to long roster and finance lists, removed the production Tailwind CDN dependency, simplified the signed-in mobile header, and bumped the service-worker cache to `v91`.
 
 ## 2026-07-11
 

@@ -1,0 +1,1181 @@
+/*
+ * Gen Alpha browser UI refresh
+ *
+ * This file is the authoritative visual layer for the current application.
+ * It is deliberately scoped to data-ui="refresh" so older experimental
+ * overrides in styles.css cannot leak into unrelated pages.
+ */
+
+html[data-ui="refresh"] {
+  --bg: #f4f7fd;
+  --panel: #ffffff;
+  --ink: #12233f;
+  --muted: #65758c;
+  --accent: #1760bb;
+  --accent-dark: #0a397d;
+  --gold: #f6b91d;
+  --success: #11845f;
+  --danger: #d13b45;
+  --border: rgba(18, 35, 63, 0.09);
+  --soft-blue: #edf5ff;
+  --soft-green: #ecfaf4;
+  --soft-gold: #fff8e7;
+  --soft-red: #fff0f1;
+  --soft-violet: #f4f0ff;
+  --shadow: 0 18px 45px rgba(29, 58, 105, 0.1);
+  color-scheme: light;
+  background: #f4f7fd;
+}
+
+html[data-ui="refresh"] body {
+  min-height: 100dvh;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 4% 2%, rgba(50, 126, 229, 0.15), transparent 27rem),
+    radial-gradient(circle at 95% 8%, rgba(111, 76, 213, 0.11), transparent 25rem),
+    radial-gradient(circle at 72% 90%, rgba(22, 163, 118, 0.09), transparent 28rem),
+    linear-gradient(145deg, #f8fbff 0%, #f2f7ff 42%, #fffaf0 100%);
+  background-attachment: fixed;
+}
+
+html[data-ui="refresh"] button,
+html[data-ui="refresh"] input,
+html[data-ui="refresh"] select,
+html[data-ui="refresh"] textarea {
+  font: inherit;
+}
+
+html[data-ui="refresh"] .app-shell,
+html[data-ui="refresh"] .app-shell:has(#rosterView:not([hidden])),
+html[data-ui="refresh"] .app-shell:has(#financeView:not([hidden])) {
+  width: min(1500px, calc(100% - 32px)) !important;
+  padding: 18px 0 54px;
+}
+
+html[data-ui="refresh"] .panel,
+html[data-ui="refresh"] .hero-card {
+  width: 100%;
+  border: 1px solid rgba(18, 35, 63, 0.08);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+  backdrop-filter: none;
+}
+
+html[data-ui="refresh"] .dashboard-view:not([hidden]) {
+  animation: refresh-view-in 220ms ease-out both;
+}
+
+@keyframes refresh-view-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+html[data-ui="refresh"] h1,
+html[data-ui="refresh"] h2,
+html[data-ui="refresh"] h3,
+html[data-ui="refresh"] h4 {
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+html[data-ui="refresh"] .section-kicker {
+  margin-bottom: 6px;
+  color: #1b5aaa;
+  font-size: 0.69rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+/* Header and navigation */
+html[data-ui="refresh"] .view-switcher.panel {
+  position: sticky;
+  top: 12px;
+  z-index: 1100;
+  width: 100%;
+  min-height: 74px;
+  margin: 0 auto 18px;
+  padding: 10px 14px !important;
+  gap: 14px;
+  border-color: rgba(18, 72, 143, 0.1);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 15px 35px rgba(24, 58, 107, 0.11);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+html[data-ui="refresh"] .brand-lockup {
+  gap: 11px;
+}
+
+html[data-ui="refresh"] .brand-badge {
+  width: 50px;
+  height: 50px;
+  padding: 3px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #edf5ff, #fff9e7);
+  mix-blend-mode: normal;
+  filter: none;
+}
+
+html[data-ui="refresh"] .academy-main-title {
+  max-width: none;
+  color: #10294f !important;
+  font-size: clamp(1rem, 2vw, 1.3rem) !important;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+html[data-ui="refresh"] .academy-tagline {
+  margin-top: 4px !important;
+  color: #718097;
+  font-size: 0.58rem !important;
+  letter-spacing: 0.13em;
+}
+
+html[data-ui="refresh"] .view-switcher-tabs {
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(18, 35, 63, 0.06);
+  border-radius: 18px;
+  background: #f1f5fb;
+}
+
+html[data-ui="refresh"] .view-tab {
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 14px;
+  color: #66758b;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+html[data-ui="refresh"] .view-tab.active {
+  color: #fff;
+  background: linear-gradient(135deg, #1760bb, #0b3d83);
+  box-shadow: 0 8px 18px rgba(23, 96, 187, 0.25);
+}
+
+html[data-ui="refresh"] .manager-bar {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+html[data-ui="refresh"] .manager-actions {
+  gap: 5px;
+}
+
+html[data-ui="refresh"] .top-link-button,
+html[data-ui="refresh"] .top-edit-button,
+html[data-ui="refresh"] .top-logout-button {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+/* Shared cards and controls */
+html[data-ui="refresh"] .primary-btn {
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #1760bb, #0b438d);
+  box-shadow: 0 9px 20px rgba(23, 96, 187, 0.2);
+}
+
+html[data-ui="refresh"] .secondary-btn,
+html[data-ui="refresh"] .icon-button {
+  border-color: rgba(18, 35, 63, 0.1);
+  border-radius: 13px;
+}
+
+html[data-ui="refresh"] input,
+html[data-ui="refresh"] select,
+html[data-ui="refresh"] textarea {
+  border-color: rgba(28, 57, 98, 0.13);
+  border-radius: 14px;
+  color: var(--ink);
+  background: #f8faff;
+  box-shadow: none;
+}
+
+html[data-ui="refresh"] input:focus,
+html[data-ui="refresh"] select:focus,
+html[data-ui="refresh"] textarea:focus {
+  border-color: #4a8fe5;
+  outline: 3px solid rgba(74, 143, 229, 0.13);
+  background: #fff;
+}
+
+html[data-ui="refresh"] .stats-grid {
+  width: 100%;
+  gap: 12px;
+}
+
+html[data-ui="refresh"] .stat-card {
+  min-height: 104px !important;
+  padding: 18px 20px !important;
+  border: 1px solid rgba(18, 35, 63, 0.06);
+  border-radius: 22px;
+  background: linear-gradient(145deg, #ffffff, #edf5ff);
+  box-shadow: 0 11px 26px rgba(29, 58, 105, 0.08);
+  cursor: default;
+}
+
+html[data-ui="refresh"] .stat-card:nth-child(2) {
+  background: linear-gradient(145deg, #ffffff, #eafaf3);
+}
+
+html[data-ui="refresh"] .stat-card:nth-child(3) {
+  background: linear-gradient(145deg, #ffffff, #fff7e3);
+}
+
+html[data-ui="refresh"] .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(29, 58, 105, 0.11);
+}
+
+html[data-ui="refresh"] .stat-card .stat-value {
+  -webkit-text-fill-color: initial;
+  color: #1356a7;
+  background: none;
+}
+
+html[data-ui="refresh"] .records-panel,
+html[data-ui="refresh"] .student-movement-panel,
+html[data-ui="refresh"] #financeView > .panel,
+html[data-ui="refresh"] #attendanceView > .panel,
+html[data-ui="refresh"] #admissionView > .panel {
+  overflow: hidden;
+  border-radius: 26px;
+}
+
+html[data-ui="refresh"] .slot-toolbar,
+html[data-ui="refresh"] .finance-range-panel {
+  border-color: rgba(23, 96, 187, 0.09);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #f7faff, #f0f6ff);
+}
+
+html[data-ui="refresh"] .slot-chip,
+html[data-ui="refresh"] .finance-range-filters button,
+html[data-ui="refresh"] .finance-recent-switch button {
+  border-radius: 999px;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+html[data-ui="refresh"] .slot-chip.active,
+html[data-ui="refresh"] .finance-range-filters button.active {
+  color: #fff;
+  background: #1457a7;
+  box-shadow: 0 7px 16px rgba(20, 87, 167, 0.18);
+}
+
+/* Roster identity and table */
+html[data-ui="refresh"] #rosterView .kids-table tr {
+  content-visibility: auto;
+  contain-intrinsic-size: 72px;
+}
+
+html[data-ui="refresh"] #rosterView .player-name-cell {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+html[data-ui="refresh"] .player-avatar,
+html[data-ui="refresh"] .player-profile-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(145deg, #2074d4, #684ac7);
+  box-shadow: 0 8px 18px rgba(44, 88, 180, 0.19);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.03em;
+}
+
+html[data-ui="refresh"] .player-title-stack {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+html[data-ui="refresh"] .player-title-stack small {
+  overflow: hidden;
+  color: #75849a;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-ui="refresh"] #rosterView .player-link {
+  min-width: 0;
+  padding: 0;
+  color: #102d59;
+  font-weight: 900;
+  line-height: 1.22;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+html[data-ui="refresh"] #rosterView .kids-table thead th {
+  color: #6b7a8f;
+  background: #f4f7fc;
+}
+
+html[data-ui="refresh"] #rosterView .kids-table tbody tr:hover {
+  background: #f9fbff;
+}
+
+/* Finance */
+html[data-ui="refresh"] .finance-stats {
+  gap: 12px;
+}
+
+html[data-ui="refresh"] .finance-metric {
+  border: 1px solid rgba(18, 35, 63, 0.06);
+  border-radius: 21px;
+  background: linear-gradient(145deg, #fff, #eaf8f2);
+  box-shadow: 0 11px 25px rgba(29, 58, 105, 0.07);
+}
+
+html[data-ui="refresh"] .finance-metric.expense {
+  background: linear-gradient(145deg, #fff, #fff0f1);
+}
+
+html[data-ui="refresh"] .finance-metric.net {
+  background: linear-gradient(145deg, #fff, #edf4ff);
+}
+
+html[data-ui="refresh"] .finance-chart-card,
+html[data-ui="refresh"] .finance-recent {
+  border: 1px solid rgba(18, 35, 63, 0.07);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(29, 58, 105, 0.06);
+}
+
+html[data-ui="refresh"] .finance-recent-switch {
+  padding: 4px;
+  border-radius: 18px;
+  background: #edf1f7;
+}
+
+html[data-ui="refresh"] .finance-recent-switch button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #1760bb, #0b438d);
+  box-shadow: 0 7px 16px rgba(23, 96, 187, 0.2);
+}
+
+html[data-ui="refresh"] .finance-payments-table tr,
+html[data-ui="refresh"] .finance-expenses-table tr {
+  content-visibility: auto;
+  contain-intrinsic-size: 64px;
+}
+
+/* Player profile: immediate, stable sheet */
+html[data-ui="refresh"] .player-popup-backdrop {
+  padding: 18px;
+  background: rgba(8, 21, 43, 0.64);
+  backdrop-filter: none;
+}
+
+html[data-ui="refresh"] #playerDetailPopup .player-popup {
+  display: flex;
+  flex-direction: column;
+  width: min(820px, 100%) !important;
+  max-height: min(880px, calc(100dvh - 36px)) !important;
+  overflow: hidden;
+  padding: 0 !important;
+  border: 0;
+  border-radius: 28px !important;
+  background: #f5f8fd !important;
+  box-shadow: 0 30px 90px rgba(3, 15, 35, 0.34);
+}
+
+html[data-ui="refresh"] #playerDetailPopup .payment-popup-header {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 13px;
+  min-height: 104px;
+  padding: 18px 20px;
+  border: 0;
+  color: #fff;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(246, 185, 29, 0.27), transparent 12rem),
+    linear-gradient(130deg, #0c397a, #1760bb 55%, #654ac3);
+}
+
+html[data-ui="refresh"] #playerDetailPopup .player-profile-avatar {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 18px;
+  color: #17335f;
+  background: linear-gradient(145deg, #ffd772, #f6b91d);
+  box-shadow: 0 10px 25px rgba(4, 25, 61, 0.23);
+  font-size: 0.92rem;
+}
+
+html[data-ui="refresh"] #playerDetailPopup .section-kicker {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+html[data-ui="refresh"] #playerDetailTitle {
+  max-width: 100%;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+html[data-ui="refresh"] #closePlayerDetailButton {
+  position: static !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.19) !important;
+  border-radius: 13px !important;
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  box-shadow: none !important;
+}
+
+html[data-ui="refresh"] #playerDetailContent {
+  min-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px;
+  scrollbar-gutter: stable;
+}
+
+html[data-ui="refresh"] .player-profile-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+html[data-ui="refresh"] .profile-stat,
+html[data-ui="refresh"] .player-detail-section {
+  border: 1px solid rgba(18, 60, 120, 0.08) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 20px rgba(29, 58, 105, 0.055) !important;
+}
+
+html[data-ui="refresh"] .profile-stat {
+  min-height: 86px;
+  padding: 13px !important;
+  background: linear-gradient(145deg, #fff, #edf5ff) !important;
+}
+
+html[data-ui="refresh"] .profile-stat:nth-child(2),
+html[data-ui="refresh"] .profile-stat:nth-child(5) {
+  background: linear-gradient(145deg, #fff, #ecfaf4) !important;
+}
+
+html[data-ui="refresh"] .profile-stat:nth-child(3) {
+  background: linear-gradient(145deg, #fff, #fff7e5) !important;
+}
+
+html[data-ui="refresh"] .profile-stat span {
+  color: #63748a;
+  font-size: 0.65rem !important;
+  line-height: 1.2;
+}
+
+html[data-ui="refresh"] .profile-stat strong {
+  margin-top: 7px;
+  color: #123c77;
+  font-size: 0.94rem !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere;
+}
+
+html[data-ui="refresh"] .player-detail-section {
+  padding: 15px !important;
+}
+
+html[data-ui="refresh"] .player-detail-section h4 {
+  margin-bottom: 10px;
+  color: #18375f;
+  font-size: 0.94rem !important;
+}
+
+html[data-ui="refresh"] .payment-history-summary div {
+  border: 1px solid rgba(23, 96, 187, 0.07);
+  background: var(--soft-blue);
+}
+
+html[data-ui="refresh"] .payment-history-row {
+  border: 1px solid rgba(18, 35, 63, 0.065);
+  background: #f8faff;
+}
+
+html[data-ui="refresh"] .timeline-card,
+html[data-ui="refresh"] .timeline-cluster-card {
+  border-color: rgba(18, 35, 63, 0.075);
+  background: #f9fbff;
+  box-shadow: none;
+}
+
+html[data-ui="refresh"] .critical-reminder-banner {
+  border-radius: 16px;
+  background: var(--soft-red);
+}
+
+html[data-ui="refresh"] .profile-loading-shell {
+  display: grid;
+  gap: 14px;
+}
+
+html[data-ui="refresh"] .profile-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+html[data-ui="refresh"] .profile-loading-tile,
+html[data-ui="refresh"] .profile-loading-block {
+  display: block;
+  min-height: 82px;
+  border-radius: 17px;
+  background: linear-gradient(100deg, #e9eef6 24%, #f8faff 42%, #e9eef6 60%);
+  background-size: 220% 100%;
+  animation: profile-shimmer 1.25s linear infinite;
+}
+
+html[data-ui="refresh"] .profile-loading-block {
+  min-height: 105px;
+}
+
+html[data-ui="refresh"] .profile-loading-block.tall {
+  min-height: 165px;
+}
+
+html[data-ui="refresh"] .profile-loading-shell p {
+  margin: 0;
+  color: #718097;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+@keyframes profile-shimmer {
+  to { background-position: -220% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-ui="refresh"] *,
+  html[data-ui="refresh"] *::before,
+  html[data-ui="refresh"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Phone layouts */
+@media (max-width: 720px) {
+  html[data-ui="refresh"] body {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(circle at 0 0, rgba(55, 132, 232, 0.13), transparent 20rem),
+      radial-gradient(circle at 100% 34%, rgba(246, 185, 29, 0.11), transparent 18rem),
+      linear-gradient(160deg, #f8fbff 0%, #f2f7ff 48%, #fffaf1 100%);
+    background-attachment: scroll;
+  }
+
+  html[data-ui="refresh"] .app-shell,
+  html[data-ui="refresh"] .app-shell:has(#rosterView:not([hidden])),
+  html[data-ui="refresh"] .app-shell:has(#financeView:not([hidden])) {
+    width: 100% !important;
+    padding: 8px 10px 22px !important;
+  }
+
+  html[data-ui="refresh"] .view-switcher.panel {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100% !important;
+    min-height: 0;
+    margin-bottom: 12px;
+    padding: 10px 11px !important;
+    border-radius: 20px;
+  }
+
+  html[data-ui="refresh"] .view-switcher .brand-lockup {
+    flex: 0 0 126px !important;
+    min-width: 0;
+    gap: 9px;
+  }
+
+  html[data-ui="refresh"] .view-switcher .brand-badge {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px;
+  }
+
+  html[data-ui="refresh"] .academy-main-title {
+    display: -webkit-box;
+    max-width: 12ch;
+    font-size: 0.7rem !important;
+    line-height: 1.04 !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+
+  html[data-ui="refresh"] .academy-tagline {
+    display: none;
+  }
+
+  html[data-ui="refresh"] .view-switcher .manager-bar {
+    display: grid;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-items: end;
+    width: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    gap: 3px;
+  }
+
+  html[data-ui="refresh"] .view-switcher .manager-identity {
+    display: none !important;
+  }
+
+  html[data-ui="refresh"] .view-switcher .manager-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  html[data-ui="refresh"] .view-switcher .top-link-button,
+  html[data-ui="refresh"] .view-switcher .top-edit-button,
+  html[data-ui="refresh"] .view-switcher .top-logout-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0 9px !important;
+    overflow: hidden;
+    font-size: 0 !important;
+  }
+
+  html[data-ui="refresh"] .view-switcher .top-link-button::before,
+  html[data-ui="refresh"] .view-switcher .top-edit-button::before,
+  html[data-ui="refresh"] .view-switcher .top-logout-button::before {
+    font-size: 0.7rem !important;
+    font-weight: 900;
+  }
+
+  html[data-ui="refresh"] #intakeToolLink::before { content: "AI"; }
+  html[data-ui="refresh"] #editModeButton::before { content: "Edit"; }
+  html[data-ui="refresh"] #quickLogoutButton::before { content: "Out"; }
+  html[data-ui="refresh"] #authToggleButton {
+    width: auto;
+    padding-inline: 11px !important;
+    font-size: 0.66rem !important;
+  }
+
+  html[data-ui="refresh"] #authToggleButton::before { content: none; }
+  html[data-ui="refresh"] #authToggleButton:empty { display: none !important; }
+
+  html[data-ui="refresh"] .desktop-tabs {
+    display: none !important;
+  }
+
+  html[data-ui="refresh"] .mobile-tabs {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 6200;
+    display: flex !important;
+    justify-content: space-around;
+    gap: 2px;
+    width: 100%;
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid rgba(18, 35, 63, 0.09);
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 -12px 28px rgba(19, 47, 89, 0.09);
+    backdrop-filter: blur(14px);
+    transition: transform 180ms ease, opacity 180ms ease;
+  }
+
+  html[data-ui="refresh"] body.popup-open .mobile-tabs {
+    opacity: 0;
+    transform: translateY(110%);
+    pointer-events: none;
+  }
+
+  html[data-ui="refresh"] .mobile-tabs .view-tab {
+    display: grid;
+    flex: 1 1 0;
+    place-items: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 52px;
+    padding: 5px 2px;
+    border-radius: 16px;
+    color: #6a788b;
+    font-size: 0.62rem;
+  }
+
+  html[data-ui="refresh"] .mobile-tabs .view-tab.active {
+    color: #0f4d96;
+    background: #eaf3ff;
+    box-shadow: none;
+  }
+
+  html[data-ui="refresh"] .mobile-tabs .view-tab.active svg {
+    stroke: #1760bb;
+  }
+
+  html[data-ui="refresh"] .panel,
+  html[data-ui="refresh"] .hero-card {
+    width: 100% !important;
+    margin-bottom: 12px;
+    padding: 16px !important;
+    border-radius: 22px;
+    box-shadow: 0 11px 27px rgba(29, 58, 105, 0.075);
+  }
+
+  html[data-ui="refresh"] .panel-heading {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  html[data-ui="refresh"] .panel-heading h2,
+  html[data-ui="refresh"] .finance-chart-head h2,
+  html[data-ui="refresh"] .finance-chart-head h3 {
+    max-width: 100%;
+    margin-bottom: 4px;
+    font-size: 1.18rem !important;
+    line-height: 1.18;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-ui="refresh"] .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  html[data-ui="refresh"] .stat-card {
+    min-width: 0 !important;
+    min-height: 92px !important;
+    padding: 12px !important;
+    border-radius: 18px;
+  }
+
+  html[data-ui="refresh"] .stat-card .section-kicker {
+    font-size: 0.54rem !important;
+    line-height: 1.25;
+  }
+
+  html[data-ui="refresh"] .stat-card .stat-value {
+    font-size: 1.45rem !important;
+  }
+
+  html[data-ui="refresh"] .stat-card .stat-copy {
+    display: none;
+  }
+
+  html[data-ui="refresh"] .student-movement-panel {
+    padding: 14px !important;
+  }
+
+  html[data-ui="refresh"] .records-panel {
+    padding: 15px !important;
+  }
+
+  html[data-ui="refresh"] .records-panel > .panel-heading {
+    display: grid !important;
+    gap: 5px;
+  }
+
+  html[data-ui="refresh"] .records-panel .records-helper {
+    margin: 0 0 6px !important;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+
+  html[data-ui="refresh"] .records-panel .slot-toolbar {
+    padding: 11px !important;
+    border-radius: 18px;
+    background: linear-gradient(145deg, #f8fbff, #edf4ff) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tbody {
+    gap: 10px !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "player status"
+      "slot fee"
+      "reason due" !important;
+    gap: 10px 8px !important;
+    min-height: 132px;
+    padding: 13px !important;
+    border: 1px solid rgba(18, 35, 63, 0.085) !important;
+    border-radius: 20px !important;
+    background: #fff !important;
+    box-shadow: 0 9px 21px rgba(29, 58, 105, 0.07) !important;
+    align-content: start !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr.alert-row {
+    border-color: rgba(224, 151, 20, 0.2) !important;
+    background: linear-gradient(145deg, #fff, #fff9eb) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr.critical-row {
+    border-color: rgba(209, 59, 69, 0.18) !important;
+    background: linear-gradient(145deg, #fff, #fff3f3) !important;
+    box-shadow: inset 4px 0 0 rgba(209, 59, 69, 0.48), 0 9px 21px rgba(29, 58, 105, 0.07) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td,
+  html[data-ui="refresh"] #rosterView .kids-table td > *,
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Player"] {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Player"] {
+    grid-area: player !important;
+    min-width: 0;
+    padding-right: 0 !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-name-cell {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 9px;
+    width: 100%;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-link {
+    display: -webkit-box !important;
+    width: 100%;
+    max-width: none !important;
+    min-height: 0 !important;
+    color: #102c54 !important;
+    font-size: 0.88rem !important;
+    line-height: 1.22 !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-title-stack small {
+    font-size: 0.59rem;
+  }
+
+  html[data-ui="refresh"] #rosterView .special-tag {
+    grid-column: 2;
+    justify-self: start;
+    margin: 1px 0 0;
+  }
+
+  html[data-ui="refresh"] #rosterView .state-pill,
+  html[data-ui="refresh"] #rosterView .slot-pill,
+  html[data-ui="refresh"] #rosterView .status-pill,
+  html[data-ui="refresh"] #rosterView .alert-pill {
+    min-height: 27px !important;
+    max-width: 150px !important;
+    padding: 0 9px !important;
+    border-radius: 999px !important;
+    font-size: 0.59rem !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Status"] {
+    grid-area: status !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Time slot"] {
+    grid-area: slot !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Fees paid"] {
+    grid-area: fee !important;
+    justify-content: flex-end;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Next fee due"] {
+    grid-area: due !important;
+    justify-content: flex-end !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .manual-followup-reason {
+    grid-area: reason;
+    max-width: 20ch;
+    color: #9a6400;
+    font-size: 0.62rem;
+    line-height: 1.25;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr::after {
+    content: "Tap card for profile";
+    position: absolute;
+    right: 13px;
+    bottom: 8px;
+    color: rgba(20, 68, 130, 0.52);
+    font-size: 0.52rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Edit mode keeps its deliberate flip interaction, but removes patchy cells. */
+  html[data-ui="refresh"] #rosterView .mobile-edit-card-shell,
+  html[data-ui="refresh"] #rosterView .mobile-edit-card-face {
+    border-radius: 20px !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .mobile-edit-card-front {
+    background: linear-gradient(145deg, #fff, #f1f6ff) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .mobile-card-name,
+  html[data-ui="refresh"] #rosterView .mobile-card-back-title {
+    display: -webkit-box !important;
+    color: #102c54 !important;
+    font-size: 0.92rem !important;
+    line-height: 1.24 !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden !important;
+    white-space: normal !important;
+  }
+
+  /* Finance phone cards */
+  html[data-ui="refresh"] #financeView > .panel {
+    padding: 15px !important;
+  }
+
+  html[data-ui="refresh"] .finance-range-panel {
+    gap: 12px;
+    padding: 13px !important;
+  }
+
+  html[data-ui="refresh"] .finance-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  html[data-ui="refresh"] .finance-metric {
+    min-width: 0;
+    min-height: 92px;
+    padding: 12px !important;
+    border-radius: 18px;
+  }
+
+  html[data-ui="refresh"] .finance-metric p {
+    font-size: 0.58rem !important;
+    line-height: 1.25;
+  }
+
+  html[data-ui="refresh"] .finance-metric strong {
+    font-size: 0.9rem !important;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-ui="refresh"] .finance-metric span {
+    display: none;
+  }
+
+  html[data-ui="refresh"] .finance-chart-card {
+    border-radius: 20px;
+  }
+
+  html[data-ui="refresh"] .finance-recent {
+    padding: 10px !important;
+    border-radius: 20px;
+  }
+
+  html[data-ui="refresh"] .finance-recent-switch {
+    position: sticky;
+    top: 6px;
+    z-index: 5;
+    margin-bottom: 10px;
+  }
+
+  html[data-ui="refresh"] .finance-recent-section .finance-toolbar {
+    border: 0 !important;
+    background: var(--soft-blue) !important;
+  }
+
+  html[data-ui="refresh"] .finance-payments-table tr,
+  html[data-ui="refresh"] .finance-expenses-table tr {
+    border: 1px solid rgba(18, 35, 63, 0.08) !important;
+    border-radius: 18px !important;
+    background: linear-gradient(145deg, #fff, #f6f9ff) !important;
+    box-shadow: 0 8px 18px rgba(29, 58, 105, 0.06) !important;
+  }
+
+  html[data-ui="refresh"] .finance-payments-table td,
+  html[data-ui="refresh"] .finance-expenses-table td,
+  html[data-ui="refresh"] .finance-payments-table td > *,
+  html[data-ui="refresh"] .finance-expenses-table td > * {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  html[data-ui="refresh"] .finance-payments-table td[data-label="Player"],
+  html[data-ui="refresh"] .finance-expenses-table td[data-label="Type"] {
+    color: #17345f !important;
+    font-size: 0.91rem !important;
+    line-height: 1.25 !important;
+  }
+
+  html[data-ui="refresh"] .finance-payments-table td[data-label="Amount"],
+  html[data-ui="refresh"] .finance-expenses-table td[data-label="Amount"] {
+    color: #0d4c94 !important;
+  }
+
+  /* Player profile becomes a stable bottom sheet on phones. */
+  html[data-ui="refresh"] #playerDetailPopup.player-popup-backdrop {
+    place-items: end center;
+    padding: 0 !important;
+  }
+
+  html[data-ui="refresh"] #playerDetailPopup .player-popup {
+    width: 100% !important;
+    max-height: min(94dvh, 900px) !important;
+    border-radius: 28px 28px 0 0 !important;
+  }
+
+  html[data-ui="refresh"] #playerDetailPopup .payment-popup-header {
+    grid-template-columns: 48px minmax(0, 1fr) 38px;
+    min-height: 92px;
+    padding: 14px 15px;
+  }
+
+  html[data-ui="refresh"] #playerDetailPopup .player-profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+
+  html[data-ui="refresh"] #playerDetailTitle {
+    display: -webkit-box;
+    font-size: 1.15rem;
+    line-height: 1.15;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  html[data-ui="refresh"] #playerDetailContent {
+    padding: 13px;
+    scrollbar-gutter: auto;
+  }
+
+  html[data-ui="refresh"] .player-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  html[data-ui="refresh"] .profile-stat {
+    min-height: 82px;
+    padding: 11px !important;
+  }
+
+  html[data-ui="refresh"] .profile-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  html[data-ui="refresh"] .player-detail-section {
+    padding: 13px !important;
+  }
+
+  html[data-ui="refresh"] .player-detail-section p {
+    font-size: 0.78rem !important;
+    line-height: 1.5 !important;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-ui="refresh"] .payment-history-summary {
+    gap: 8px;
+  }
+
+  html[data-ui="refresh"] .payment-history-row {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  html[data-ui="refresh"] .payment-history-row > div:first-child {
+    min-width: 0;
+  }
+
+  html[data-ui="refresh"] .payment-history-row strong,
+  html[data-ui="refresh"] .payment-history-row span {
+    overflow-wrap: anywhere;
+  }
+
+  html[data-ui="refresh"] .profile-loading-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Tablet: favor card grids over a squeezed desktop table. */
+@media (min-width: 721px) and (max-width: 1100px) {
+  html[data-ui="refresh"] .app-shell,
+  html[data-ui="refresh"] .app-shell:has(#rosterView:not([hidden])),
+  html[data-ui="refresh"] .app-shell:has(#financeView:not([hidden])) {
+    width: calc(100% - 20px) !important;
+  }
+
+  html[data-ui="refresh"] .view-switcher.panel {
+    position: relative;
+    top: auto;
+    flex-wrap: wrap;
+  }
+
+  html[data-ui="refresh"] .desktop-tabs {
+    order: 3;
+    width: 100%;
+  }
+
+  html[data-ui="refresh"] .desktop-tabs .view-tab {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tbody {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+  }
+}
