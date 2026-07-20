@@ -326,6 +326,11 @@ html[data-ui="refresh"] .player-title-stack {
   min-width: 0;
 }
 
+html[data-ui="refresh"] .player-title-row {
+  display: block;
+  min-width: 0;
+}
+
 html[data-ui="refresh"] .player-subline {
   display: flex;
   align-items: center;
@@ -334,14 +339,7 @@ html[data-ui="refresh"] .player-subline {
   flex-wrap: wrap;
 }
 
-html[data-ui="refresh"] .player-type-stack {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-html[data-ui="refresh"] .desktop-special-tag {
+html[data-ui="refresh"] .desktop-name-special-tag {
   display: none;
 }
 
@@ -406,7 +404,14 @@ html[data-ui="refresh"] .finance-recent-switch {
   background: #edf1f7;
 }
 
-html[data-ui="refresh"] .finance-recent-switch button.active {
+html[data-ui="refresh"] .finance-recent-switch button {
+  color: #66758a;
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-ui="refresh"] #financeRecent[data-active-view="revenue"] [data-finance-recent-view="revenue"],
+html[data-ui="refresh"] #financeRecent[data-active-view="expenses"] [data-finance-recent-view="expenses"] {
   color: #fff;
   background: linear-gradient(135deg, #1760bb, #0b438d);
   box-shadow: 0 7px 16px rgba(23, 96, 187, 0.2);
@@ -1357,11 +1362,16 @@ html[data-ui="refresh"] .profile-loading-shell p {
   }
 
   html[data-ui="refresh"] #rosterView .player-link {
+    display: block !important;
+    width: 100% !important;
     white-space: normal !important;
   }
 
-  html[data-ui="refresh"] #rosterView .desktop-special-tag {
+  html[data-ui="refresh"] #rosterView .desktop-name-special-tag {
     display: inline-flex;
+    margin-left: 3px;
+    vertical-align: 0.12em;
+    pointer-events: none;
   }
 
   html[data-ui="refresh"] .finance-recent-switch {

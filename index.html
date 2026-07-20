@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css?v=78" />
-    <link rel="stylesheet" href="./ui-refresh.css?v=3" />
+    <link rel="stylesheet" href="./ui-refresh.css?v=4" />
     <script>
       (function() {
         // Prevent flicker by determining view early
@@ -534,8 +534,8 @@
           </section>
           <div id="financeRecent" class="finance-recent" hidden>
             <div class="finance-recent-switch" role="tablist" aria-label="Recent finance records">
-              <button type="button" data-finance-recent-view="revenue" class="active">Revenue</button>
-              <button type="button" data-finance-recent-view="expenses">Expenses</button>
+              <button type="button" role="tab" aria-selected="true" data-finance-recent-view="revenue" class="active">Revenue</button>
+              <button type="button" role="tab" aria-selected="false" data-finance-recent-view="expenses">Expenses</button>
             </div>
             <div class="finance-recent-grid">
               <div class="finance-recent-section">
@@ -1344,6 +1344,6 @@
     <script async src="https://www.instagram.com/embed.js"></script>
     <script src="./supabase-config.js?v=34"></script>
     <script src="./fee-plan-rules.js?v=1"></script>
-    <script src="./script.js?v=85"></script>
+    <script src="./script.js?v=86"></script>
   </body>
 </html>

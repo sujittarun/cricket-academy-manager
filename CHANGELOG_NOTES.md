@@ -22,6 +22,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Removed the redundant player subline from desktop roster rows and moved Special training into the Type column.
 - Removed the Revenue/Expenses switch on desktop so both finance tables remain visible side by side.
 
+### Mobile Finance Selection and Special Tag Placement
+
+- Made the mobile Revenue/Expenses switch update one consistent active color, class, and accessibility state.
+- Returned the desktop Special training pill beside the player name while keeping the redundant desktop subline hidden.
+
 ### Finance Reconciliation and Responsive UI Follow-up
 
 - Unified the web finance overview with its canonical signed revenue ledger so legacy joining fees are excluded when an explicit joining-payment row exists and jersey refunds reduce revenue.

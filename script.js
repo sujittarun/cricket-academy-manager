@@ -3324,7 +3324,11 @@ const renderKids = () => {
       <td data-label="Player">
         <div class="player-name-cell">
           <span class="player-title-stack">
-            <button class="player-link" data-action="details" data-id="${kid.id}" type="button" title="${safeKidName}">${safeKidName}</button>
+            <span class="player-title-row">
+              <button class="player-link" data-action="details" data-id="${kid.id}" type="button" title="${safeKidName}">
+                <span class="player-name-text">${safeKidName}</span>${isSpecialTraining(kid) ? '<span class="special-tag tiny desktop-name-special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
+              </button>
+            </span>
             <span class="player-subline">
               <small>${escapeHtml(studentType)} · Joined ${escapeHtml(formatDate(kid.joinDate))}</small>
               ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
@@ -3342,11 +3346,8 @@ const renderKids = () => {
         </span>
       </td>
       <td data-label="Type">
-        <span class="player-type-stack">
-          <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
-            ${studentType}
-          </span>
-          ${isSpecialTraining(kid) ? '<span class="special-tag desktop-special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
+        <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
+          ${studentType}
         </span>
       </td>
       <td data-label="Tenure"><span class="tenure-pill">${getTenureBadge(kid)}</span></td>
@@ -4734,6 +4735,17 @@ const closeRenewalPopup = () => {
   document.body.classList.remove("popup-open");
 };
 
+const syncFinanceRecentView = () => {
+  if (!financeRecent) return;
+  financeRecent.setAttribute("data-active-view", activeFinanceRecentView);
+  financeRecent.querySelectorAll("[data-finance-recent-view]").forEach((button) => {
+    const isSelected = button.dataset.financeRecentView === activeFinanceRecentView;
+    button.classList.toggle("active", isSelected);
+    button.setAttribute("aria-selected", String(isSelected));
+    button.tabIndex = isSelected ? 0 : -1;
+  });
+};
+
 const loadFinance = async () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   if (financeLock) financeLock.hidden = managerReady;
@@ -4954,7 +4966,7 @@ const loadFinance = async () => {
 
   renderExpensesTable();
   renderPaymentsTable();
-  financeRecent?.setAttribute("data-active-view", activeFinanceRecentView);
+  syncFinanceRecentView();
 
   // Attach events if not already attached
   if (expenseSearch && !expenseSearch.hasAttribute("data-bound")) {
@@ -5001,7 +5013,7 @@ financeRecent?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-finance-recent-view]");
   if (!button) return;
   activeFinanceRecentView = button.dataset.financeRecentView || "revenue";
-  financeRecent.setAttribute("data-active-view", activeFinanceRecentView);
+  syncFinanceRecentView();
 });
 
 financeExportMonth?.addEventListener("change", () => {
