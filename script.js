@@ -1439,7 +1439,7 @@ const financeRangeFromMode = () => {
 
 const isRowInFinanceRange = (row, range) => {
   if (!range.startDate || !range.endDate) return true;
-  const rawDate = String(row.paid_on || row.paidOn || row.expense_date || row.expenseDate || "");
+  const rawDate = String(row.date || row.paid_on || row.paidOn || row.expense_date || row.expenseDate || "");
   if (!rawDate) return false;
   const rowDate = new Date(`${rawDate.slice(0, 10)}T12:00:00`);
   return rowDate >= range.startDate && rowDate <= range.endDate;
@@ -3323,12 +3323,13 @@ const renderKids = () => {
     row.innerHTML = `
       <td data-label="Player">
         <div class="player-name-cell">
-          <span class="player-avatar" aria-hidden="true">${escapeHtml(getPlayerInitials(kid.name))}</span>
           <span class="player-title-stack">
             <button class="player-link" data-action="details" data-id="${kid.id}" type="button" title="${safeKidName}">${safeKidName}</button>
-            <small>${escapeHtml(studentType)} · Joined ${escapeHtml(formatDate(kid.joinDate))}</small>
+            <span class="player-subline">
+              <small>${escapeHtml(studentType)} · Joined ${escapeHtml(formatDate(kid.joinDate))}</small>
+              ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
+            </span>
           </span>
-          ${isSpecialTraining(kid) ? '<span class="special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
         </div>
         ${mobileEditCard}
       </td>
@@ -4757,17 +4758,15 @@ const loadFinance = async () => {
   const now = new Date();
   const localMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
   const selectedRange = financeRangeFromMode();
-  const initialFees = buildLegacyJoiningRevenueRows().map((row) => ({
-    amount: row.amount,
-    paid_on: row.paid_on,
-  }));
-  const allFees = [...initialFees, ...financePayments];
+  // Use the same canonical revenue ledger as the detail table: legacy joining
+  // fees only when no explicit joining row exists, with refunds kept negative.
+  const revenueRows = buildFinanceRevenueRows();
   const sum = (rows, dateKey = "") =>
     rows
-      .filter((row) => !dateKey || String(row.paid_on || row.expense_date || "").startsWith(dateKey))
+      .filter((row) => !dateKey || String(row.date || row.paid_on || row.expense_date || "").startsWith(dateKey))
       .reduce((total, row) => total + Number(row.amount || 0), 0);
 
-  const rangeFees = allFees.filter((row) => isRowInFinanceRange(row, selectedRange)).reduce((total, row) => total + Number(row.amount || 0), 0);
+  const rangeFees = revenueRows.filter((row) => isRowInFinanceRange(row, selectedRange)).reduce((total, row) => total + Number(row.amount || 0), 0);
   const rangeExpenses = financeExpenses.filter((row) => isRowInFinanceRange(row, selectedRange)).reduce((total, row) => total + Number(row.amount || 0), 0);
   const rangeNet = rangeFees - rangeExpenses;
 
@@ -4798,7 +4797,7 @@ const loadFinance = async () => {
         key,
         label: date.toLocaleString("en-IN", { month: "short" }),
         fullLabel: date.toLocaleString("en-IN", { month: "long", year: "numeric" }),
-        fees: sum(allFees, key),
+        fees: sum(revenueRows, key),
         expenses: sum(financeExpenses, key),
       };
     });

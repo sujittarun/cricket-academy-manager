@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-07-20
 
+### Finance Reconciliation and Responsive UI Follow-up
+
+- Unified the web finance overview with its canonical signed revenue ledger so legacy joining fees are excluded when an explicit joining-payment row exists and jersey refunds reduce revenue.
+- Removed initials from roster cards, protected long names and special-training labels from overlap, and rebuilt phone/tablet cards into compact information rows without legacy cell patches.
+- Made the player-profile content a bounded touch-scroll region and removed the desktop admission decoration that extended into the registration-number section.
+- Added phone, tablet, and desktop-specific roster treatments and bumped browser assets to `script.js?v=84`, `ui-refresh.css?v=2`, and service-worker cache `v92`.
+
 ### Responsive UI and Player Profile Performance
 
 - Added one scoped `ui-refresh.css` visual layer for the browser manager app so legacy mobile experiments no longer leave patchy cell backgrounds or conflicting title rules.

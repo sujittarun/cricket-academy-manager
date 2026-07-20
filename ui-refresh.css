@@ -63,6 +63,21 @@ html[data-ui="refresh"] .hero-card {
   backdrop-filter: none;
 }
 
+/* Keep the admission heading decoration inside its own section. The legacy
+   panel pseudo-element extended into the registration-number banner. */
+html[data-ui="refresh"] .admission-panel::before {
+  content: none !important;
+}
+
+html[data-ui="refresh"] .admission-heading {
+  margin: -2px -2px 18px !important;
+  padding: 4px 2px 14px;
+  border-bottom: 1px solid rgba(18, 72, 143, 0.08);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(246, 185, 29, 0.14), transparent 18rem),
+    linear-gradient(90deg, rgba(23, 96, 187, 0.055), transparent 62%);
+}
+
 html[data-ui="refresh"] .dashboard-view:not([hidden]) {
   animation: refresh-view-in 220ms ease-out both;
 }
@@ -284,13 +299,12 @@ html[data-ui="refresh"] #rosterView .kids-table tr {
 
 html[data-ui="refresh"] #rosterView .player-name-cell {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
-html[data-ui="refresh"] .player-avatar,
 html[data-ui="refresh"] .player-profile-avatar {
   display: grid;
   place-items: center;
@@ -308,17 +322,23 @@ html[data-ui="refresh"] .player-profile-avatar {
 
 html[data-ui="refresh"] .player-title-stack {
   display: grid;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
 }
 
+html[data-ui="refresh"] .player-subline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
 html[data-ui="refresh"] .player-title-stack small {
-  overflow: hidden;
   color: #75849a;
   font-size: 0.66rem;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
 html[data-ui="refresh"] #rosterView .player-link {
@@ -460,8 +480,11 @@ html[data-ui="refresh"] #closePlayerDetailButton {
 }
 
 html[data-ui="refresh"] #playerDetailContent {
-  min-height: 260px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   overscroll-behavior: contain;
   padding: 18px;
   scrollbar-gutter: stable;
@@ -834,27 +857,38 @@ html[data-ui="refresh"] .profile-loading-shell p {
   html[data-ui="refresh"] #rosterView .kids-table tr {
     grid-template-columns: minmax(0, 1fr) auto !important;
     grid-template-areas:
-      "player status"
-      "slot fee"
-      "reason due" !important;
-    gap: 10px 8px !important;
-    min-height: 132px;
-    padding: 13px !important;
+      "player player"
+      "slot status"
+      "fee due" !important;
+    gap: 10px 12px !important;
+    min-height: 0;
+    padding: 14px !important;
     border: 1px solid rgba(18, 35, 63, 0.085) !important;
-    border-radius: 20px !important;
-    background: #fff !important;
-    box-shadow: 0 9px 21px rgba(29, 58, 105, 0.07) !important;
+    border-radius: 22px !important;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(64, 124, 216, 0.08), transparent 42%),
+      linear-gradient(145deg, #ffffff, #f8fbff) !important;
+    box-shadow: 0 11px 26px rgba(29, 58, 105, 0.08) !important;
     align-content: start !important;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr:active {
+    transform: scale(0.992);
   }
 
   html[data-ui="refresh"] #rosterView .kids-table tr.alert-row {
     border-color: rgba(224, 151, 20, 0.2) !important;
-    background: linear-gradient(145deg, #fff, #fff9eb) !important;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(246, 185, 29, 0.13), transparent 44%),
+      linear-gradient(145deg, #fff, #fffbf1) !important;
   }
 
   html[data-ui="refresh"] #rosterView .kids-table tr.critical-row {
     border-color: rgba(209, 59, 69, 0.18) !important;
-    background: linear-gradient(145deg, #fff, #fff3f3) !important;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(209, 59, 69, 0.11), transparent 44%),
+      linear-gradient(145deg, #fff, #fff6f6) !important;
     box-shadow: inset 4px 0 0 rgba(209, 59, 69, 0.48), 0 9px 21px rgba(29, 58, 105, 0.07) !important;
   }
 
@@ -873,16 +907,10 @@ html[data-ui="refresh"] .profile-loading-shell p {
 
   html[data-ui="refresh"] #rosterView .player-name-cell {
     display: grid !important;
-    grid-template-columns: 40px minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     align-items: center !important;
-    gap: 9px;
+    gap: 5px;
     width: 100%;
-  }
-
-  html[data-ui="refresh"] #rosterView .player-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 14px;
   }
 
   html[data-ui="refresh"] #rosterView .player-link {
@@ -891,8 +919,9 @@ html[data-ui="refresh"] .profile-loading-shell p {
     max-width: none !important;
     min-height: 0 !important;
     color: #102c54 !important;
-    font-size: 0.88rem !important;
-    line-height: 1.22 !important;
+    padding-right: 24px !important;
+    font-size: 0.98rem !important;
+    line-height: 1.2 !important;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden !important;
@@ -901,13 +930,16 @@ html[data-ui="refresh"] .profile-loading-shell p {
   }
 
   html[data-ui="refresh"] #rosterView .player-title-stack small {
-    font-size: 0.59rem;
+    font-size: 0.64rem;
   }
 
-  html[data-ui="refresh"] #rosterView .special-tag {
-    grid-column: 2;
-    justify-self: start;
-    margin: 1px 0 0;
+  html[data-ui="refresh"] #rosterView .player-subline {
+    gap: 6px;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-subline .special-tag {
+    flex: 0 0 auto;
+    margin: 0;
   }
 
   html[data-ui="refresh"] #rosterView .state-pill,
@@ -931,7 +963,7 @@ html[data-ui="refresh"] .profile-loading-shell p {
 
   html[data-ui="refresh"] #rosterView .kids-table td[data-label="Fees paid"] {
     grid-area: fee !important;
-    justify-content: flex-end;
+    justify-content: flex-start !important;
   }
 
   html[data-ui="refresh"] #rosterView .kids-table td[data-label="Next fee due"] {
@@ -940,23 +972,22 @@ html[data-ui="refresh"] .profile-loading-shell p {
   }
 
   html[data-ui="refresh"] #rosterView .manual-followup-reason {
-    grid-area: reason;
-    max-width: 20ch;
+    max-width: 24ch;
     color: #9a6400;
     font-size: 0.62rem;
     line-height: 1.25;
+    text-align: left;
   }
 
   html[data-ui="refresh"] #rosterView .kids-table tr::after {
-    content: "Tap card for profile";
+    content: "›";
     position: absolute;
-    right: 13px;
-    bottom: 8px;
-    color: rgba(20, 68, 130, 0.52);
-    font-size: 0.52rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    top: 12px;
+    right: 14px;
+    color: rgba(20, 68, 130, 0.42);
+    font-size: 1.55rem;
+    font-weight: 500;
+    line-height: 1;
   }
 
   /* Edit mode keeps its deliberate flip interaction, but removes patchy cells. */
@@ -1074,6 +1105,7 @@ html[data-ui="refresh"] .profile-loading-shell p {
 
   html[data-ui="refresh"] #playerDetailPopup .player-popup {
     width: 100% !important;
+    height: min(94dvh, 900px) !important;
     max-height: min(94dvh, 900px) !important;
     border-radius: 28px 28px 0 0 !important;
   }
@@ -1100,6 +1132,8 @@ html[data-ui="refresh"] .profile-loading-shell p {
   }
 
   html[data-ui="refresh"] #playerDetailContent {
+    flex: 1 1 0;
+    min-height: 0;
     padding: 13px;
     scrollbar-gutter: auto;
   }
@@ -1162,20 +1196,194 @@ html[data-ui="refresh"] .profile-loading-shell p {
   html[data-ui="refresh"] .view-switcher.panel {
     position: relative;
     top: auto;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 78px;
+    padding: 11px 14px !important;
   }
 
   html[data-ui="refresh"] .desktop-tabs {
-    order: 3;
-    width: 100%;
+    display: none !important;
   }
 
-  html[data-ui="refresh"] .desktop-tabs .view-tab {
-    flex: 1 1 0;
-    justify-content: center;
+  html[data-ui="refresh"] .brand-lockup {
+    justify-self: start;
+  }
+
+  html[data-ui="refresh"] .manager-bar {
+    justify-self: end;
+  }
+
+  html[data-ui="refresh"] .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  html[data-ui="refresh"] .stat-card {
+    min-height: 116px;
+    padding: 18px !important;
   }
 
   html[data-ui="refresh"] #rosterView .kids-table tbody {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+    gap: 14px !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "player player player"
+      "slot jersey status"
+      "fee fee due" !important;
+    gap: 9px 12px !important;
+    min-height: 0 !important;
+    padding: 15px !important;
+    border: 1px solid rgba(18, 35, 63, 0.09) !important;
+    border-radius: 22px !important;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(64, 124, 216, 0.08), transparent 44%),
+      linear-gradient(145deg, #fff, #f8fbff) !important;
+    box-shadow: 0 11px 25px rgba(29, 58, 105, 0.075) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr.alert-row {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(246, 185, 29, 0.13), transparent 46%),
+      linear-gradient(145deg, #fff, #fffbf1) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr.critical-row {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(209, 59, 69, 0.1), transparent 46%),
+      linear-gradient(145deg, #fff, #fff6f6) !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td,
+  html[data-ui="refresh"] #rosterView .kids-table td > *,
+  html[data-ui="refresh"] #rosterView .player-name-cell,
+  html[data-ui="refresh"] #rosterView .player-title-stack,
+  html[data-ui="refresh"] #rosterView .player-link {
+    border: 0 !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Player"] {
+    grid-area: player !important;
+    min-width: 0;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-link {
+    display: -webkit-box !important;
+    width: 100%;
+    color: #102c54 !important;
+    font-size: 0.98rem !important;
+    line-height: 1.22 !important;
+    text-decoration: none !important;
+    white-space: normal !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Time slot"] { grid-area: slot !important; }
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Status"] { grid-area: status !important; justify-content: flex-end; }
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Jersey"] { grid-area: jersey !important; justify-content: center; }
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Fees paid"] { grid-area: fee !important; }
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Next fee due"] { grid-area: due !important; justify-content: flex-end !important; }
+
+  html[data-ui="refresh"] #rosterView .slot-pill,
+  html[data-ui="refresh"] #rosterView .state-pill,
+  html[data-ui="refresh"] #rosterView .status-pill,
+  html[data-ui="refresh"] #rosterView .alert-pill {
+    width: auto !important;
+    max-width: 160px !important;
+    min-height: 27px !important;
+    padding: 0 10px !important;
+    border-radius: 999px !important;
+    font-size: 0.61rem !important;
+    line-height: 1 !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .fee-status-stack {
+    align-items: flex-start;
+    max-width: 190px;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table tr::after {
+    content: "›";
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    color: rgba(20, 68, 130, 0.4);
+    font-size: 1.55rem;
+    line-height: 1;
+  }
+}
+
+@media (min-width: 1101px) {
+  html[data-ui="refresh"] #rosterView .kids-table td[data-label="Player"] {
+    min-width: 220px !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .player-link {
+    white-space: normal !important;
+  }
+}
+
+/* Mid-size landscape tablets have no bottom navigation in the legacy shell,
+   so keep a compact full navigation row available in the header. */
+@media (min-width: 901px) and (max-width: 1100px) {
+  html[data-ui="refresh"] .view-switcher.panel {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  html[data-ui="refresh"] .desktop-tabs {
+    order: 2;
+    display: flex !important;
+    min-width: 0;
+    padding: 4px;
+    gap: 3px;
+  }
+
+  html[data-ui="refresh"] .brand-lockup { order: 1; }
+
+  html[data-ui="refresh"] .manager-bar {
+    order: 3;
+  }
+
+  html[data-ui="refresh"] .manager-actions {
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+  }
+
+  html[data-ui="refresh"] .manager-actions > * {
+    min-height: 36px !important;
+    padding-inline: 10px !important;
+    white-space: nowrap;
+    font-size: 0.7rem !important;
+  }
+
+  html[data-ui="refresh"] .desktop-tabs .view-tab {
+    min-width: 0;
+    padding: 0 10px !important;
+    gap: 5px;
+    font-size: 0.72rem;
+  }
+
+  html[data-ui="refresh"] .brand-badge {
+    width: 42px;
+    height: 42px;
+  }
+
+  html[data-ui="refresh"] .brand-copy h1 {
+    font-size: 1rem;
+  }
+
+  html[data-ui="refresh"] .manager-identity,
+  html[data-ui="refresh"] .brand-tagline {
+    display: none !important;
   }
 }
