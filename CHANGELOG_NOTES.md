@@ -27,6 +27,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Made the mobile Revenue/Expenses switch update one consistent active color, class, and accessibility state.
 - Returned the desktop Special training pill beside the player name while keeping the redundant desktop subline hidden.
 
+### Current Coaching Plan Classification
+
+- Special training tags now follow the latest joining or renewal coaching plan instead of being blocked by the admission-time plan.
+- Jersey transactions are excluded from coaching-plan classification, preserving quarterly players while restoring later Special renewals.
+
 ### Finance Reconciliation and Responsive UI Follow-up
 
 - Unified the web finance overview with its canonical signed revenue ledger so legacy joining fees are excluded when an explicit joining-payment row exists and jersey refunds reduce revenue.

@@ -3052,12 +3052,16 @@ const updateAuthPanel = () => {
 
 const isSpecialTraining = (kid) => {
   const payments = getStudentPayments(kid);
+  const paymentPlans = window.GEN_ALPHA_FEE_PLAN_RULES?.latestCoachingPaymentPlans?.(payments)
+    ?? payments
+      .filter((payment) => ["joining", "renewal"].includes(String(payment.payment_type || payment.paymentType || "").toLowerCase()))
+      .map((payment) => payment.plan_type || payment.planType);
   const firstPaymentAmount = Math.round(
     Math.max(Number(kid.amountPaid || 0) - getExtraJerseyAmount(kid.jerseyPairs), 0),
   );
   return window.GEN_ALPHA_FEE_PLAN_RULES?.shouldTreatAsSpecialTraining({
     feePlan: kid.feePlan || kid.fee_plan,
-    paymentPlans: payments.map((payment) => payment.plan_type || payment.planType),
+    paymentPlans,
     feesPaid: kid.feesPaid === "yes",
     firstPaymentAmount,
   }) ?? (String(kid.feePlan || kid.fee_plan || "").toLowerCase() === "special");
