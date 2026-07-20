@@ -334,6 +334,17 @@ html[data-ui="refresh"] .player-subline {
   flex-wrap: wrap;
 }
 
+html[data-ui="refresh"] .player-type-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+html[data-ui="refresh"] .desktop-special-tag {
+  display: none;
+}
+
 html[data-ui="refresh"] .player-title-stack small {
   color: #75849a;
   font-size: 0.66rem;
@@ -409,6 +420,7 @@ html[data-ui="refresh"] .finance-expenses-table tr {
 
 /* Player profile: immediate, stable sheet */
 html[data-ui="refresh"] .player-popup-backdrop {
+  z-index: 9000;
   padding: 18px;
   background: rgba(8, 21, 43, 0.64);
   backdrop-filter: none;
@@ -419,7 +431,14 @@ html[data-ui="refresh"] #playerDetailPopup .player-popup {
   flex-direction: column;
   width: min(820px, 100%) !important;
   max-height: min(880px, calc(100dvh - 36px)) !important;
-  overflow: hidden;
+  margin: 0 !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  scroll-padding-top: 104px;
+  scrollbar-gutter: stable;
   padding: 0 !important;
   border: 0;
   border-radius: 28px !important;
@@ -428,6 +447,9 @@ html[data-ui="refresh"] #playerDetailPopup .player-popup {
 }
 
 html[data-ui="refresh"] #playerDetailPopup .payment-popup-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: 54px minmax(0, 1fr) 42px;
@@ -480,14 +502,16 @@ html[data-ui="refresh"] #closePlayerDetailButton {
 }
 
 html[data-ui="refresh"] #playerDetailContent {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  overscroll-behavior: contain;
+  flex: 0 0 auto;
+  min-height: max-content;
+  overflow: visible;
   padding: 18px;
-  scrollbar-gutter: stable;
+}
+
+html[data-ui="refresh"] #playerDetailPopup .timeline-section {
+  height: auto !important;
+  min-height: max-content !important;
+  overflow: visible !important;
 }
 
 html[data-ui="refresh"] .player-profile-grid {
@@ -1107,6 +1131,7 @@ html[data-ui="refresh"] .profile-loading-shell p {
     width: 100% !important;
     height: min(94dvh, 900px) !important;
     max-height: min(94dvh, 900px) !important;
+    scroll-padding-top: 92px;
     border-radius: 28px 28px 0 0 !important;
   }
 
@@ -1132,10 +1157,10 @@ html[data-ui="refresh"] .profile-loading-shell p {
   }
 
   html[data-ui="refresh"] #playerDetailContent {
-    flex: 1 1 0;
-    min-height: 0;
+    flex: 0 0 auto;
+    min-height: max-content;
+    overflow: visible;
     padding: 13px;
-    scrollbar-gutter: auto;
   }
 
   html[data-ui="refresh"] .player-profile-grid {
@@ -1323,12 +1348,32 @@ html[data-ui="refresh"] .profile-loading-shell p {
 }
 
 @media (min-width: 1101px) {
+  html[data-ui="refresh"] #rosterView .player-subline {
+    display: none !important;
+  }
+
   html[data-ui="refresh"] #rosterView .kids-table td[data-label="Player"] {
     min-width: 220px !important;
   }
 
   html[data-ui="refresh"] #rosterView .player-link {
     white-space: normal !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .desktop-special-tag {
+    display: inline-flex;
+  }
+
+  html[data-ui="refresh"] .finance-recent-switch {
+    display: none !important;
+  }
+
+  html[data-ui="refresh"] #financeRecent .finance-recent-grid {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+  }
+
+  html[data-ui="refresh"] #financeRecent .finance-recent-section {
+    display: block !important;
   }
 }
 

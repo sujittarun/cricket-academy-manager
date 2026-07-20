@@ -3342,8 +3342,11 @@ const renderKids = () => {
         </span>
       </td>
       <td data-label="Type">
-        <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
-          ${studentType}
+        <span class="player-type-stack">
+          <span class="type-pill ${studentType === "Returning" ? "returning" : "new"}">
+            ${studentType}
+          </span>
+          ${isSpecialTraining(kid) ? '<span class="special-tag desktop-special-tag" title="Special training"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Special</span>' : ''}
         </span>
       </td>
       <td data-label="Tenure"><span class="tenure-pill">${getTenureBadge(kid)}</span></td>
@@ -4581,6 +4584,11 @@ const renderPlayerDetails = async (kid) => {
   `;
   playerDetailPopup.hidden = false;
   document.body.classList.add("popup-open");
+  const playerDialog = playerDetailPopup.querySelector(".player-popup");
+  if (playerDialog) {
+    playerDialog.scrollTop = 0;
+    requestAnimationFrame(() => playerDialog.focus({ preventScroll: true }));
+  }
 
   // Give the browser one paint before timeline network work starts so the
   // profile always responds immediately on mobile connections.

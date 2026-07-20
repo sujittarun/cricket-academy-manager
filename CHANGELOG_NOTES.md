@@ -15,6 +15,13 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-07-20
 
+### Player Profile Scroll and Desktop Simplification
+
+- Replaced the nested player-profile content scroller with one dialog scroller and a sticky profile header.
+- Prevented the timeline grid row from collapsing to its padding height on mobile browsers.
+- Removed the redundant player subline from desktop roster rows and moved Special training into the Type column.
+- Removed the Revenue/Expenses switch on desktop so both finance tables remain visible side by side.
+
 ### Finance Reconciliation and Responsive UI Follow-up
 
 - Unified the web finance overview with its canonical signed revenue ledger so legacy joining fees are excluded when an explicit joining-payment row exists and jersey refunds reduce revenue.
