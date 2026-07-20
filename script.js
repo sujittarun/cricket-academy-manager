@@ -3373,6 +3373,7 @@ const renderKids = () => {
           ${renewalStatus}
         </span>
       </td>
+      <td data-label="Last Updated"><span class="meta-text small-meta">${kid.updatedBy.substring(0, 8)}...</span></td>
       ${
         canEdit
           ? `<td data-label="Actions">
@@ -3419,7 +3420,6 @@ const renderKids = () => {
           </td>`
           : ""
       }
-      <td data-label="Last Updated"><span class="meta-text small-meta">${kid.updatedBy.substring(0, 8)}...</span></td>
     `;
     kidsTableBody.appendChild(row);
   });

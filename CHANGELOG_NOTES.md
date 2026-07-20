@@ -15,6 +15,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 
 ## 2026-07-20
 
+### Desktop Roster Edit Actions
+
+- Moved Actions to the final roster column and pinned it to the desktop table's right edge in Edit mode.
+- The action menu button now stays visible without horizontal scrolling while the remaining roster columns retain their full detail.
+
 ### Player Profile Scroll and Desktop Simplification
 
 - Replaced the nested player-profile content scroller with one dialog scroller and a sticky profile header.

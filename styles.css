@@ -8243,9 +8243,9 @@ body.popup-open {
   #rosterView .kids-table th:nth-child(12),
   #rosterView .kids-table td:nth-child(12) { width: 8% !important; min-width: 120px !important; }
   #rosterView .kids-table.edit-mode th:nth-child(13),
-  #rosterView .kids-table.edit-mode td[data-label="Actions"] { width: 4% !important; min-width: 54px !important; text-align: center !important; }
-  #rosterView .kids-table.edit-mode th:nth-child(14),
   #rosterView .kids-table.edit-mode td[data-label="Last Updated"] { width: 6.5% !important; min-width: 96px !important; }
+  #rosterView .kids-table.edit-mode th:nth-child(14),
+  #rosterView .kids-table.edit-mode td[data-label="Actions"] { width: 4% !important; min-width: 54px !important; text-align: center !important; }
 
   #rosterView .action-trigger-btn {
     width: 32px !important;

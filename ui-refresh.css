@@ -1387,6 +1387,41 @@ html[data-ui="refresh"] .profile-loading-shell p {
   }
 }
 
+@media (min-width: 1181px) {
+  /* Keep the edit menu available without horizontally scrolling the roster.
+     Actions is the final column, so it can safely stay pinned to the right edge. */
+  html[data-ui="refresh"] #rosterView .kids-table.edit-mode #actionHeader,
+  html[data-ui="refresh"] #rosterView .kids-table.edit-mode td[data-label="Actions"] {
+    position: sticky !important;
+    right: 0;
+    width: 62px !important;
+    min-width: 62px !important;
+    max-width: 62px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    text-align: center !important;
+    background: #ffffff !important;
+    box-shadow: -12px 0 18px -16px rgba(21, 53, 96, 0.6);
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table.edit-mode #actionHeader {
+    z-index: 7;
+    background: #f5f8fc !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table.edit-mode td[data-label="Actions"] {
+    z-index: 5;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table.edit-mode tbody tr:hover td[data-label="Actions"] {
+    background: #f8fbff !important;
+  }
+
+  html[data-ui="refresh"] #rosterView .kids-table.edit-mode td[data-label="Actions"] .action-menu-container {
+    display: inline-flex;
+  }
+}
+
 /* Mid-size landscape tablets have no bottom navigation in the legacy shell,
    so keep a compact full navigation row available in the header. */
 @media (min-width: 901px) and (max-width: 1100px) {
