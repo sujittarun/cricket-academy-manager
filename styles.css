@@ -1984,7 +1984,7 @@ body.popup-open {
 .proof-viewer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 10050;
   display: grid;
   place-items: center;
   padding: 20px;

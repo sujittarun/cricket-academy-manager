@@ -505,6 +505,8 @@ let realtimeRemindersChannel = null;
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let playerDetailRenderSeq = 0;
+let activePaymentProofViewer = null;
+let paymentProofReturnFocus = null;
 let financePayments = [];
 let financeExpenses = [];
 let paymentFollowUps = [];
@@ -4261,22 +4263,42 @@ const renderPlayerTimeline = (timeline = []) =>
     ).join("")}
   </ol>`;
 
-const openPaymentProofViewer = (url) => {
+const closePaymentProofViewer = ({ restoreFocus = true } = {}) => {
+  if (!activePaymentProofViewer) return false;
+  activePaymentProofViewer.remove();
+  activePaymentProofViewer = null;
+  if (restoreFocus && paymentProofReturnFocus?.isConnected) {
+    paymentProofReturnFocus.focus({ preventScroll: true });
+  }
+  paymentProofReturnFocus = null;
+  return true;
+};
+
+const openPaymentProofViewer = (url, trigger = null) => {
   if (!url) return;
+  closePaymentProofViewer({ restoreFocus: false });
+  paymentProofReturnFocus = trigger instanceof HTMLElement
+    ? trigger
+    : document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
   const viewer = document.createElement("div");
   viewer.className = "proof-viewer-backdrop";
   viewer.innerHTML = `
-    <div class="proof-viewer" role="dialog" aria-modal="true" aria-label="Payment proof">
-      <button class="icon-button proof-viewer-close" type="button">Close</button>
+    <div class="proof-viewer" role="dialog" aria-modal="true" aria-label="Payment proof" tabindex="-1">
+      <button class="icon-button proof-viewer-close" type="button" aria-label="Close payment proof">Close</button>
       <img src="${escapeHtml(url)}" alt="Payment proof screenshot" />
     </div>
   `;
   viewer.addEventListener("click", (event) => {
     if (event.target === viewer || event.target.closest(".proof-viewer-close")) {
-      viewer.remove();
+      event.stopPropagation();
+      closePaymentProofViewer();
     }
   });
   document.body.appendChild(viewer);
+  activePaymentProofViewer = viewer;
+  viewer.querySelector(".proof-viewer-close")?.focus({ preventScroll: true });
 };
 
 const getFreshManagerAccessToken = async () => {
@@ -6245,7 +6267,7 @@ playerDetailContent?.addEventListener("click", async (event) => {
   }
   const proofTarget = event.target.closest("[data-proof-url]");
   if (proofTarget) {
-    openPaymentProofViewer(proofTarget.dataset.proofUrl || "");
+    openPaymentProofViewer(proofTarget.dataset.proofUrl || "", proofTarget);
     return;
   }
   const confirmTarget = event.target.closest("[data-profile-confirm-payment-id]");
@@ -6309,6 +6331,10 @@ playerDetailPopup?.addEventListener("click", (event) => {
 });
 window.addEventListener("focus", refreshPaymentReturnHint);
 window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && closePaymentProofViewer()) {
+    event.preventDefault();
+    return;
+  }
   if (event.key === "Escape" && paymentPopup && !paymentPopup.hidden) {
     closePaymentPopup();
   }

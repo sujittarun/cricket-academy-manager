@@ -32,6 +32,11 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 - Special training tags now follow the latest joining or renewal coaching plan instead of being blocked by the admission-time plan.
 - Jersey transactions are excluded from coaching-plan classification, preserving quarterly players while restoring later Special renewals.
 
+### Payment Proof Viewer Layer
+
+- Payment proof images now open above the player-profile dialog instead of behind it.
+- Closing with the button, backdrop, or Escape keeps the player profile open and restores focus to the proof thumbnail.
+
 ### Finance Reconciliation and Responsive UI Follow-up
 
 - Unified the web finance overview with its canonical signed revenue ledger so legacy joining fees are excluded when an explicit joining-payment row exists and jersey refunds reduce revenue.
