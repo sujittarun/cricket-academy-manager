@@ -618,12 +618,12 @@
 
       const notifyPaymentAttempt = async () => {
         if (!reminderEventId || !supabaseConfig.url) {
-          return;
+          return false;
         }
 
         const notifyKey = `gen-alpha-payment-attempt-${reminderEventId}-${selectedPlanId}-${selectedMonths}`;
         if (sessionStorage.getItem(notifyKey)) {
-          return;
+          return true;
         }
 
         const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/whatsapp-reminder`;
@@ -640,15 +640,21 @@
             selectedPlan: selectedPlanId,
             selectedMonths,
           }),
-        }).then((response) => {
+        }).then(async (response) => {
           if (response.ok) {
             sessionStorage.setItem(notifyKey, "1");
+            return true;
           }
+          console.warn("Unable to send the WhatsApp payment follow-up.", await response.text());
+          return false;
+        }).catch((error) => {
+          console.warn("Unable to send the WhatsApp payment follow-up.", error);
+          return false;
         });
 
-        await Promise.race([
-          request.catch(() => {}),
-          new Promise((resolve) => window.setTimeout(resolve, 700)),
+        return await Promise.race([
+          request,
+          new Promise((resolve) => window.setTimeout(() => resolve(false), 4000)),
         ]);
       };
 
@@ -703,8 +709,9 @@
         messageText.textContent = "Choose your UPI app. If it does not open, copy the UPI ID and amount.";
       };
 
-      const openUpiApp = (appName = "generic") => {
-        void notifyPaymentAttempt();
+      const openUpiApp = async (appName = "generic") => {
+        messageText.textContent = "Preparing payment and WhatsApp instructions...";
+        await notifyPaymentAttempt();
         const upiLinks = buildUpiLinks();
         const targetUrl = upiLinks[appName] || upiLinks.generic;
         messageText.textContent = "Opening your UPI app...";
@@ -714,25 +721,27 @@
         }, 1600);
       };
 
-      document.getElementById("payButton").addEventListener("click", () => {
+      document.getElementById("payButton").addEventListener("click", async () => {
         if (!upiId) {
           messageText.textContent = "UPI payment is not configured. Please contact academy staff.";
           return;
         }
         if (isAppleTouchDevice()) {
+          messageText.textContent = "Sending payment instructions to WhatsApp...";
+          await notifyPaymentAttempt();
           showUpiOptions();
           return;
         }
-        openUpiApp("generic");
+        await openUpiApp("generic");
       });
 
       document.querySelectorAll("[data-upi-app]").forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
           if (!upiId) {
             messageText.textContent = "UPI payment is not configured. Please contact academy staff.";
             return;
           }
-          openUpiApp(button.dataset.upiApp || "generic");
+          await openUpiApp(button.dataset.upiApp || "generic");
         });
       });
 
