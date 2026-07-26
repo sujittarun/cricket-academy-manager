@@ -4887,6 +4887,40 @@ body.popup-open {
   min-width: 46px;
 }
 
+.reminder-pause-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(32, 88, 173, 0.18);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(234, 242, 255, 0.9), rgba(247, 250, 255, 0.96));
+}
+
+.reminder-pause-field[hidden] {
+  display: none;
+}
+
+.reminder-pause-field > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.reminder-pause-field strong {
+  color: var(--ink);
+  font-size: 0.94rem;
+}
+
+.reminder-pause-field small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.reminder-pause-field .toggle-switch {
+  margin-top: 0;
+}
+
 .toggle-label.present {
   color: var(--success);
 }

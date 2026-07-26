@@ -54,6 +54,8 @@ const managerTotalAmount = document.getElementById("managerTotalAmount");
 const managerFeeSummary = document.getElementById("managerFeeSummary");
 const joinDateInput = document.getElementById("joinDate");
 const whatsappContactStatusField = document.getElementById("whatsappContactStatusField");
+const pauseRemindersField = document.getElementById("pauseRemindersField");
+const pauseRemindersInput = document.getElementById("pauseReminders");
 const formMessage = document.getElementById("formMessage");
 const saveButton = document.getElementById("saveButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
@@ -650,6 +652,15 @@ const getFeeDisplayState = (kid) => {
   if (isPaymentPendingFollowUp(followUp) || kid?.paymentStatus === "pending_verification") {
     return { label: "Pending verification", className: "status-pending", followUp };
   }
+  if (kid?.whatsappRemindersPaused) {
+    return {
+      label: "Reminders paused",
+      className: "status-manual",
+      followUp,
+      reasonLabel: "Paused by staff",
+      title: "Scheduled WhatsApp reminders and automatic retries are paused. Manual sends remain available.",
+    };
+  }
   if (isManualFollowUpDue(kid, followUp)) {
     const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
     const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
@@ -743,6 +754,7 @@ const normalizeKid = (kid) => {
     fatherGuardianName: kid.father_guardian_name || "",
     parentContactNo: kid.parent_contact_no || "",
     whatsappContactStatus: kid.whatsapp_contact_status || "active",
+    whatsappRemindersPaused: kid.whatsapp_reminders_paused === true,
     alternateContactNo: kid.alternate_contact_no || "",
     schoolCollege: kid.school_college || "",
     grade: kid.grade || "",
@@ -815,6 +827,7 @@ const toDatabasePayload = ({
   fatherGuardianName = "",
   parentContactNo = "",
   whatsappContactStatus = "active",
+  whatsappRemindersPaused = false,
   alternateContactNo = "",
   schoolCollege = "",
   grade = "",
@@ -853,6 +866,7 @@ const toDatabasePayload = ({
       father_guardian_name: fatherGuardianName,
       parent_contact_no: parentContactNo,
       whatsapp_contact_status: whatsappContactStatus,
+      whatsapp_reminders_paused: Boolean(whatsappRemindersPaused),
       alternate_contact_no: alternateContactNo,
       school_college: schoolCollege,
       grade,
@@ -867,7 +881,7 @@ const isMissingStudentProfileColumnError = (error) => {
   const message = String(error?.message || "").toLowerCase();
   return (
     message.includes("schema cache") &&
-    ["father_guardian_name", "parent_contact_no", "alternate_contact_no", "school_college", "grade", "address", "whatsapp_contact_status"]
+    ["father_guardian_name", "parent_contact_no", "alternate_contact_no", "school_college", "grade", "address", "whatsapp_contact_status", "whatsapp_reminders_paused"]
       .some((column) => message.includes(column))
   );
 };
@@ -1146,7 +1160,9 @@ const getReminderState = (kid) => {
     dueDate,
     overdueDays,
     isCritical: overdueDays > 10,
-    requiresManualFollowUp: (hasBlockedWhatsappContact(kid) || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS) && (isJoiningFee || isRenewalPending(kid)),
+    requiresManualFollowUp: !kid.whatsappRemindersPaused &&
+      (hasBlockedWhatsappContact(kid) || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS) &&
+      (isJoiningFee || isRenewalPending(kid)),
     reminderType: isJoiningFee ? "joining_fee" : "renewal",
   };
 };
@@ -2652,6 +2668,7 @@ const resetFormState = () => {
   editingKidId = null;
   kidForm.reset();
   if (whatsappContactStatusField) whatsappContactStatusField.hidden = true;
+  if (pauseRemindersField) pauseRemindersField.hidden = true;
   saveButton.disabled = false;
   saveButton.textContent = "Save kid details";
   cancelEditButton.hidden = true;
@@ -4636,7 +4653,9 @@ const renderPlayerDetails = async (kid) => {
 
   playerDetailContent.innerHTML = `
     ${
-      reminderState.requiresManualFollowUp
+      kid.whatsappRemindersPaused
+        ? `<div class="critical-reminder-banner">Automatic WhatsApp reminders are paused by staff. Manual sends remain available.</div>`
+        : reminderState.requiresManualFollowUp
         ? `<div class="critical-reminder-banner">${escapeHtml(feeDisplay.reasonLabel || `Overdue for ${reminderState.overdueDays} days`)}. Automatic WhatsApp reminders are paused; manual follow-up is required.</div>`
         : reminderState.isCritical
         ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Follow up with parent today.</div>`
@@ -5577,6 +5596,9 @@ kidForm.addEventListener("submit", async (event) => {
       const nextPhone = String(formData.get("parentContactNo") || "").replace(/\D/g, "").slice(0, 10);
       return nextPhone.length === 10 && nextPhone !== previousPhone ? "active" : "wrong_number";
     })(),
+    whatsappRemindersPaused: currentKid
+      ? formData.get("pauseReminders") === "on"
+      : false,
     alternateContactNo: "",
     schoolCollege: String(formData.get("schoolCollege") || "").trim(),
     grade: String(formData.get("grade") || "").trim(),
@@ -5836,6 +5858,8 @@ kidsTableBody.addEventListener("click", async (event) => {
     if (whatsappContactStatusField) {
       whatsappContactStatusField.hidden = kidToEdit.whatsappContactStatus !== "wrong_number";
     }
+    if (pauseRemindersField) pauseRemindersField.hidden = false;
+    if (pauseRemindersInput) pauseRemindersInput.checked = kidToEdit.whatsappRemindersPaused === true;
     document.getElementById("schoolCollege").value = kidToEdit.schoolCollege || "";
     document.getElementById("grade").value = kidToEdit.grade || "";
     document.getElementById("address").value = kidToEdit.address || "";

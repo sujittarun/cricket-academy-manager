@@ -226,6 +226,17 @@
                 <small>Enter a different valid 10-digit number and save. Future reminders will resume automatically.</small>
               </div>
 
+              <label id="pauseRemindersField" class="reminder-pause-field form-span-full" hidden>
+                <span>
+                  <strong>Pause automatic reminders</strong>
+                  <small>Stops scheduled WhatsApp reminders and retries. Manual sends stay available.</small>
+                </span>
+                <span class="toggle-switch">
+                  <input id="pauseReminders" name="pauseReminders" type="checkbox" />
+                  <span class="toggle-track"></span>
+                </span>
+              </label>
+
               <label>
                 School
                 <input id="schoolCollege" name="schoolCollege" type="text" placeholder="School name" />
