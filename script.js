@@ -414,6 +414,120 @@ const supabaseClient =
     ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
     : null;
 const isBackendReady = Boolean(supabaseClient);
+
+/* ============================================================
+   Reporting in to Academy Manager.
+
+   Gen Alpha keeps its own Supabase project, its own schema and its own
+   money logic — none of that changes and no data moves. This only tells
+   the platform console that the app is alive, when it breaks, and
+   roughly how big the academy is, so its card shows real numbers rather
+   than an academy with no students.
+
+   Strictly additive and strictly fire-and-forget: every path is
+   wrapped, nothing is awaited, and a failure here can never affect a
+   page. If the platform is unreachable this app does not notice.
+
+   WHAT IS SENT: counts and totals only. Never a student's name, a
+   parent's number, or anything identifying a person. The platform's
+   event sink is not a place personal data should ever reach.
+   ============================================================ */
+const AM_REPORT = {
+  url: "https://ugsklcipzyiogxynshnh.supabase.co",
+  // The platform's public anon key — the same one in every tenant's
+  // front end. It can write events and read nothing.
+  key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnc2tsY2lwenlpb2d4eW5zaG5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4OTUyMzksImV4cCI6MjA5ODQ3MTIzOX0.w7xkjdTkYN2qA0oxMKLUNtua0ScKVHKQzfEyIayh9eo",
+  tenant: "genalpha",
+  ver: "web",
+};
+
+function amReport(name, props) {
+  try {
+    let sid = null;
+    try {
+      sid = sessionStorage.getItem("ga-am-sid");
+      if (!sid) {
+        sid = Math.random().toString(36).slice(2);
+        sessionStorage.setItem("ga-am-sid", sid);
+      }
+    } catch (e) { /* private mode */ }
+
+    fetch(`${AM_REPORT.url}/rest/v1/events`, {
+      method: "POST",
+      headers: {
+        apikey: AM_REPORT.key,
+        Authorization: `Bearer ${AM_REPORT.key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        tenant_id: AM_REPORT.tenant,
+        name,
+        session_id: sid,
+        page: (location.pathname.split("/").pop() || "index.html").slice(0, 60),
+        props: { ver: AM_REPORT.ver, ...(props || {}) },
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (e) { /* reporting must never break a page */ }
+}
+
+amReport("page_view", {});
+
+/* Capped, so one broken render does not send a thousand. */
+let amReportErrors = 0;
+function amReportError(msg, src, stack) {
+  if (amReportErrors++ >= 5) return;
+  amReport("client_error", {
+    msg: String(msg || "").slice(0, 200),
+    src: String(src || "").slice(0, 120),
+    stack: stack ? String(stack).slice(0, 300) : null,
+    kind: "crash",
+  });
+}
+window.addEventListener("error", (e) => {
+  amReportError(e.message, `${String(e.filename || "").split("/").pop()}:${e.lineno || 0}`, e.error?.stack);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const r = e.reason;
+  amReportError(
+    r instanceof Error ? r.message : `Unhandled rejection: ${String(r)}`,
+    "promise",
+    r instanceof Error ? r.stack : null,
+  );
+});
+
+/* Once a day: how big the academy is. Active students only — 42 are
+   training of 77 on the books, and sending the larger number would
+   overstate the academy by something the owner would notice. The count
+   is a head() query, so the rows are never fetched, let alone sent. */
+async function amReportRollup() {
+  try {
+    if (!supabaseClient) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem("ga-am-rollup") === today) return;
+
+    const students = await supabaseClient
+      .from("students")
+      .select("id", { count: "exact", head: true })
+      .neq("discontinued", true)
+      .then((r) => r.count, () => null);
+
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+    const revenue = await supabaseClient
+      .from("student_payments")
+      .select("amount")
+      .gte("paid_on", since.toISOString().slice(0, 10))
+      .then((r) => (r.data || []).reduce((a, x) => a + (Number(x.amount) || 0), 0), () => null);
+
+    if (students === null && revenue === null) return;
+    amReport("tenant_rollup", { players: students, revenue_30d: revenue });
+    localStorage.setItem("ga-am-rollup", today);
+  } catch (e) { /* a schema change must not break the app */ }
+}
+setTimeout(amReportRollup, 4000);
+
 const LAST_EMAIL_STORAGE_KEY = "gen-alpha-last-manager-email";
 const LAST_PASSWORD_STORAGE_KEY = "gen-alpha-last-manager-password";
 const PAYMENT_RETURN_STORAGE_KEY = "gen-alpha-payment-return";
