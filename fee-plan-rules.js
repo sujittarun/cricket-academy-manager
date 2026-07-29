@@ -11,12 +11,14 @@
 
   const fixedMonthsForPlan = (value) => PLAN_MONTHS[normalizePlan(value)] || 0;
 
+  const isCoachingFeePayment = (payment) => {
+    const paymentType = normalizePlan(payment?.payment_type || payment?.paymentType);
+    return paymentType === "joining" || paymentType === "renewal";
+  };
+
   const latestCoachingPaymentPlans = (payments) =>
     (payments || [])
-      .filter((payment) => {
-        const paymentType = normalizePlan(payment?.payment_type || payment?.paymentType);
-        return paymentType === "joining" || paymentType === "renewal";
-      })
+      .filter(isCoachingFeePayment)
       .slice()
       .sort((first, second) => {
         const firstPaidOn = String(first?.paid_on || first?.paidOn || "");
@@ -45,6 +47,20 @@
     };
   };
 
+  const currentFeeStatus = ({ feesPaid, daysFromDue }) => {
+    const isPaid = feesPaid === true || feesPaid === "yes";
+    const dueDays = Number(daysFromDue);
+    if (isPaid && Number.isFinite(dueDays) && dueDays >= 0) {
+      return {
+        key: dueDays > 0 ? "renewal_overdue" : "renewal_due",
+        label: dueDays > 0 ? "Renewal overdue" : "Renewal due",
+        paymentDue: true,
+      };
+    }
+    if (isPaid) return { key: "paid", label: "Paid", paymentDue: false };
+    return { key: "not_paid", label: "Not paid", paymentDue: true };
+  };
+
   const shouldTreatAsSpecialTraining = ({ feePlan, paymentPlans, feesPaid, firstPaymentAmount }) => {
     // Payment history represents the player's current coaching plan more
     // accurately than the admission-time fee_plan. The caller provides it in
@@ -61,7 +77,9 @@
 
   return {
     buildSyntheticJoiningFee,
+    currentFeeStatus,
     fixedMonthsForPlan,
+    isCoachingFeePayment,
     latestCoachingPaymentPlans,
     normalizePlan,
     shouldTreatAsSpecialTraining,

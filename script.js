@@ -800,7 +800,24 @@ const getFeeDisplayState = (kid) => {
   if (isReminderSentFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
     return { label: "Reminder sent", className: "status-reminder", followUp };
   }
-  if (kid?.feesPaid === "yes") return { label: "Paid", className: "status-paid", followUp };
+  const dueDays = getDaysSinceDate(getPaidThroughDate(kid));
+  const baseFeeStatus = window.GEN_ALPHA_FEE_PLAN_RULES?.currentFeeStatus?.({
+    feesPaid: kid?.feesPaid,
+    daysFromDue: dueDays,
+  });
+  if (baseFeeStatus?.key === "renewal_due" || baseFeeStatus?.key === "renewal_overdue") {
+    return {
+      label: baseFeeStatus.label,
+      className: "status-unpaid",
+      followUp,
+      title: dueDays > 0
+        ? `Coaching renewal is overdue by ${dueDays} day${dueDays === 1 ? "" : "s"}.`
+        : "Coaching renewal is due today.",
+    };
+  }
+  if (baseFeeStatus?.key === "paid" || kid?.feesPaid === "yes") {
+    return { label: "Paid", className: "status-paid", followUp };
+  }
   return { label: "Not paid", className: "status-unpaid", followUp };
 };
 
@@ -1218,7 +1235,13 @@ const getPaidThroughDate = (kid) => {
   });
 
   getStudentPayments(kid)
-    .filter((payment) => ["joining", "renewal"].includes(payment.payment_type || payment.paymentType))
+    .filter((payment) =>
+      window.GEN_ALPHA_FEE_PLAN_RULES?.isCoachingFeePayment
+        ? window.GEN_ALPHA_FEE_PLAN_RULES.isCoachingFeePayment(payment)
+        : ["joining", "renewal"].includes(
+          String(payment.payment_type || payment.paymentType || "").trim().toLowerCase()
+        )
+    )
     .forEach((payment) => {
       const cycleStart = payment.cycle_start_date || payment.cycleStartDate || payment.paid_on || payment.paidOn;
       const monthsCovered = getPaymentMonthsCovered(payment);
@@ -2108,8 +2131,9 @@ const matchesRosterFilters = (kid) => {
   if (rosterJerseyFilter === "not-set" && jerseySize) return false;
   if (rosterJerseyFilter !== "all" && rosterJerseyFilter !== "not-set" && jerseySize !== rosterJerseyFilter) return false;
   if (rosterTypeFilter !== "all" && getStudentType(kid).toLowerCase() !== rosterTypeFilter) return false;
-  if (rosterFeeDueFilter === "paid" && kid.feesPaid !== "yes") return false;
-  if (rosterFeeDueFilter === "not-paid" && kid.feesPaid === "yes") return false;
+  const hasPaymentDue = isFeesPending(kid) || isRenewalPending(kid);
+  if (rosterFeeDueFilter === "paid" && hasPaymentDue) return false;
+  if (rosterFeeDueFilter === "not-paid" && !hasPaymentDue) return false;
   if (rosterFeeDueFilter === "joining-pending" && !isFeesPending(kid)) return false;
   if (rosterFeeDueFilter === "overdue" && !isRenewalOverdue(kid)) return false;
   if (!matchesMovementFilter(kid)) return false;
@@ -2134,7 +2158,7 @@ const getRosterSortValue = (kid, key) => {
     tenure: getDaysSinceDate(kid.joinDate),
     joinDate: kid.joinDate,
     latestRenewal,
-    feesPaid: kid.feesPaid === "yes" ? 1 : 0,
+    feesPaid: isFeesPending(kid) || isRenewalPending(kid) ? 0 : 1,
     amountPaid: Number(kid.amountPaid || 0),
     nextDue: getPaidThroughDate(kid),
     updatedBy: kid.updatedBy || "",

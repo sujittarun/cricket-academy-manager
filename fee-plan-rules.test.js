@@ -2,10 +2,31 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
   buildSyntheticJoiningFee,
+  currentFeeStatus,
   fixedMonthsForPlan,
+  isCoachingFeePayment,
   latestCoachingPaymentPlans,
   shouldTreatAsSpecialTraining,
 } = require("./fee-plan-rules.js");
+
+test("paid admission becomes renewal due on the coaching due date", () => {
+  assert.deepEqual(currentFeeStatus({ feesPaid: "yes", daysFromDue: 0 }), {
+    key: "renewal_due",
+    label: "Renewal due",
+    paymentDue: true,
+  });
+  assert.equal(currentFeeStatus({ feesPaid: true, daysFromDue: 2 }).key, "renewal_overdue");
+  assert.equal(currentFeeStatus({ feesPaid: true, daysFromDue: -1 }).key, "paid");
+  assert.equal(currentFeeStatus({ feesPaid: false, daysFromDue: 0 }).key, "not_paid");
+});
+
+test("only joining and renewal payments extend coaching coverage", () => {
+  assert.equal(isCoachingFeePayment({ payment_type: "joining" }), true);
+  assert.equal(isCoachingFeePayment({ paymentType: " Renewal " }), true);
+  assert.equal(isCoachingFeePayment({ payment_type: "jersey" }), false);
+  assert.equal(isCoachingFeePayment({ payment_type: "jersey_refund" }), false);
+  assert.equal(isCoachingFeePayment({}), false);
+});
 
 test("explicit quarterly plan keeps three months for a 10000 payment", () => {
   const joining = buildSyntheticJoiningFee({

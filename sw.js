@@ -1,4 +1,4 @@
-const CACHE_NAME = "gen-alpha-academy-v98";
+const CACHE_NAME = "gen-alpha-academy-v99";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "./styles.css",
   "./ui-refresh.css",
   "./script.js",
+  "./fee-plan-rules.js",
   "./supabase-config.js",
   "./manifest.webmanifest",
   "./assets/og-image.jpg",
@@ -25,6 +26,7 @@ const NETWORK_FIRST_PATH_ENDINGS = [
   "/styles.css",
   "/ui-refresh.css",
   "/script.js",
+  "/fee-plan-rules.js",
   "/supabase-config.js",
   "/manifest.webmanifest",
   "/sw.js",
