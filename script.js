@@ -4961,7 +4961,7 @@ const renderWhatsappPerformance = (data, errorMessage = "") => {
     return `
       <article class="whatsapp-month-card ${month.isCurrent ? "is-current" : ""}">
         <div class="whatsapp-month-title">
-          <div><strong>${escapeHtml(month.label || "")}</strong><span>${escapeHtml(String(month.fullLabel || "").replace(String(month.label || ""), "").trim())}</span></div>
+          <div><strong>${escapeHtml(month.label || "")}</strong><span>${escapeHtml(String(month.month || "").slice(0, 4))}</span></div>
           ${month.isCurrent ? '<em>MTD</em>' : ""}
         </div>
         <div class="whatsapp-reminder-count"><strong>${Number(month.remindersSent || 0)}</strong><span>reminders</span></div>
