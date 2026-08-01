@@ -225,6 +225,12 @@ const financeMonthExpenses = document.getElementById("financeMonthExpenses");
 const financeMonthNet = document.getElementById("financeMonthNet");
 const financeMiniChart = document.getElementById("financeMiniChart");
 const financeNetTimeline = document.getElementById("financeNetTimeline");
+const whatsappStatsPanel = document.getElementById("whatsappStatsPanel");
+const whatsappStatsSummary = document.getElementById("whatsappStatsSummary");
+const whatsappMonthlyStats = document.getElementById("whatsappMonthlyStats");
+const whatsappStatsNote = document.getElementById("whatsappStatsNote");
+const openWhatsappStatsButton = document.getElementById("openWhatsappStatsButton");
+const closeWhatsappStatsButton = document.getElementById("closeWhatsappStatsButton");
 const expenseForm = document.getElementById("expenseForm");
 const expenseMessage = document.getElementById("expenseMessage");
 const openExpensePopupButton = document.getElementById("openExpensePopupButton");
@@ -4929,11 +4935,60 @@ const syncFinanceRecentView = () => {
   });
 };
 
+const renderWhatsappPerformance = (data, errorMessage = "") => {
+  if (!whatsappStatsPanel || !whatsappStatsSummary || !whatsappMonthlyStats) return;
+  if (errorMessage || !Array.isArray(data?.months)) {
+    whatsappStatsSummary.innerHTML = "";
+    whatsappMonthlyStats.innerHTML = `
+      <div class="whatsapp-stats-empty">
+        <strong>WhatsApp stats are temporarily unavailable</strong>
+        <span>${escapeHtml(errorMessage || "Refresh Finance to try again.")}</span>
+      </div>`;
+    if (whatsappStatsNote) whatsappStatsNote.textContent = "";
+    return;
+  }
+
+  const totals = data.totals || {};
+  const months = data.months;
+  const maxReminders = Math.max(1, ...months.map((month) => Number(month.remindersSent || 0)));
+  whatsappStatsSummary.innerHTML = `
+    <article><span>Reminders sent</span><strong>${Number(totals.remindersSent || 0).toLocaleString("en-IN")}</strong><small>${Number(totals.playersReached || 0).toLocaleString("en-IN")} unique players</small></article>
+    <article class="payment"><span>Payments received</span><strong>${Number(totals.paymentsViaReminder || 0).toLocaleString("en-IN")}</strong><small>${Number(totals.conversionRate || 0).toLocaleString("en-IN")}% player conversion</small></article>
+    <article class="revenue"><span>Reminder revenue</span><strong>${rupees(Number(totals.revenueViaReminder || 0))}</strong><small>${Number(totals.proofSubmitted || 0).toLocaleString("en-IN")} proof submissions</small></article>
+    <article class="read"><span>Read rate</span><strong>${Number(totals.readRate || 0).toLocaleString("en-IN")}%</strong><small>${Number(totals.deliveryRate || 0).toLocaleString("en-IN")}% delivered</small></article>`;
+  whatsappMonthlyStats.innerHTML = months.map((month) => {
+    const reminderWidth = Math.max(4, Math.round((Number(month.remindersSent || 0) / maxReminders) * 100));
+    return `
+      <article class="whatsapp-month-card ${month.isCurrent ? "is-current" : ""}">
+        <div class="whatsapp-month-title">
+          <div><strong>${escapeHtml(month.label || "")}</strong><span>${escapeHtml(String(month.fullLabel || "").replace(String(month.label || ""), "").trim())}</span></div>
+          ${month.isCurrent ? '<em>MTD</em>' : ""}
+        </div>
+        <div class="whatsapp-reminder-count"><strong>${Number(month.remindersSent || 0)}</strong><span>reminders</span></div>
+        <div class="whatsapp-volume-track"><i style="width:${reminderWidth}%"></i></div>
+        <div class="whatsapp-month-outcome">
+          <div><strong>${Number(month.paymentsViaReminder || 0)}</strong><span>payments</span></div>
+          <div><strong>${rupees(Number(month.revenueViaReminder || 0))}</strong><span>revenue</span></div>
+        </div>
+        <div class="whatsapp-rate-row">
+          <span>${Number(month.deliveryRate || 0)}% delivered</span>
+          <span>${Number(month.readRate || 0)}% read</span>
+          <span>${Number(month.conversionRate || 0)}% converted</span>
+        </div>
+      </article>`;
+  }).join("");
+  if (whatsappStatsNote) {
+    const generatedAt = data.generatedAt ? new Date(data.generatedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "just now";
+    whatsappStatsNote.textContent = `Updated ${generatedAt}. Payments count only confirmed reminder conversations; AgentAlpha and manual renewals are excluded.`;
+  }
+};
+
 const loadFinance = async () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   if (financeLock) financeLock.hidden = managerReady;
   if (financeStats) financeStats.hidden = !managerReady;
   if (financeInsights) financeInsights.hidden = !managerReady;
+  if (openWhatsappStatsButton) openWhatsappStatsButton.hidden = !managerReady;
   if (financeExportPanel) financeExportPanel.hidden = true; // Export panel hidden for now
   if (financeRangePanel) financeRangePanel.hidden = !managerReady;
   if (managerReady) {
@@ -4948,14 +5003,21 @@ const loadFinance = async () => {
   if (!managerReady) return;
 
   const requestSeq = ++financeLoadSeq;
-  const [paymentsResult, expensesResult] = await Promise.all([
+  const [paymentsResult, expensesResult, whatsappStatsResult] = await Promise.all([
     supabaseClient.from("student_payments").select("*").order("paid_on", { ascending: false }),
     supabaseClient.from("academy_expenses").select("*").order("expense_date", { ascending: false }),
+    supabaseClient.functions.invoke("whatsapp-reminder", {
+      body: { action: "whatsapp_monthly_stats", months: 4 },
+    }),
   ]);
   if (requestSeq !== financeLoadSeq) return;
 
   financePayments = paymentsResult.data || [];
   financeExpenses = expensesResult.data || [];
+  renderWhatsappPerformance(
+    whatsappStatsResult.data,
+    whatsappStatsResult.error?.message || whatsappStatsResult.data?.error || "",
+  );
   if (activeView === "roster") renderKids();
 
   const now = new Date();
@@ -5251,6 +5313,20 @@ expensePopup?.addEventListener("click", (event) => {
 closeFinanceMonthPopupButton?.addEventListener("click", closeFinanceMonthPopup);
 financeMonthPopup?.addEventListener("click", (event) => {
   if (event.target === financeMonthPopup) closeFinanceMonthPopup();
+});
+const closeWhatsappStatsPopup = () => {
+  if (!whatsappStatsPanel) return;
+  whatsappStatsPanel.hidden = true;
+  document.body.classList.remove("popup-open");
+};
+openWhatsappStatsButton?.addEventListener("click", () => {
+  if (!whatsappStatsPanel) return;
+  whatsappStatsPanel.hidden = false;
+  document.body.classList.add("popup-open");
+});
+closeWhatsappStatsButton?.addEventListener("click", closeWhatsappStatsPopup);
+whatsappStatsPanel?.addEventListener("click", (event) => {
+  if (event.target === whatsappStatsPanel) closeWhatsappStatsPopup();
 });
 window.addEventListener("popstate", () => {
   if (financeMonthPopup && !financeMonthPopup.hidden && financeMonthPopup.dataset.historyOpen === "true") {

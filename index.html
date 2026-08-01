@@ -492,6 +492,10 @@
               <p class="section-kicker">Manager Finance</p>
               <h2>Fees and expenses</h2>
             </div>
+            <button id="openWhatsappStatsButton" type="button" class="whatsapp-stats-trigger" hidden>
+              <span class="whatsapp-trigger-icon">↗</span>
+              WhatsApp stats
+            </button>
           </div>
           <div id="financeLock" class="editor-lock">Login as manager to view finance details.</div>
           <section id="financeExportPanel" class="finance-export-panel" hidden>
@@ -1328,6 +1332,27 @@
           </button>
         </div>
         <div id="financeMonthPopupContent" class="finance-month-detail"></div>
+      </section>
+    </div>
+
+    <div id="whatsappStatsPanel" class="player-popup-backdrop whatsapp-stats-backdrop" hidden>
+      <section class="player-popup panel whatsapp-stats-panel" role="dialog" aria-modal="true" aria-labelledby="whatsappStatsTitle">
+        <div class="payment-popup-header whatsapp-stats-head">
+          <div>
+            <p class="section-kicker">WhatsApp Performance</p>
+            <h3 id="whatsappStatsTitle">Reminders to payments</h3>
+            <p class="slot-helper">Deduplicated month-on-month results.</p>
+          </div>
+          <div class="whatsapp-stats-header-actions">
+            <span class="whatsapp-live-pill"><i></i>Live</span>
+            <button id="closeWhatsappStatsButton" type="button" class="icon-button close-popup-btn" aria-label="Close WhatsApp statistics">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="whatsappStatsSummary" class="whatsapp-stats-summary"></div>
+        <div id="whatsappMonthlyStats" class="whatsapp-monthly-stats" aria-live="polite"></div>
+        <p id="whatsappStatsNote" class="whatsapp-stats-note"></p>
       </section>
     </div>
 
