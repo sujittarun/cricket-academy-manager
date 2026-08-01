@@ -10012,4 +10012,34 @@ body.popup-open {
     -webkit-overflow-scrolling: touch;
     padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
   }
+
+  #whatsappStatsPanel .whatsapp-stats-summary {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 1px 1px 7px !important;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  #whatsappStatsPanel .whatsapp-stats-summary::-webkit-scrollbar {
+    display: none;
+  }
+
+  #whatsappStatsPanel .whatsapp-stats-summary article {
+    flex: 0 0 min(42vw, 150px) !important;
+    min-height: 86px !important;
+    padding: 10px !important;
+    scroll-snap-align: start;
+  }
+
+  #whatsappStatsPanel .whatsapp-stats-summary strong {
+    font-size: 1.15rem !important;
+  }
+
+  #whatsappStatsPanel .whatsapp-stats-summary span,
+  #whatsappStatsPanel .whatsapp-stats-summary small {
+    font-size: 0.65rem !important;
+  }
 }
