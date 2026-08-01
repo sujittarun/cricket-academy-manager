@@ -9983,3 +9983,33 @@ body.popup-open {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Keep the WhatsApp performance sheet inside the real mobile viewport. This
+   intentionally comes after the shared player-popup mobile rules. */
+@media (max-width: 720px) {
+  #whatsappStatsPanel.player-popup-backdrop {
+    z-index: 9000 !important;
+    align-items: end !important;
+    justify-items: stretch !important;
+    overflow: hidden !important;
+    padding:
+      max(8px, env(safe-area-inset-top, 0px))
+      8px
+      max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  #whatsappStatsPanel .whatsapp-stats-panel {
+    align-self: end !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: calc(
+      100dvh - max(16px, env(safe-area-inset-top, 0px)) -
+      max(16px, env(safe-area-inset-bottom, 0px))
+    ) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
