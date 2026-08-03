@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
   buildSyntheticJoiningFee,
+  confirmedJoiningPaymentAmount,
   currentFeeStatus,
   fixedMonthsForPlan,
   isCoachingFeePayment,
@@ -9,6 +10,40 @@ const {
   rejoinAwarePaidThroughDate,
   shouldTreatAsSpecialTraining,
 } = require("./fee-plan-rules.js");
+
+test("pending admission confirmation preserves the submitted total", () => {
+  assert.equal(confirmedJoiningPaymentAmount({
+    amountPaid: 0,
+    totalFeeAmount: 4000,
+    coachingFee: 3500,
+    admissionFee: 500,
+    jerseyAmount: 0,
+    fallbackAmount: 3500,
+  }), 4000);
+});
+
+test("an explicit received amount is not replaced by the expected fee total", () => {
+  assert.equal(confirmedJoiningPaymentAmount({
+    amountPaid: 3000,
+    totalFeeAmount: 4000,
+    coachingFee: 3500,
+    admissionFee: 500,
+    jerseyAmount: 0,
+    fallbackAmount: 3500,
+  }), 3000);
+});
+
+test("synthetic joining confirmation includes the submitted admission total", () => {
+  assert.equal(buildSyntheticJoiningFee({
+    feePlan: "monthly",
+    amountPaid: 0,
+    totalFeeAmount: 4000,
+    coachingFee: 3500,
+    admissionFee: 500,
+    jerseyAmount: 0,
+    joinDate: "2026-08-03",
+  }).amount, 4000);
+});
 
 test("paid admission becomes renewal due on the coaching due date", () => {
   assert.deepEqual(currentFeeStatus({ feesPaid: "yes", daysFromDue: 0 }), {

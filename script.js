@@ -834,6 +834,10 @@ const getConfirmablePaymentFollowUp = (kid) => {
     return window.GEN_ALPHA_FEE_PLAN_RULES?.buildSyntheticJoiningFee({
       feePlan: kid.feePlan,
       amountPaid: kid.amountPaid,
+      totalFeeAmount: kid.totalFeeAmount,
+      coachingFee: kid.coachingFee,
+      admissionFee: kid.admissionFee,
+      jerseyAmount: kid.jerseyAmount,
       joinDate: kid.joinDate,
     }) || {
       studentId: kid.id,
@@ -4560,11 +4564,21 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
 
   const planKey = planKeyForFollowUp(followUp);
   const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
-  const amount = Number(followUp.amount || plan.amount);
+  let amount = Number(followUp.amount || plan.amount);
   const cycleDate = followUp.cycleStartDate || getDueCycleDate(kid);
   const monthsCovered = Number(followUp.monthsCovered || plan.months || 1);
   const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
   const isJoiningFee = followUp.isSyntheticJoiningFee === true;
+  if (isJoiningFee && window.GEN_ALPHA_FEE_PLAN_RULES?.confirmedJoiningPaymentAmount) {
+    amount = window.GEN_ALPHA_FEE_PLAN_RULES.confirmedJoiningPaymentAmount({
+      amountPaid: kid.amountPaid,
+      totalFeeAmount: kid.totalFeeAmount,
+      coachingFee: kid.coachingFee,
+      admissionFee: kid.admissionFee,
+      jerseyAmount: kid.jerseyAmount,
+      fallbackAmount: amount,
+    });
+  }
 
   const paymentPayload = {
     student_id: kid.id,
@@ -4603,6 +4617,7 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
   if (paymentError) {
     return { success: false, message: paymentError.message };
   }
+  amount = Number(paymentRow?.amount || amount);
 
   let updatePayload = { updated_by: getActiveManagerEmail() };
   Object.assign(updatePayload, kid.discontinued ? getRejoinPayload(kid) : { discontinued: false });
@@ -4610,7 +4625,6 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
     updatePayload.fees_paid = true;
     updatePayload.amount_paid = amount;
     updatePayload.payment_status = "paid";
-    updatePayload.fee_plan = planKey;
   } else {
     updatePayload.renewals = [...new Set([...kid.renewals, cycleDate])];
   }
@@ -4629,6 +4643,7 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
 
   if (isJoiningFee) {
     kid.feesPaid = "yes";
+    kid.amountPaid = amount;
     kid.paymentStatus = "paid";
   } else {
     kid.renewals = updatePayload.renewals;

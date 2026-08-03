@@ -32,12 +32,42 @@
       .map((payment) => normalizePlan(payment?.plan_type || payment?.planType))
       .filter(Boolean);
 
-  const buildSyntheticJoiningFee = ({ feePlan, amountPaid, joinDate }) => {
+  const confirmedJoiningPaymentAmount = ({
+    amountPaid,
+    totalFeeAmount,
+    coachingFee,
+    admissionFee,
+    jerseyAmount,
+    fallbackAmount,
+  }) => {
+    const receivedAmount = Number(amountPaid);
+    if (receivedAmount > 0) return receivedAmount;
+    const submittedTotal = Number(totalFeeAmount);
+    if (submittedTotal > 0) return submittedTotal;
+    const submittedParts = [coachingFee, admissionFee, jerseyAmount]
+      .reduce((total, value) => total + Math.max(Number(value) || 0, 0), 0);
+    return submittedParts > 0 ? submittedParts : Math.max(Number(fallbackAmount) || 0, 0);
+  };
+
+  const buildSyntheticJoiningFee = ({
+    feePlan,
+    amountPaid,
+    totalFeeAmount,
+    coachingFee,
+    admissionFee,
+    jerseyAmount,
+    joinDate,
+  }) => {
     const requestedPlan = normalizePlan(feePlan);
     const plan = VALID_PAID_PLANS.has(requestedPlan) ? requestedPlan : "monthly";
-    const amount = Number(amountPaid) > 0
-      ? Number(amountPaid)
-      : Number(PLAN_AMOUNTS[plan] || 3500);
+    const amount = confirmedJoiningPaymentAmount({
+      amountPaid,
+      totalFeeAmount,
+      coachingFee,
+      admissionFee,
+      jerseyAmount,
+      fallbackAmount: PLAN_AMOUNTS[plan] || 3500,
+    });
     return {
       selectedPlan: plan,
       monthsCovered: fixedMonthsForPlan(plan) || 1,
@@ -88,6 +118,7 @@
 
   return {
     buildSyntheticJoiningFee,
+    confirmedJoiningPaymentAmount,
     currentFeeStatus,
     fixedMonthsForPlan,
     isCoachingFeePayment,
