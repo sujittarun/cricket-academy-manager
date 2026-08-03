@@ -2008,6 +2008,23 @@ const getDiscontinuedMovementDate = (kid) => {
   return parseIsoDate(kid.updatedAt) || parseIsoDate(kid.createdAt) || parseIsoDate(kid.joinDate);
 };
 
+const isLeftDuringMovementRange = (kid, rangeStart, rangeEnd) => {
+  const discontinuedAt = getDiscontinuedMovementDate(kid);
+  if (!discontinuedAt) return false;
+  const args = {
+    discontinuedAt: toLocalIsoDate(discontinuedAt),
+    rejoinedAt: kid.rejoinedAt,
+    rangeStart: toLocalIsoDate(rangeStart),
+    rangeEnd: toLocalIsoDate(rangeEnd),
+  };
+  if (window.GEN_ALPHA_ROSTER_MOVEMENT_RULES?.isLeftDuringRange) {
+    return window.GEN_ALPHA_ROSTER_MOVEMENT_RULES.isLeftDuringRange(args);
+  }
+  return discontinuedAt >= rangeStart
+    && discontinuedAt <= rangeEnd
+    && (!kid.rejoinedAt || parseIsoDate(kid.rejoinedAt) > rangeEnd);
+};
+
 const buildStudentMovement = (students, monthCount = 6) => {
   const now = new Date();
   return Array.from({ length: monthCount }, (_, index) => {
@@ -2032,8 +2049,7 @@ const buildStudentMovement = (students, monthCount = 6) => {
     }).length;
 
     const discontinued = students.filter((kid) => {
-      const discontinuedAt = getDiscontinuedMovementDate(kid);
-      return discontinuedAt && discontinuedAt >= monthStart && discontinuedAt <= monthEnd;
+      return isLeftDuringMovementRange(kid, monthStart, monthEnd);
     }).length;
 
     return {
@@ -2068,7 +2084,7 @@ const matchesMovementFilter = (kid) => {
     return joinDate && joinDate >= range.start && joinDate <= range.end;
   }
   if (rosterMovementFilter.type === "left") {
-    return discontinuedAt && discontinuedAt >= range.start && discontinuedAt <= range.end;
+    return isLeftDuringMovementRange(kid, range.start, range.end);
   }
   return joinDate && joinDate <= range.previousEnd && (!discontinuedAt || discontinuedAt >= range.start);
 };
