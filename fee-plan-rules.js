@@ -61,6 +61,29 @@
     return { key: "not_paid", label: "Not paid", paymentDue: true };
   };
 
+  const addDaysIso = (isoDate, days) => {
+    const [year, month, day] = String(isoDate || "").slice(0, 10).split("-").map(Number);
+    if (!year || !month || !day) return String(isoDate || "");
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + Math.max(0, Number(days) || 0));
+    return date.toISOString().slice(0, 10);
+  };
+
+  const rejoinAwarePaidThroughDate = ({
+    paidThrough,
+    rejoinedAt,
+    feePauseDays,
+    hasRenewalAfterRejoin,
+  }) => {
+    const paidThroughDate = String(paidThrough || "").slice(0, 10);
+    if (hasRenewalAfterRejoin) return paidThroughDate;
+    const pauseAdjustedDate = Number(feePauseDays) > 0
+      ? addDaysIso(paidThroughDate, feePauseDays)
+      : paidThroughDate;
+    const rejoinDate = String(rejoinedAt || "").slice(0, 10);
+    return rejoinDate && rejoinDate > pauseAdjustedDate ? rejoinDate : pauseAdjustedDate;
+  };
+
   const shouldTreatAsSpecialTraining = ({ feePlan, paymentPlans, feesPaid, firstPaymentAmount }) => {
     // Payment history represents the player's current coaching plan more
     // accurately than the admission-time fee_plan. The caller provides it in
@@ -82,6 +105,7 @@
     isCoachingFeePayment,
     latestCoachingPaymentPlans,
     normalizePlan,
+    rejoinAwarePaidThroughDate,
     shouldTreatAsSpecialTraining,
   };
 });

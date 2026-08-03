@@ -1260,7 +1260,19 @@ const getPaidThroughDate = (kid) => {
   const hasRenewalAfterRejoin = kid.rejoinedAt
     ? paidCycleStarts.some((cycleStart) => String(cycleStart).slice(0, 10) >= kid.rejoinedAt)
     : false;
-  return getFeePauseDays(kid) > 0 && !hasRenewalAfterRejoin ? addDaysIso(paidThrough, getFeePauseDays(kid)) : paidThrough;
+  if (window.GEN_ALPHA_FEE_PLAN_RULES?.rejoinAwarePaidThroughDate) {
+    return window.GEN_ALPHA_FEE_PLAN_RULES.rejoinAwarePaidThroughDate({
+      paidThrough,
+      rejoinedAt: kid.rejoinedAt,
+      feePauseDays: getFeePauseDays(kid),
+      hasRenewalAfterRejoin,
+    });
+  }
+  if (hasRenewalAfterRejoin) return paidThrough;
+  const pauseAdjusted = getFeePauseDays(kid) > 0
+    ? addDaysIso(paidThrough, getFeePauseDays(kid))
+    : paidThrough;
+  return kid.rejoinedAt ? maxIsoDate(pauseAdjusted, kid.rejoinedAt) : pauseAdjusted;
 };
 
 const getNextRenewalCycleDate = (kid) => {

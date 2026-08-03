@@ -6,6 +6,7 @@ const {
   fixedMonthsForPlan,
   isCoachingFeePayment,
   latestCoachingPaymentPlans,
+  rejoinAwarePaidThroughDate,
   shouldTreatAsSpecialTraining,
 } = require("./fee-plan-rules.js");
 
@@ -104,4 +105,31 @@ test("coaching history ignores jersey transactions and sorts latest first", () =
     { payment_type: "jersey", plan_type: "monthly", paid_on: "2026-07-19" },
     { payment_type: "joining", plan_type: "monthly", paid_on: "2026-05-18" },
   ]), ["special", "monthly"]);
+});
+
+test("rejoin date becomes the next cycle when the paused cycle ended earlier", () => {
+  assert.equal(rejoinAwarePaidThroughDate({
+    paidThrough: "2026-07-11",
+    feePauseDays: 18,
+    rejoinedAt: "2026-08-03",
+    hasRenewalAfterRejoin: false,
+  }), "2026-08-03");
+});
+
+test("pause-adjusted date remains when it is later than the rejoin date", () => {
+  assert.equal(rejoinAwarePaidThroughDate({
+    paidThrough: "2026-07-20",
+    feePauseDays: 20,
+    rejoinedAt: "2026-08-03",
+    hasRenewalAfterRejoin: false,
+  }), "2026-08-09");
+});
+
+test("a renewal on or after rejoin uses its paid-through date without pause days", () => {
+  assert.equal(rejoinAwarePaidThroughDate({
+    paidThrough: "2026-09-03",
+    feePauseDays: 18,
+    rejoinedAt: "2026-08-03",
+    hasRenewalAfterRejoin: true,
+  }), "2026-09-03");
 });
