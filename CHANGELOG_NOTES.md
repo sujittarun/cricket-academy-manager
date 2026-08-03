@@ -77,7 +77,7 @@ For current source-of-truth rules, read `PROJECT_CONTEXT.md` first.
 ### Rejoin Renewal Correction
 
 - Corrected the Shreyas K and Mahasvin K live rejoin/payment data with a saved Supabase SQL script in the root project.
-- Browser due-date logic now treats an explicit renewal cycle on or after `rejoined_at` as the new billing anchor, so old pause days do not push the next due date past the paid renewal month.
+- Browser due-date logic uses `rejoined_at` as the fresh billing anchor until the first rejoin renewal, then uses that payment's purchased coverage. Stored pause days are tenure-only and never change fee dates.
 - Training duration and tenure badges now subtract stored pause days, and also stop counting the current open pause while a player is discontinued.
 - Marking a discontinued player active in the browser asks for the rejoin date before saving `rejoined_at` and `fee_pause_days`.
 - Bumped browser service-worker cache to `v78`.

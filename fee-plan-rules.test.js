@@ -116,13 +116,22 @@ test("rejoin date becomes the next cycle when the paused cycle ended earlier", (
   }), "2026-08-03");
 });
 
-test("pause-adjusted date remains when it is later than the rejoin date", () => {
+test("rejoin date replaces an old cycle even when pause-adjusted date would be later", () => {
   assert.equal(rejoinAwarePaidThroughDate({
     paidThrough: "2026-07-20",
     feePauseDays: 20,
     rejoinedAt: "2026-08-03",
     hasRenewalAfterRejoin: false,
-  }), "2026-08-09");
+  }), "2026-08-03");
+});
+
+test("pause days never move a fee date when there is no rejoin date", () => {
+  assert.equal(rejoinAwarePaidThroughDate({
+    paidThrough: "2026-07-20",
+    feePauseDays: 20,
+    rejoinedAt: "",
+    hasRenewalAfterRejoin: false,
+  }), "2026-07-20");
 });
 
 test("a renewal on or after rejoin uses its paid-through date without pause days", () => {
