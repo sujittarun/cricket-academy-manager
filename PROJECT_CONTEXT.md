@@ -121,7 +121,7 @@ Current fee constants:
 
 - Provider: Meta WhatsApp Cloud API direct.
 - Utility templates:
-  - `gen_alpha_fee_direct_pay`: direct Pay Now utility template for fee reminders. It opens `pay.html?e={{1}}` and keeps plan selection on the payment page. Use the older plan-button templates as fallback while this template is missing, disabled, or awaiting Meta approval.
+  - `gen_alpha_fee_direct_pay_v2`: direct Pay Now utility template for fee reminders. It opens `pay.html?e={{1}}` and keeps plan selection on the payment page; body wording does not mention 1/3/6 month choice (that happens on the payment page). Supersedes `gen_alpha_fee_direct_pay`. Use the older plan-button templates as fallback while this template is missing, disabled, or awaiting Meta approval.
   - `utlity_fee_headsup`: 2 days before renewal date. Keep this exact spelling because it matches the Meta template name.
   - `utility_renewal_day`: renewal due day.
   - `utility_for_fee_reminder`: joining-fee due day, overdue day 5, and daily overdue day 7 through day 14.
