@@ -578,6 +578,9 @@ let lastManagerPassword = localStorage.getItem(LAST_PASSWORD_STORAGE_KEY) ?? "";
 let activeSlotFilter = "";
 let toastTimeoutId = null;
 let activeView = "roster";
+// Protected view (roster/finance) parked while the manager session restores, so a
+// refresh does not permanently dump a logged-in manager onto the admission page.
+let pendingManagerView = null;
 let pendingJerseyAdjustmentResolve = null;
 
 const switchView = (view, push = true) => {
@@ -3327,7 +3330,18 @@ const updateAccessUI = () => {
   });
 
   if (!managerReady && activeView !== "admission" && activeView !== "attendance") {
+    // Park the protected view instead of dropping it: on page refresh this runs
+    // before the async session restore, and the view comes back once login is confirmed.
+    pendingManagerView = activeView;
     activeView = "admission";
+  } else if (managerReady && pendingManagerView) {
+    const restoreView = pendingManagerView;
+    pendingManagerView = null;
+    if (["roster", "finance"].includes(restoreView)) {
+      activeView = restoreView;
+      localStorage.setItem("activeView", activeView);
+      if (restoreView === "finance") loadFinance();
+    }
   }
 
   if (rosterTabButtons.length > 0) {
@@ -5042,21 +5056,26 @@ const loadFinance = async () => {
   if (!managerReady) return;
 
   const requestSeq = ++financeLoadSeq;
-  const [paymentsResult, expensesResult, whatsappStatsResult] = await Promise.all([
+  // The WhatsApp stats function call can take several seconds; let it fill in
+  // whenever it lands instead of blocking the finance tables and stats.
+  supabaseClient.functions
+    .invoke("whatsapp-reminder", { body: { action: "whatsapp_monthly_stats", months: 4 } })
+    .then((whatsappStatsResult) => {
+      if (requestSeq !== financeLoadSeq) return;
+      renderWhatsappPerformance(
+        whatsappStatsResult.data,
+        whatsappStatsResult.error?.message || whatsappStatsResult.data?.error || "",
+      );
+    })
+    .catch(() => {});
+  const [paymentsResult, expensesResult] = await Promise.all([
     supabaseClient.from("student_payments").select("*").order("paid_on", { ascending: false }),
     supabaseClient.from("academy_expenses").select("*").order("expense_date", { ascending: false }),
-    supabaseClient.functions.invoke("whatsapp-reminder", {
-      body: { action: "whatsapp_monthly_stats", months: 4 },
-    }),
   ]);
   if (requestSeq !== financeLoadSeq) return;
 
   financePayments = paymentsResult.data || [];
   financeExpenses = expensesResult.data || [];
-  renderWhatsappPerformance(
-    whatsappStatsResult.data,
-    whatsappStatsResult.error?.message || whatsappStatsResult.data?.error || "",
-  );
   if (activeView === "roster") renderKids();
 
   const now = new Date();
@@ -7741,11 +7760,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeAuthListener();
   await loadAdmissionRegNo();
   await refreshSession();
+  // Load roster and finance in parallel — the old sequential chain kept the
+  // roster empty until finance (and its slow WhatsApp stats call) finished.
+  // loadFinance fetches reminder settings itself, so no separate await here.
+  const startupLoads = [loadKids()];
   if (isManagerLoggedIn) {
-    await loadReminderSettings();
-    await loadFinance();
+    startupLoads.push(loadFinance());
   }
-  await loadKids();
+  await Promise.all(startupLoads);
   initRealtimeSync();
 });
 
