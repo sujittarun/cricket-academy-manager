@@ -6364,6 +6364,50 @@ closeRenewalButton?.addEventListener("click", closeRenewalPopup);
 renewalPopup?.addEventListener("click", (event) => {
   if (event.target === renewalPopup) closeRenewalPopup();
 });
+const isNetworkFetchError = (error) =>
+  /failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(String(error?.message || error || ""));
+
+const findExistingRenewalPayment = async (payload) => {
+  const { data } = await supabaseClient
+    .from("student_payments")
+    .select("*")
+    .eq("student_id", payload.student_id)
+    .eq("payment_type", payload.payment_type)
+    .eq("paid_on", payload.paid_on)
+    .eq("cycle_start_date", payload.cycle_start_date)
+    .eq("amount", payload.amount)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  return data?.[0] || null;
+};
+
+// Saving can hit a transient network drop ("TypeError: Failed to fetch"). Retry a
+// couple of times, and before every attempt check whether an identical payment
+// already reached the server, so a lost response or a manager pressing Save again
+// never turns into a duplicate payment row. A genuine next renewal always has a
+// different cycle_start_date, so an identical row can only be this same save.
+const insertRenewalPaymentWithRetry = async (payload, attempts = 3) => {
+  let lastResult = { data: null, error: null };
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const existing = await findExistingRenewalPayment(payload).catch(() => null);
+    if (existing) return { data: existing, error: null };
+    lastResult = await supabaseClient.from("student_payments").insert(payload).select("*").single();
+    if (!lastResult.error || !isNetworkFetchError(lastResult.error)) return lastResult;
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+  }
+  return lastResult;
+};
+
+const updateStudentWithRetry = async (studentId, payload, attempts = 3) => {
+  let lastResult = { error: null };
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    lastResult = await supabaseClient.from("students").update(payload).eq("id", studentId);
+    if (!lastResult.error || !isNetworkFetchError(lastResult.error)) return lastResult;
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+  }
+  return lastResult;
+};
+
 renewalForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const kid = kids.find((item) => item.id === renewalStudentId.value);
@@ -6407,7 +6451,8 @@ renewalForm?.addEventListener("submit", async (event) => {
         }
       : {}),
   };
-  let { data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert(paymentPayload).select("*").single();
+  renewalMessage.textContent = "Saving...";
+  let { data: paymentRow, error: paymentError } = await insertRenewalPaymentWithRetry(paymentPayload);
   let savedWithoutPaymentFeeFields = false;
   if (paymentError && isJoiningFee && isMissingPaymentFeeColumnError(paymentError)) {
     const legacyPaymentPayload = { ...paymentPayload };
@@ -6417,11 +6462,13 @@ renewalForm?.addEventListener("submit", async (event) => {
     delete legacyPaymentPayload.total_fee_amount;
     delete legacyPaymentPayload.jersey_size;
     delete legacyPaymentPayload.jersey_pairs;
-    ({ data: paymentRow, error: paymentError } = await supabaseClient.from("student_payments").insert(legacyPaymentPayload).select("*").single());
+    ({ data: paymentRow, error: paymentError } = await insertRenewalPaymentWithRetry(legacyPaymentPayload));
     savedWithoutPaymentFeeFields = !paymentError;
   }
   if (paymentError) {
-    renewalMessage.textContent = paymentError.message;
+    renewalMessage.textContent = isNetworkFetchError(paymentError)
+      ? "Network error: could not reach the server, so nothing was saved. Check your internet connection and press Save again."
+      : paymentError.message;
     return;
   }
   const studentUpdatePayload = {
@@ -6442,10 +6489,7 @@ renewalForm?.addEventListener("submit", async (event) => {
     ...(kid.discontinued ? getRejoinPayload(kid) : { discontinued: false }),
     updated_by: getActiveManagerEmail(),
   };
-  let { error: updateError } = await supabaseClient
-    .from("students")
-    .update(studentUpdatePayload)
-    .eq("id", kid.id);
+  let { error: updateError } = await updateStudentWithRetry(kid.id, studentUpdatePayload);
   let savedWithoutStudentFeeFields = false;
   if (updateError && isJoiningFee && isMissingStudentFeeColumnError(updateError)) {
     const legacyStudentUpdatePayload = { ...studentUpdatePayload };
@@ -6454,14 +6498,11 @@ renewalForm?.addEventListener("submit", async (event) => {
     delete legacyStudentUpdatePayload.admission_fee;
     delete legacyStudentUpdatePayload.jersey_amount;
     delete legacyStudentUpdatePayload.total_fee_amount;
-    ({ error: updateError } = await supabaseClient
-      .from("students")
-      .update(legacyStudentUpdatePayload)
-      .eq("id", kid.id));
+    ({ error: updateError } = await updateStudentWithRetry(kid.id, legacyStudentUpdatePayload));
     savedWithoutStudentFeeFields = !updateError;
   }
   if (updateError) {
-    renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}`;
+    renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}. Press Save again — the payment will not be duplicated.`;
     return;
   }
   if (savedWithoutPaymentFeeFields || savedWithoutStudentFeeFields) {
