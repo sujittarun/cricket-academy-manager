@@ -5239,7 +5239,7 @@ const loadFinance = async () => {
             <tr>
               <td data-label="Date">${formatDate(payment.paid_on)}</td>
               <td data-label="Player"><strong>${name}</strong></td>
-              <td data-label="Type"><span class="type-pill ${paymentLabel === "Jersey" ? "jersey" : payment.isInitial ? "new" : "returning"}">${paymentLabel}</span></td>
+              <td data-label="Type"><span class="type-pill ${paymentLabel === "Jersey" ? "jersey" : paymentLabel === "Joining" ? "new" : "returning"}">${paymentLabel}</span></td>
               <td data-label="Amount" class="amount-cell">Rs ${Number(payment.amount).toFixed(2)}</td>
             </tr>
           `;

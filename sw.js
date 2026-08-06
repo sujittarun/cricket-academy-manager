@@ -1,4 +1,4 @@
-const CACHE_NAME = "gen-alpha-academy-v105";
+const CACHE_NAME = "gen-alpha-academy-v106";
 const APP_SHELL = [
   "./",
   "./index.html",
