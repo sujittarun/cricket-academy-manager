@@ -21,6 +21,20 @@ test("isFollowUpForCurrentCycle matches every shared fixture", () => {
   }
 });
 
+test("rejoinAwarePaidThroughDate matches every shared fixture", () => {
+  const { rejoinAwarePaidThroughDate } = require("./fee-plan-rules.js");
+  for (const testCase of fixtures.rejoinAwarePaidThroughDate) {
+    assert.equal(rejoinAwarePaidThroughDate(testCase.input), testCase.expected, testCase.name);
+  }
+});
+
+test("isLeftDuringRange matches every shared fixture", () => {
+  const { isLeftDuringRange } = require("./roster-movement-rules.js");
+  for (const testCase of fixtures.isLeftDuringRange) {
+    assert.equal(isLeftDuringRange(testCase.input), testCase.expected, testCase.name);
+  }
+});
+
 test("a missing follow-up is never treated as current", () => {
   assert.equal(isFollowUpForCurrentCycle({ cycleDueDate: "2026-08-03" }), true);
   assert.equal(

@@ -827,9 +827,10 @@ const isManualFollowUpDue = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
 const getFeeDisplayState = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
   const paymentDue = isFeesPending(kid) || isRenewalPending(kid);
-  // Only claim a payment is awaiting verification while one is actually outstanding,
-  // otherwise a proof sent for an already-settled cycle keeps hiding the Paid state.
-  if ((isPaymentPendingFollowUp(kid, followUp) && paymentDue) || kid?.paymentStatus === "pending_verification") {
+  // No payment-due guard here on purpose: the cycle gate already drops proof sent for a
+  // settled cycle, and parents often pay from the heads-up reminder two days BEFORE the due
+  // date — requiring the payment to be due would hide that proof and its Confirm button.
+  if (isPaymentPendingFollowUp(kid, followUp) || kid?.paymentStatus === "pending_verification") {
     return { label: "Pending verification", className: "status-pending", followUp };
   }
   if (kid?.whatsappRemindersPaused) {
@@ -890,9 +891,10 @@ const getFeeDisplayState = (kid) => {
 
 const getConfirmablePaymentFollowUp = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
-  // Never offer to confirm a payment for a cycle that is already settled — that is how a
-  // second student_payments row gets written for money collected once.
-  if (isPaymentPendingFollowUp(kid, followUp) && (isFeesPending(kid) || isRenewalPending(kid))) return followUp;
+  // The cycle gate inside isPaymentPendingFollowUp is what stops a settled cycle being
+  // confirmed twice; do not also require the payment to be due, or proof sent from the
+  // heads-up reminder would have no Confirm button for two days.
+  if (isPaymentPendingFollowUp(kid, followUp)) return followUp;
   if (kid?.paymentStatus === "pending_verification" && kid?.feesPaid !== "yes") {
     return window.GEN_ALPHA_FEE_PLAN_RULES?.buildSyntheticJoiningFee({
       feePlan: kid.feePlan,
@@ -4895,7 +4897,13 @@ const renderPlayerDetails = async (kid) => {
       kid.whatsappRemindersPaused
         ? `<div class="critical-reminder-banner">Automatic WhatsApp reminders are paused by staff. Manual sends remain available.</div>`
         : reminderState.requiresManualFollowUp
-        ? `<div class="critical-reminder-banner">${escapeHtml(feeDisplay.reasonLabel || `Overdue for ${reminderState.overdueDays} days`)}. Automatic WhatsApp reminders are paused; manual follow-up is required.</div>`
+        ? `<div class="critical-reminder-banner">${escapeHtml(feeDisplay.reasonLabel || `Overdue for ${reminderState.overdueDays} days`)}. ${
+            hasBlockedWhatsappContact(kid) || reminderState.overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS
+              // Only these two actually stop the scheduler; a delivery failure inside the
+              // cycle still gets the day 3/5/7+ nudges, so do not claim reminders are paused.
+              ? "Automatic WhatsApp reminders are paused; manual follow-up is required."
+              : "Automatic retries have stopped; follow up with the parent directly."
+          }</div>`
         : reminderState.isCritical
         ? `<div class="critical-reminder-banner">Overdue for ${reminderState.overdueDays} days. Follow up with parent today.</div>`
         : ""

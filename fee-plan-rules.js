@@ -99,7 +99,11 @@
     const paidThroughDate = String(paidThrough || "").slice(0, 10);
     if (hasRenewalAfterRejoin) return paidThroughDate;
     const rejoinDate = String(rejoinedAt || "").slice(0, 10);
-    return rejoinDate || paidThroughDate;
+    if (!rejoinDate) return paidThroughDate;
+    // A returning player owes from the day they came back, but never earlier than what they
+    // have already paid for: someone who prepaid a quarter and stepped away inside it must
+    // not be asked for that money twice.
+    return rejoinDate > paidThroughDate ? rejoinDate : paidThroughDate;
   };
 
   const shouldTreatAsSpecialTraining = ({ feePlan, paymentPlans, feesPaid, firstPaymentAmount }) => {

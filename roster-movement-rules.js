@@ -12,7 +12,10 @@
     if (!leftDate || !startDate || !endDate || leftDate < startDate || leftDate > endDate) return false;
 
     const returnDate = isoDate(rejoinedAt);
-    return !returnDate || returnDate > endDate;
+    // A return only cancels this exit if it happened after it. A player who came back once
+    // and later left again still left — their older rejoin date must not erase the new exit.
+    if (!returnDate || returnDate < leftDate) return true;
+    return returnDate > endDate;
   };
 
   return { isLeftDuringRange };
