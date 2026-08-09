@@ -630,9 +630,12 @@ let realtimeRemindersChannel = null;
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let financeLoadInFlight = null;
+let financeLoadedAt = 0;
 let whatsappStatsLoadedAt = 0;
 let whatsappStatsCache = null;
 const WHATSAPP_STATS_TTL_MS = 60000;
+// Long enough to swallow the startup burst, short enough that a real change still reloads.
+const FINANCE_REFRESH_COALESCE_MS = 2500;
 let playerDetailRenderSeq = 0;
 let activePaymentProofViewer = null;
 let paymentProofReturnFocus = null;
@@ -5117,6 +5120,7 @@ const renderWhatsappPerformance = (data, errorMessage = "") => {
 // duplicate finance round trip — and duplicate WhatsApp stats call — on every page load.
 const loadFinance = (...args) => {
   const pending = runFinanceLoad(...args).finally(() => {
+    financeLoadedAt = Date.now();
     if (financeLoadInFlight === pending) financeLoadInFlight = null;
   });
   financeLoadInFlight = pending;
@@ -5395,9 +5399,12 @@ const queueFinanceRefresh = () => {
   if (financeReloadTimer) window.clearTimeout(financeReloadTimer);
   financeReloadTimer = window.setTimeout(() => {
     financeReloadTimer = null;
-    // A load already running has fresher data than this request; joining it avoids the
-    // duplicate finance round trip (and duplicate WhatsApp stats call) on every page load.
+    // Best-effort refresh only. On a page load the startup already asks for finance and the
+    // roster finishing asks again moments later, which used to fetch everything twice —
+    // including the multi-second WhatsApp stats call. A load that is still running, or one
+    // that finished a moment ago, already reflects this request.
     if (financeLoadInFlight) return financeLoadInFlight;
+    if (Date.now() - financeLoadedAt < FINANCE_REFRESH_COALESCE_MS) return;
     loadFinance();
   }, 120);
 };
