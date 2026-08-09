@@ -629,6 +629,10 @@ let realtimeAdmissionsChannel = null;
 let realtimeRemindersChannel = null;
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
+let financeLoadInFlight = null;
+let whatsappStatsLoadedAt = 0;
+let whatsappStatsCache = null;
+const WHATSAPP_STATS_TTL_MS = 60000;
 let playerDetailRenderSeq = 0;
 let activePaymentProofViewer = null;
 let paymentProofReturnFocus = null;
@@ -3744,10 +3748,13 @@ const loadKids = async () => {
     return;
   }
 
-  const { data, error } = await supabaseClient
-    .from("students")
-    .select("*")
-    .order("join_date", { ascending: false });
+  // Players and their reminder rows are independent queries, so fetch them together. Chaining
+  // them meant the roster could not paint until both round trips had finished one after the
+  // other, and painting earlier without the reminder rows would show the wrong fee pills.
+  const [{ data, error }] = await Promise.all([
+    supabaseClient.from("students").select("*").order("join_date", { ascending: false }),
+    isManagerLoggedIn ? loadPaymentFollowUps() : Promise.resolve((paymentFollowUps = [])),
+  ]);
 
   if (error) {
     kids = [];
@@ -3760,12 +3767,6 @@ const loadKids = async () => {
   }
 
   kids = data.map(normalizeKid);
-
-  if (isManagerLoggedIn) {
-    await loadPaymentFollowUps();
-  } else {
-    paymentFollowUps = [];
-  }
   renderKids();
   if (isManagerLoggedIn) {
     queueFinanceRefresh();
@@ -5110,7 +5111,19 @@ const renderWhatsappPerformance = (data, errorMessage = "") => {
   }
 };
 
-const loadFinance = async () => {
+// A direct call always fetches: callers reach for it right after recording a payment or an
+// expense and must not be handed a load that started before that write. Only the best-effort
+// refresh path (queueFinanceRefresh) joins a load already running, which is what removes the
+// duplicate finance round trip — and duplicate WhatsApp stats call — on every page load.
+const loadFinance = (...args) => {
+  const pending = runFinanceLoad(...args).finally(() => {
+    if (financeLoadInFlight === pending) financeLoadInFlight = null;
+  });
+  financeLoadInFlight = pending;
+  return pending;
+};
+
+const runFinanceLoad = async () => {
   const managerReady = isBackendReady && isManagerLoggedIn;
   if (financeLock) financeLock.hidden = managerReady;
   if (financeStats) financeStats.hidden = !managerReady;
@@ -5130,18 +5143,25 @@ const loadFinance = async () => {
   if (!managerReady) return;
 
   const requestSeq = ++financeLoadSeq;
-  // The WhatsApp stats function call can take several seconds; let it fill in
-  // whenever it lands instead of blocking the finance tables and stats.
-  supabaseClient.functions
-    .invoke("whatsapp-reminder", { body: { action: "whatsapp_monthly_stats", months: 4 } })
-    .then((whatsappStatsResult) => {
-      if (requestSeq !== financeLoadSeq) return;
-      renderWhatsappPerformance(
-        whatsappStatsResult.data,
-        whatsappStatsResult.error?.message || whatsappStatsResult.data?.error || "",
-      );
-    })
-    .catch(() => {});
+  // The WhatsApp stats function call takes seconds and aggregates whole months, so it cannot
+  // meaningfully change between two loads a moment apart. Serve the cached answer and let it
+  // fill in whenever it lands, instead of blocking the finance tables and stats.
+  if (whatsappStatsCache && Date.now() - whatsappStatsLoadedAt < WHATSAPP_STATS_TTL_MS) {
+    renderWhatsappPerformance(whatsappStatsCache, "");
+  } else {
+    supabaseClient.functions
+      .invoke("whatsapp-reminder", { body: { action: "whatsapp_monthly_stats", months: 4 } })
+      .then((whatsappStatsResult) => {
+        const errorMessage = whatsappStatsResult.error?.message || whatsappStatsResult.data?.error || "";
+        if (!errorMessage && Array.isArray(whatsappStatsResult.data?.months)) {
+          whatsappStatsCache = whatsappStatsResult.data;
+          whatsappStatsLoadedAt = Date.now();
+        }
+        if (requestSeq !== financeLoadSeq) return;
+        renderWhatsappPerformance(whatsappStatsResult.data, errorMessage);
+      })
+      .catch(() => {});
+  }
   const [paymentsResult, expensesResult] = await Promise.all([
     supabaseClient.from("student_payments").select("*").order("paid_on", { ascending: false }),
     supabaseClient.from("academy_expenses").select("*").order("expense_date", { ascending: false }),
@@ -5375,6 +5395,9 @@ const queueFinanceRefresh = () => {
   if (financeReloadTimer) window.clearTimeout(financeReloadTimer);
   financeReloadTimer = window.setTimeout(() => {
     financeReloadTimer = null;
+    // A load already running has fresher data than this request; joining it avoids the
+    // duplicate finance round trip (and duplicate WhatsApp stats call) on every page load.
+    if (financeLoadInFlight) return financeLoadInFlight;
     loadFinance();
   }, 120);
 };
@@ -5645,7 +5668,10 @@ const initializeAuthListener = () => {
         isEditMode = false;
       }
       updateAccessUI();
-      renderKids();
+      // On a page load this fires while the roster is still being fetched. Rendering an empty
+      // table here is what makes the page look like it loads, then changes a few seconds
+      // later; the load that is already running will render once the real data arrives.
+      if (kids.length > 0) renderKids();
       if (isManagerLoggedIn) {
         loadPendingAdmissions();
       } else {
