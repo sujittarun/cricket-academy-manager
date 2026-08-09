@@ -1,0 +1,8 @@
+{
+  "name": "gen-alpha-academy-manager-web",
+  "private": true,
+  "description": "Gen Alpha Cricket Academy manager web app. The app itself is static; this file exists so the shared business-rule modules can be unit tested.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

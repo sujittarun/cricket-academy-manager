@@ -664,6 +664,10 @@ const normalizePaymentFollowUp = (reminder = null, link = null) => ({
   amount: Number(link?.amount ?? reminder?.amount ?? 0) || 0,
   monthsCovered: Number(link?.months_covered || 0) || 0,
   cycleStartDate: link?.cycle_start_date || reminder?.due_date || "",
+  // Kept separate from cycleStartDate/createdAt on purpose: those fall back to the
+  // payment-link row, and the cycle gate must only ever read the reminder's own dates.
+  dueDate: reminder?.due_date || "",
+  reminderCreatedAt: reminder?.created_at || "",
   paymentLinkUrl: link?.payment_link_url || reminder?.payment_link_url || "",
   createdAt: link?.created_at || reminder?.created_at || "",
   metaError: reminder?.meta_error || null,
@@ -696,26 +700,43 @@ const REMINDER_SENT_STATUSES = new Set([
 ]);
 const REMINDER_SENT_LINK_STATUSES = new Set(["awaiting_parent_choice", "payment_link_sent", "payment_attempted"]);
 
-const isPaymentPendingFollowUp = (followUp) =>
+// Raw row predicates: what a reminder row says about itself, with no notion of "current".
+// Use these for history (the player timeline); use the cycle-scoped wrappers below for
+// anything describing the player's state today.
+const isPaymentPendingRow = (followUp) =>
   ["payment_pending_verification", "pending_verification"].includes(followUp?.linkStatus) ||
   ["payment_pending_verification", "pending_verification"].includes(followUp?.reminderStatus);
 
-const isReminderRetryScheduledFollowUp = (followUp) =>
+const isRetryScheduledRow = (followUp) =>
   REMINDER_RETRY_STATUSES.has(followUp?.reminderStatus) && Boolean(followUp?.nextRetryAt);
 
-const isReminderFailedFollowUp = (followUp) => {
+const isReminderFailedRow = (followUp) => {
   if (!followUp) return false;
-  if (isReminderRetryScheduledFollowUp(followUp)) return false;
+  if (isRetryScheduledRow(followUp)) return false;
   if (REMINDER_SENT_STATUSES.has(followUp.reminderStatus)) return false;
   return REMINDER_FAILED_STATUSES.has(followUp.reminderStatus) ||
     REMINDER_FAILED_STATUSES.has(followUp.linkStatus) ||
     Boolean(followUp.manualFollowupRequired || followUp.failedAt || followUp.providerError || followUp.metaError?.message || followUp.metaError?.error?.message);
 };
 
-const isReminderSentFollowUp = (followUp) =>
-  !isReminderFailedFollowUp(followUp) &&
+const isReminderSentRow = (followUp) =>
+  !isReminderFailedRow(followUp) &&
   (REMINDER_SENT_STATUSES.has(followUp?.reminderStatus) ||
     REMINDER_SENT_LINK_STATUSES.has(followUp?.linkStatus));
+
+// Cycle-scoped wrappers: a reminder raised for a cycle that has since been paid, or before
+// a rejoin, no longer describes the player today.
+const isPaymentPendingFollowUp = (kid, followUp = getPaymentFollowUpForKid(kid)) =>
+  isPaymentPendingRow(getCurrentFollowUp(kid, followUp));
+
+const isReminderRetryScheduledFollowUp = (kid, followUp = getPaymentFollowUpForKid(kid)) =>
+  isRetryScheduledRow(getCurrentFollowUp(kid, followUp));
+
+const isReminderFailedFollowUp = (kid, followUp = getPaymentFollowUpForKid(kid)) =>
+  isReminderFailedRow(getCurrentFollowUp(kid, followUp));
+
+const isReminderSentFollowUp = (kid, followUp = getPaymentFollowUpForKid(kid)) =>
+  isReminderSentRow(getCurrentFollowUp(kid, followUp));
 
 const describeReminderFailure = (followUp = {}) => {
   const meta = followUp?.metaError || followUp?.reminder?.meta_error || {};
@@ -745,34 +766,70 @@ const getPaymentFollowUpForKid = (kid) =>
 const hasBlockedWhatsappContact = (kid) =>
   ["wrong_number", "opted_out"].includes(String(kid?.whatsappContactStatus || "active"));
 
+/**
+ * The date the player's current fee cycle became due. A rejoined player who still owes
+ * the joining fee restarts from the return date, so the overdue count never counts the
+ * discontinued gap. Every overdue calculation must start here.
+ */
+const getCurrentDueDate = (kid) =>
+  GEN_ALPHA_REMINDER_CYCLE_RULES.currentFeeCycleDate({
+    feesPending: isFeesPending(kid),
+    joinDate: kid?.joinDate,
+    rejoinedAt: kid?.rejoinedAt,
+    paidThroughDate: getPaidThroughDate(kid),
+  });
+
+const getCurrentOverdueDays = (kid) => Math.max(0, getDaysSinceDate(getCurrentDueDate(kid)));
+
+/**
+ * Whether a reminder row still belongs to the player's current cycle. Everything stored on
+ * a reminder row expires with the cycle it was raised for; live student properties
+ * (15+ days overdue, wrong_number, opted_out) are never routed through this gate.
+ */
+const isFollowUpCurrent = (kid, followUp = getPaymentFollowUpForKid(kid)) =>
+  Boolean(followUp) &&
+  GEN_ALPHA_REMINDER_CYCLE_RULES.isFollowUpForCurrentCycle({
+    cycleDueDate: getCurrentDueDate(kid),
+    followUpDueDate: followUp.dueDate,
+    followUpCreatedAt: followUp.reminderCreatedAt,
+    rejoinedAt: kid?.rejoinedAt,
+  });
+
+/** The follow-up row, but only when it still describes the current cycle. */
+const getCurrentFollowUp = (kid, followUp = getPaymentFollowUpForKid(kid)) =>
+  isFollowUpCurrent(kid, followUp) ? followUp : null;
+
 const getManualFollowUpReason = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
   if (kid?.whatsappContactStatus === "wrong_number") return "Wrong phone number";
   if (kid?.whatsappContactStatus === "opted_out") return "WhatsApp opted out";
-  const dueDate = isFeesPending(kid) ? kid?.joinDate : getPaidThroughDate(kid);
-  const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
-  if (followUp?.manualFollowupReason === "overdue_15_days" || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS) {
-    return "15+ days overdue";
-  }
-  if (followUp?.manualFollowupReason === "retry_exhausted") return "Retry limit reached";
-  if (followUp?.manualFollowupReason === "missing_phone") return "Phone number missing";
-  if (followUp?.manualFollowupReason === "delivery_failure") return "WhatsApp delivery failed";
-  return followUp?.manualFollowupRequired ? "Delivery needs staff review" : "";
+  // Live overdue count decides first: a reason string stored on day 15 must not keep
+  // claiming "15+ days overdue" after a payment or rejoin moved the cycle forward.
+  if (getCurrentOverdueDays(kid) >= MANUAL_FOLLOWUP_OVERDUE_DAYS) return "15+ days overdue";
+  const current = getCurrentFollowUp(kid, followUp);
+  if (!current) return "";
+  if (current.manualFollowupReason === "overdue_15_days") return "15+ days overdue";
+  if (current.manualFollowupReason === "retry_exhausted") return "Retry limit reached";
+  if (current.manualFollowupReason === "missing_phone") return "Phone number missing";
+  if (current.manualFollowupReason === "delivery_failure") return "WhatsApp delivery failed";
+  return current.manualFollowupRequired ? "Delivery needs staff review" : "";
 };
 
 const isManualFollowUpDue = (kid, followUp = getPaymentFollowUpForKid(kid)) => {
   if (!kid || !isActiveKid(kid)) return false;
-  if (isPaymentPendingFollowUp(followUp) || kid.paymentStatus === "pending_verification") return false;
+  if (isPaymentPendingFollowUp(kid, followUp) || kid.paymentStatus === "pending_verification") return false;
   const paymentDue = isFeesPending(kid) || isRenewalPending(kid);
   if (!paymentDue) return false;
   if (hasBlockedWhatsappContact(kid)) return true;
-  const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
-  const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
-  return followUp?.manualFollowupRequired === true || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS;
+  return getCurrentFollowUp(kid, followUp)?.manualFollowupRequired === true ||
+    getCurrentOverdueDays(kid) >= MANUAL_FOLLOWUP_OVERDUE_DAYS;
 };
 
 const getFeeDisplayState = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
-  if (isPaymentPendingFollowUp(followUp) || kid?.paymentStatus === "pending_verification") {
+  const paymentDue = isFeesPending(kid) || isRenewalPending(kid);
+  // Only claim a payment is awaiting verification while one is actually outstanding,
+  // otherwise a proof sent for an already-settled cycle keeps hiding the Paid state.
+  if ((isPaymentPendingFollowUp(kid, followUp) && paymentDue) || kid?.paymentStatus === "pending_verification") {
     return { label: "Pending verification", className: "status-pending", followUp };
   }
   if (kid?.whatsappRemindersPaused) {
@@ -785,8 +842,9 @@ const getFeeDisplayState = (kid) => {
     };
   }
   if (isManualFollowUpDue(kid, followUp)) {
-    const dueDate = isFeesPending(kid) ? kid.joinDate : getPaidThroughDate(kid);
-    const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
+    const overdueDays = getCurrentOverdueDays(kid);
+    // One reason string drives both the sub-label and the tooltip; recomputing the branch
+    // separately is what let the pill and its tooltip contradict each other.
     const reasonLabel = getManualFollowUpReason(kid, followUp);
     return {
       label: "Manual follow-up",
@@ -797,16 +855,16 @@ const getFeeDisplayState = (kid) => {
         ? `${reasonLabel}. Automatic WhatsApp reminders and retries are paused until the contact is corrected.`
         : overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS
           ? "15+ days overdue. Automatic reminders are paused; follow up directly with the parent."
-          : `${describeReminderFailure(followUp)} Automatic retry is not appropriate; follow up directly with the parent.`,
+          : `${reasonLabel || describeReminderFailure(getCurrentFollowUp(kid, followUp) || {})}. Automatic retry is not appropriate; follow up directly with the parent.`,
     };
   }
-  if (isReminderRetryScheduledFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
+  if (isReminderRetryScheduledFollowUp(kid, followUp) && paymentDue) {
     return { label: "Retry scheduled", className: "status-retry", followUp, title: describeReminderRetry(followUp) };
   }
-  if (isReminderFailedFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
+  if (isReminderFailedFollowUp(kid, followUp) && paymentDue) {
     return { label: "Reminder failed", className: "status-failed", followUp, title: describeReminderFailure(followUp) };
   }
-  if (isReminderSentFollowUp(followUp) && (isFeesPending(kid) || isRenewalPending(kid))) {
+  if (isReminderSentFollowUp(kid, followUp) && paymentDue) {
     return { label: "Reminder sent", className: "status-reminder", followUp };
   }
   const dueDays = getDaysSinceDate(getPaidThroughDate(kid));
@@ -832,7 +890,9 @@ const getFeeDisplayState = (kid) => {
 
 const getConfirmablePaymentFollowUp = (kid) => {
   const followUp = getPaymentFollowUpForKid(kid);
-  if (isPaymentPendingFollowUp(followUp)) return followUp;
+  // Never offer to confirm a payment for a cycle that is already settled — that is how a
+  // second student_payments row gets written for money collected once.
+  if (isPaymentPendingFollowUp(kid, followUp) && (isFeesPending(kid) || isRenewalPending(kid))) return followUp;
   if (kid?.paymentStatus === "pending_verification" && kid?.feesPaid !== "yes") {
     return window.GEN_ALPHA_FEE_PLAN_RULES?.buildSyntheticJoiningFee({
       feePlan: kid.feePlan,
@@ -1310,17 +1370,21 @@ const getReminderState = (kid) => {
     };
   }
   const isJoiningFee = isFeesPending(kid);
-  const dueDate = isJoiningFee ? kid.joinDate : getPaidThroughDate(kid);
+  const dueDate = getCurrentDueDate(kid);
   const overdueDays = Math.max(0, getDaysSinceDate(dueDate));
+  const isDue = isJoiningFee || isRenewalPending(kid);
   return {
-    isDue: isJoiningFee || isRenewalPending(kid),
+    isDue,
     isJoiningFee,
     dueDate,
     overdueDays,
     isCritical: overdueDays > 10,
-    requiresManualFollowUp: !kid.whatsappRemindersPaused &&
-      (hasBlockedWhatsappContact(kid) || overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS) &&
-      (isJoiningFee || isRenewalPending(kid)),
+    // Same rule the roster pill uses, so the player-detail banner and the pill cannot
+    // disagree: live student state, plus a manual-followup flag from the current cycle.
+    requiresManualFollowUp: !kid.whatsappRemindersPaused && isDue &&
+      (hasBlockedWhatsappContact(kid) ||
+        overdueDays >= MANUAL_FOLLOWUP_OVERDUE_DAYS ||
+        getCurrentFollowUp(kid)?.manualFollowupRequired === true),
     reminderType: isJoiningFee ? "joining_fee" : "renewal",
   };
 };
@@ -3695,37 +3759,6 @@ const loadKids = async () => {
 
   kids = data.map(normalizeKid);
 
-  // Administrative Fix: Silently ensure Dhruvin Karthikeya has the correct 3250 payment
-  if (isManagerLoggedIn && kids.length > 0) {
-    const dhruvin = kids.find(k => k.name === "Dhruvin Karthikeya");
-    if (dhruvin) {
-      (async () => {
-        try {
-          const { data: existing } = await supabaseClient
-            .from("student_payments")
-            .select("id")
-            .eq("student_id", dhruvin.id)
-            .eq("amount", 3250)
-            .limit(1);
-            
-          if (!existing || existing.length === 0) {
-            await supabaseClient.from("student_payments").insert({
-              student_id: dhruvin.id,
-              payment_type: "renewal",
-              amount: 3250,
-              cycle_start_date: "2026-04-30",
-              months_covered: 1,
-              paid_on: toLocalIsoDate(),
-              comment: "Administrative fix to 3250",
-              recorded_by: lastManagerEmail || "system"
-            });
-            console.log("Dhruvin administrative fix applied.");
-          }
-        } catch (e) { /* ignore */ }
-      })();
-    }
-  }
-
   if (isManagerLoggedIn) {
     await loadPaymentFollowUps();
   } else {
@@ -4088,7 +4121,7 @@ const loadPlayerTimeline = async (studentId) => {
   if (!reminderResult.error) {
     reminderStatusEvents = (reminderResult.data || []).map((reminder) => {
       const followUp = normalizePaymentFollowUp(reminder, null);
-      const isRetry = isReminderRetryScheduledFollowUp(followUp);
+      const isRetry = isRetryScheduledRow(followUp);
       return {
         id: `${isRetry ? "reminder-retry" : "reminder-failure"}-${reminder.id}`,
         student_id: studentId,
@@ -4579,7 +4612,12 @@ const confirmPendingPaymentReceived = async (kid, followUp) => {
   const planKey = planKeyForFollowUp(followUp);
   const plan = RENEWAL_PLANS[planKey] || RENEWAL_PLANS.monthly;
   let amount = Number(followUp.amount || plan.amount);
-  const cycleDate = followUp.cycleStartDate || getDueCycleDate(kid);
+  // Only trust the cycle stored on the follow-up while it still describes the current
+  // cycle. A stale row would credit the payment to a period the player has already paid
+  // for (or spent discontinued), leaving them "overdue" the moment the money is recorded.
+  const cycleDate = (followUp.isSyntheticJoiningFee || isFollowUpCurrent(kid, followUp)) && followUp.cycleStartDate
+    ? followUp.cycleStartDate
+    : getDueCycleDate(kid);
   const monthsCovered = Number(followUp.monthsCovered || plan.months || 1);
   const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
   const isJoiningFee = followUp.isSyntheticJoiningFee === true;
@@ -4845,7 +4883,11 @@ const renderPlayerDetails = async (kid) => {
   const pendingPlanKey = planKeyForFollowUp(pendingPaymentFollowUp);
   const pendingPlan = RENEWAL_PLANS[pendingPlanKey] || RENEWAL_PLANS.monthly;
   const pendingAmount = Number(pendingPaymentFollowUp?.amount || pendingPlan.amount || 0);
-  const pendingCycleDate = pendingPaymentFollowUp?.cycleStartDate || getDueCycleDate(kid);
+  // Must match the cycle confirmPendingPaymentReceived will actually record, so the
+  // manager sees the real renewal period before confirming.
+  const pendingCycleDate = (pendingPaymentFollowUp?.isSyntheticJoiningFee || isFollowUpCurrent(kid, pendingPaymentFollowUp)) && pendingPaymentFollowUp?.cycleStartDate
+    ? pendingPaymentFollowUp.cycleStartDate
+    : getDueCycleDate(kid);
   const pendingToDate = addMonthsIso(pendingCycleDate, Number(pendingPaymentFollowUp?.monthsCovered || pendingPlan.months || 1));
 
   playerDetailContent.innerHTML = `
