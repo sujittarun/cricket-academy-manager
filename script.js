@@ -510,6 +510,12 @@ window.addEventListener("unhandledrejection", (e) => {
 async function amReportRollup() {
   try {
     if (!supabaseClient) return;
+    // Counts students and payments, so it needs a signed-in session once
+    // anon SELECT is revoked. The manager opens the app daily, so the
+    // rollup still reaches Academy Manager — just not from a stranger's
+    // browser. Without this guard the count silently becomes null and the
+    // operator console shows the academy as empty.
+    if (!isManagerLoggedIn) return;
     const today = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem("ga-am-rollup") === today) return;
 
@@ -7870,9 +7876,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load roster and finance in parallel — the old sequential chain kept the
   // roster empty until finance (and its slow WhatsApp stats call) finished.
   // loadFinance fetches reminder settings itself, so no separate await here.
-  const startupLoads = [loadKids()];
+  // The roster is gated behind sign-in, exactly as finance already is.
+  //
+  // It used to load unconditionally, which meant the landing page pulled
+  // every student row — name, age, home address, school, both parents'
+  // phone numbers — for anyone who opened the site. That only worked
+  // because RLS granted `anon` SELECT on students with predicate `true`,
+  // and the publishable key that unlocks it ships in this bundle and is
+  // committed in two public repos. 81 children.
+  //
+  // SECURITY-FIX-2026-08-10.sql closes the database side. This closes the
+  // client side, and MUST DEPLOY FIRST — the SQL removes the anon policy,
+  // and an ungated loadKids() would then render "Supabase error" on the
+  // public page.
+  const startupLoads = [];
   if (isManagerLoggedIn) {
+    startupLoads.push(loadKids());
     startupLoads.push(loadFinance());
+  } else {
+    renderKids();   // empty roster, no request, no error
   }
   await Promise.all(startupLoads);
   initRealtimeSync();
