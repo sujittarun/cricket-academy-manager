@@ -1,6 +1,6 @@
 window.GEN_ALPHA_SUPABASE_CONFIG = {
   url: "https://hwxhigwaklzedxufwedv.supabase.co",
-  anonKey: "sb_publishable_eXPI__qyWrhMr4eb8RsezQ_4RNRZ8V_",
+  anonKey: "sb_publishable_RSL2J0oUD50AIlKeOQ7CiA_8e_VIUcV",
 };
 
 window.GEN_ALPHA_FEATURES = {
