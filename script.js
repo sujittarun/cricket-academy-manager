@@ -417,7 +417,20 @@ const ADMISSION_YEARS = Array.from({ length: 16 }, (_, index) => String(2010 + i
 const hasSupabaseConfig = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 const supabaseClient =
   hasSupabaseConfig && window.supabase
-    ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
+    ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
+        // Resolve unqualified table and RPC names in the genalpha schema.
+        // That schema holds compatibility views shaped exactly like this
+        // app's old tables — students, student_payments, attendance,
+        // student_timeline, admissions — reading from the platform's
+        // shared tables underneath, and still keyed on the original uuids.
+        //
+        // The three RPCs (submit_admission_form, peek_next_admission_reg_no,
+        // approve_admission) live there too, so .rpc() needs no change.
+        //
+        // Telemetry is unaffected: AM_REPORT posts to /rest/v1/events with
+        // its own fetch, which stays on the public schema.
+        db: { schema: "genalpha" },
+      })
     : null;
 const isBackendReady = Boolean(supabaseClient);
 

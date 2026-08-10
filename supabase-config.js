@@ -1,6 +1,14 @@
+// Points at the Academy Manager platform, not GenAlpha's old project.
+// GenAlpha is now a tenant (tenant_id='genalpha') alongside raj, leo, mpp,
+// matchpoint and demo, and its data lives in the shared tables.
+//
+// The client sets db.schema='genalpha' (see script.js), so every
+// .from('students') resolves to genalpha.students — a security_invoker
+// view over public.members joined to genalpha.student_details. The app's
+// table names, column names and uuid ids are unchanged.
 window.GEN_ALPHA_SUPABASE_CONFIG = {
-  url: "https://hwxhigwaklzedxufwedv.supabase.co",
-  anonKey: "sb_publishable_RSL2J0oUD50AIlKeOQ7CiA_8e_VIUcV",
+  url: "https://ugsklcipzyiogxynshnh.supabase.co",
+  anonKey: "sb_publishable_Lrxh3RceGcj7g5JEefze_g_R-bMtAn3",
 };
 
 window.GEN_ALPHA_FEATURES = {
