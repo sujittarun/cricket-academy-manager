@@ -1,6 +1,14 @@
 (async function () {
   const config = window.GEN_ALPHA_SUPABASE_CONFIG || {};
-  const client = window.supabase.createClient(config.url, config.anonKey);
+  // intake.html loads supabase-config.js and this file, never script.js,
+  // so nothing else supplies the schema pin. Without it PostgREST resolves
+  // against `public`, where admission_intake_sessions does not exist, and
+  // loadRecentHistory() paints a raw PGRST205 into the history panel on
+  // every load. Pinned at construction rather than per query, so the next
+  // query added here does not repeat the omission.
+  const client = window.supabase.createClient(config.url, config.anonKey, {
+    db: { schema: "genalpha" },
+  });
   const $ = (id) => document.getElementById(id);
   let sessionId = "";
   let chatId = "";

@@ -971,6 +971,11 @@ const normalizeKid = (kid) => {
     discontinued: Boolean(kid.discontinued),
     discontinuedAt: kid.discontinued_at || "",
     rejoinedAt: kid.rejoined_at || "",
+    // enrollments.renewal_on, surfaced by the genalpha.students view. This
+    // is the platform's answer to "when do this family's fees run out",
+    // and it is the one reminder_queue() acts on. It was going unread
+    // while getPaidThroughDate recomputed it in JavaScript.
+    paidThrough: kid.paid_through || "",
     feePauseDays: Number(kid.fee_pause_days) || 0,
     paymentMethod: kid.payment_method || "",
     paymentUpiId: kid.payment_upi_id || "",
@@ -1325,6 +1330,20 @@ const getPlayerPaymentRows = (kid) => {
 };
 
 const getPaidThroughDate = (kid) => {
+  // The database owns this date. renewal_on is rolled forward by
+  // record_fee_payment() on every payment, and reminder_queue() chases
+  // families against it — so if this function and that column disagree,
+  // the screen says "paid" while the parent keeps getting messages.
+  //
+  // The JavaScript below is kept as a fallback for a row that arrives
+  // without it, and for the one case the database does not model: a
+  // rejoin. record_fee_payment() rolls renewal_on forward on payment and
+  // knows nothing about a student leaving and coming back, whereas the
+  // rejoin branch at the end of this function does. No student currently
+  // has rejoined_at set, so this is a guard against the first one rather
+  // than a live disagreement.
+  if (kid.paidThrough && !kid.rejoinedAt) return kid.paidThrough;
+
   let paidThrough = kid.feesPaid === "yes"
     ? addMonthsIso(kid.joinDate, getInitialCoverageMonths(kid))
     : kid.joinDate;
@@ -1536,10 +1555,54 @@ const getJoiningPaymentDefaultSplit = (kid, planKey = "monthly", specialMonths =
 
 const getRenewalSpecialMonths = () => getPositiveInteger(renewalSpecialMonths?.value, 1);
 
+// The hardcoded list below is a FALLBACK, not the price. What a family
+// owes is decided by the database — resolve_fee(), reached through
+// genalpha.quote_fee() — because 52 of 81 students are not on the 3,500
+// default and this list quoted every one of them 3,500.
+//
+// Anything that computes money lives in Postgres. That is the platform
+// rule, and this function was the app's last violation of it.
 const getRenewalDefaultAmountForPlan = () => {
   if (renewalPlan?.value === "special") return getSpecialTrainingAmountForMonths(getRenewalSpecialMonths());
   const plan = RENEWAL_PLANS[renewalPlan?.value] || RENEWAL_PLANS.monthly;
   return plan.amount;
+};
+
+const PLAN_MONTHS = { monthly: 1, quarterly: 3, halfyearly: 6 };
+
+// The renewal popup tracks whose renewal it is in a hidden field, which
+// is the only handle the plan/month change listeners have.
+const getOpenRenewalKid = () => kids.find((item) => item.id === renewalStudentId?.value);
+
+// Asks the database what this student owes for the selected plan and
+// writes it into the amount box. Falls back to the static list only if
+// the call fails, so a network blip degrades to today's behaviour rather
+// than to an empty field.
+const applyResolvedRenewalAmount = async (kid) => {
+  if (!renewalAmount) return;
+  const fallback = String(getRenewalDefaultAmountForPlan());
+  renewalAmount.value = fallback;
+  if (!kid?.id || !isBackendReady) return;
+
+  const months =
+    renewalPlan?.value === "special"
+      ? getRenewalSpecialMonths()
+      : PLAN_MONTHS[renewalPlan?.value] || 1;
+
+  try {
+    const { data, error } = await supabaseClient.rpc("quote_fee", {
+      p_student_id: kid.id,
+      p_months: months,
+    });
+    if (error) throw error;
+    const amount = Number(data?.amount);
+    if (Number.isFinite(amount) && amount > 0) {
+      renewalAmount.value = String(amount);
+    }
+  } catch (error) {
+    // Keep the fallback already in the box; the manager can still type.
+    console.warn("quote_fee unavailable, using the static plan price", error);
+  }
 };
 
 const syncRenewalSpecialMonthsState = () => {
@@ -5055,7 +5118,7 @@ const openRenewalPopup = (kid, mode = "renewal") => {
     if (joiningFeeBreakdown) joiningFeeBreakdown.hidden = true;
     if (renewalAmountField) renewalAmountField.hidden = false;
     if (renewalAmount) renewalAmount.required = true;
-    renewalAmount.value = String(getRenewalDefaultAmountForPlan());
+    void applyResolvedRenewalAmount(kid);
   }
   if (renewalPaymentDate) renewalPaymentDate.value = toLocalIsoDate();
   renewalComment.value = "";
@@ -6473,7 +6536,7 @@ renewalPlan?.addEventListener("change", () => {
     if (isJoiningFee) {
       syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
     } else {
-      renewalAmount.value = String(getRenewalDefaultAmountForPlan());
+      void applyResolvedRenewalAmount(getOpenRenewalKid());
     }
   } else if (isJoiningFee) {
     syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: false });
@@ -6489,7 +6552,7 @@ renewalSpecialMonths?.addEventListener("input", () => {
   if (isJoiningFee) {
     syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
   } else if (renewalPlan?.value === "special" && renewalAmount) {
-    renewalAmount.value = String(getRenewalDefaultAmountForPlan());
+    void applyResolvedRenewalAmount(getOpenRenewalKid());
   }
 });
 renewalSpecialMonths?.addEventListener("change", () => {
@@ -6498,7 +6561,7 @@ renewalSpecialMonths?.addEventListener("change", () => {
   if (isJoiningFee) {
     syncJoiningFeeBreakdown({ resetFromPlan: true, updateAmount: true });
   } else if (renewalPlan?.value === "special" && renewalAmount) {
-    renewalAmount.value = String(getRenewalDefaultAmountForPlan());
+    void applyResolvedRenewalAmount(getOpenRenewalKid());
   }
 });
 [joiningCoachingFee, joiningAdmissionFee, joiningJerseySize, joiningJerseyPairs].forEach((input) => {
