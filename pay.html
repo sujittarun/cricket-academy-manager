@@ -710,6 +710,72 @@
         messageText.textContent = "Choose your UPI app. If it does not open, copy the UPI ID and amount.";
       };
 
+
+      // DID A UPI APP ACTUALLY OPEN, AND FOR HOW LONG?
+      //
+      // A upi:// intent gives the page no callback — the browser cannot be
+      // told whether the payment succeeded. That needs a payment gateway,
+      // and it is exactly why this flow asks for a screenshot instead.
+      //
+      // What the page CAN see is whether it lost visibility right after
+      // the intent fired. If an app opened, the tab is backgrounded within
+      // a moment; if nothing is installed or the intent was blocked, the
+      // page just sits there. And when the parent comes back, the gap
+      // tells us roughly what happened:
+      //
+      //   never left            no UPI app opened at all
+      //   back in a few seconds opened it and bailed
+      //   back after a while    was in a payment flow
+      //
+      // That is what lets the follow-up nudge say something specific two
+      // minutes later instead of nagging everyone identically.
+      const watchForUpiApp = () => {
+        const firedAt = Date.now();
+        let opened = false;
+
+        const report = (body) => {
+          const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/genalpha-whatsapp`;
+          fetch(endpoint, {
+            method: "POST",
+            keepalive: true,
+            headers: {
+              "Content-Type": "application/json",
+              ...(supabaseConfig.anonKey ? { apikey: supabaseConfig.anonKey } : {}),
+            },
+            body: JSON.stringify({ eventId: reminderEventId, ...body }),
+          }).catch(() => {});
+        };
+
+        const onHide = () => {
+          if (document.visibilityState !== "hidden" || opened) return;
+          opened = true;
+          report({ action: "upi_app_opened", openedAt: new Date().toISOString() });
+        };
+        document.addEventListener("visibilitychange", onHide);
+
+        // Back on the page: report the gap, once.
+        const onShow = () => {
+          if (document.visibilityState !== "visible" || !opened) return;
+          document.removeEventListener("visibilitychange", onHide);
+          document.removeEventListener("visibilitychange", onShow);
+          report({
+            action: "upi_app_returned",
+            secondsAway: Math.round((Date.now() - firedAt) / 1000),
+          });
+        };
+        document.addEventListener("visibilitychange", onShow);
+
+        // Still here after 2.5s means nothing opened. Worth knowing: the
+        // parent tapped and got nowhere, which is a different problem from
+        // paying and forgetting the screenshot.
+        window.setTimeout(() => {
+          if (opened) return;
+          document.removeEventListener("visibilitychange", onHide);
+          document.removeEventListener("visibilitychange", onShow);
+          report({ action: "upi_app_not_opened" });
+        }, 2500);
+      };
+
       const openUpiApp = async (appName = "generic") => {
         // Open the UPI app FIRST, then tell the academy.
         //
@@ -727,6 +793,7 @@
         const targetUrl = upiLinks[appName] || upiLinks.generic;
         void notifyPaymentAttempt();
         messageText.textContent = "Opening your UPI app...";
+        watchForUpiApp();
         window.location.href = targetUrl;
         window.setTimeout(() => {
           messageText.textContent = 'After payment, send the payment screenshot on WhatsApp so the academy can verify it.';
