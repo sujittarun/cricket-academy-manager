@@ -5915,7 +5915,17 @@ admissionReviewList?.addEventListener("click", async (event) => {
       p_review_notes: "",
     }));
   } else {
-    ({ error } = await supabaseClient.from("admissions").delete().eq("id", admissionId));
+    // Was a hard DELETE of the whole application — the child's name, both
+    // parent phone numbers, the address, the consent and terms record and
+    // the reg_no that was consumed to create it, with no audit row and
+    // nothing to answer a parent who rings back. An approval was recorded
+    // forever; a rejection left no trace. reject_admission marks the row
+    // and keeps it, with the reviewer and the reason.
+    ({ error } = await supabaseClient.rpc("reject_admission", {
+      p_admission_id: admissionId,
+      p_reviewed_by: getActiveManagerEmail(),
+      p_review_notes: "",
+    }));
   }
 
   if (error) {
