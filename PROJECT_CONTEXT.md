@@ -2,21 +2,21 @@
 
 Last updated: 2026-05-09
 
-This file is the web repo briefing for Codex/future agents. Read this first before changing the browser app, then verify the relevant implementation files. The Android/native repo has the fuller cross-app context in `/Users/jiths/Documents/New project/PROJECT_CONTEXT.md`.
+This file is the web repo briefing for Codex/future agents. Read this first before changing the browser app, then verify the relevant implementation files. The Android/native repo has the fuller cross-app context in `/Users/jiths/Documents/Academy Manager Business/GenAlphaApp/PROJECT_CONTEXT.md`.
 
 ## Project Identity
 
 - Academy name: Gen Alpha Cricket Academy.
 - Public domain: `https://genalphaacademy.in`.
-- Web repo path: `/Users/jiths/Documents/New project/web-app-repo`.
+- Web repo path: `/Users/jiths/Documents/Academy Manager Business/GenAlpha`.
 - Web remote: `git@github.com:sujittarun/cricket-academy-manager.git`.
-- Android/native repo path: `/Users/jiths/Documents/New project`.
+- Android/native repo path: `/Users/jiths/Documents/Academy Manager Business/GenAlphaApp`.
 - Android remote: `git@github.com:sujittarun/genAlpha-Manager-AndroidApp.git`.
 - Keep web and Android feature behavior in sync unless the user says web-only or Android-only.
 
 ## Product Rule
 
-- This workspace contains two separate app projects: the web/browser app at `/Users/jiths/Documents/New project/web-app-repo` and the Android/native app at `/Users/jiths/Documents/New project`.
+- This workspace contains two separate app projects: the web/browser app at `/Users/jiths/Documents/Academy Manager Business/GenAlpha` and the Android/native app at `/Users/jiths/Documents/Academy Manager Business/GenAlphaApp`.
 - Public landing page must show only the admission form before manager login.
 - Parents should not see roster, manager stats, finance, or internal manager text before login.
 - After manager login, show dashboard/roster/attendance/finance as appropriate.
@@ -34,13 +34,13 @@ This file is the web repo briefing for Codex/future agents. Read this first befo
 
 ## Key Web Files
 
-- `/Users/jiths/Documents/New project/web-app-repo/index.html`
-- `/Users/jiths/Documents/New project/web-app-repo/script.js`
-- `/Users/jiths/Documents/New project/web-app-repo/styles.css`
-- `/Users/jiths/Documents/New project/web-app-repo/supabase-config.js`
-- `/Users/jiths/Documents/New project/web-app-repo/pay.html`
-- `/Users/jiths/Documents/New project/web-app-repo/manifest.webmanifest`
-- `/Users/jiths/Documents/New project/web-app-repo/assets/...`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/index.html`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/script.js`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/styles.css`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/supabase-config.js`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/pay.html`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/manifest.webmanifest`
+- `/Users/jiths/Documents/Academy Manager Business/GenAlpha/assets/...`
 
 ## Admission Form
 
@@ -184,7 +184,7 @@ Current fee constants:
 
 ## Git and Verification
 
-- Web commit/push from `/Users/jiths/Documents/New project/web-app-repo` to `origin main`.
+- Web commit/push from `/Users/jiths/Documents/Academy Manager Business/GenAlpha` to `origin main`.
 - Do not commit Android changes in this repo.
 - Before pushing, run `git status`.
 - For layout changes, verify desktop and mobile browser behavior where possible.
