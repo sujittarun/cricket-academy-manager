@@ -642,10 +642,8 @@ let attendanceDateValue = toLocalIsoDate();
 let recentAttendanceRows = [];
 let isFeesVerified = false;
 let realtimeStudentsChannel = null;
-let realtimeAttendanceChannel = null;
-let realtimeFinanceChannel = null;
-let realtimeAdmissionsChannel = null;
-let realtimeRemindersChannel = null;
+// One channel now. The five separate ones each watched a table that does
+// not exist in `public` on the platform; see initRealtimeSync.
 let financeReloadTimer = null;
 let financeLoadSeq = 0;
 let financeLoadInFlight = null;
@@ -7670,14 +7668,10 @@ const showRealtimeToast = (message) => {
 };
 
 const stopRealtimeSync = () => {
-  [realtimeStudentsChannel, realtimeAttendanceChannel, realtimeFinanceChannel, realtimeAdmissionsChannel, realtimeRemindersChannel].forEach((channel) => {
+  [realtimeStudentsChannel].forEach((channel) => {
     if (channel) supabaseClient.removeChannel(channel);
   });
   realtimeStudentsChannel = null;
-  realtimeAttendanceChannel = null;
-  realtimeFinanceChannel = null;
-  realtimeAdmissionsChannel = null;
-  realtimeRemindersChannel = null;
 };
 
 const restartRealtimeSync = () => {
@@ -7688,148 +7682,86 @@ const restartRealtimeSync = () => {
 
 const initRealtimeSync = () => {
   if (!isBackendReady) return;
-  if (realtimeStudentsChannel || realtimeAttendanceChannel || realtimeFinanceChannel || realtimeAdmissionsChannel || realtimeRemindersChannel) return;
+  if (realtimeStudentsChannel) return;
 
-  // Students table — fast sync for roster edits/adds/deletes
-  realtimeStudentsChannel = supabaseClient
-    .channel("public:students")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "students" },
-      async (payload) => {
-        const event = payload.eventType;
-        if (event === "INSERT") {
-          const newKid = normalizeKid(payload.new);
-          if (!kids.some((k) => k.id === newKid.id)) {
-            kids.unshift(newKid);
-          }
-          showRealtimeToast(`New player added: ${newKid.name}`);
-        } else if (event === "UPDATE") {
-          const updated = normalizeKid(payload.new);
-          kids = kids.map((k) => (k.id === updated.id ? updated : k));
-          showRealtimeToast(`Player updated: ${updated.name}`);
-        } else if (event === "DELETE") {
-          const deletedId = payload.old?.id;
-          if (deletedId) {
-            kids = kids.filter((k) => k.id !== deletedId);
-          }
-        }
-        renderKids();
-        if (activeView === "attendance") renderAttendance(todayAttendanceIds);
-      }
-    )
-    .subscribe();
+  // A change SIGNAL, not a payload.
+  //
+  // Two things changed when GenAlpha moved onto the platform, and both
+  // break the old approach:
+  //
+  //   * The tables this used to watch — students, student_payments,
+  //     academy_expenses, attendance, admissions — do not exist in
+  //     `public` here. They are views in the `genalpha` schema, and
+  //     logical replication cannot publish a view. Every one of those
+  //     subscriptions matched nothing, which looks exactly like a quiet
+  //     database, so it went unnoticed.
+  //
+  //   * A student is now a join across members + student_details +
+  //     enrollments. normalizeKid(payload.new) therefore CANNOT rebuild
+  //     one from any single changed row, however the subscription is
+  //     written.
+  //
+  // So we subscribe to the real tables underneath and refetch through
+  // the views that do the join. One channel, debounced, because a single
+  // renewal touches payments, enrollments and reminder_events and should
+  // cost one reload rather than three.
+  let pending = null;
+  const touched = new Set();
+  const refetch = () => {
+    const tables = new Set(touched);
+    touched.clear();
+    pending = null;
+    if (!isBackendReady) return;
 
-  // Attendance table — instant reflect when mobile app marks/unmarks
-  realtimeAttendanceChannel = supabaseClient
-    .channel("public:attendance")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "attendance" },
-      async (payload) => {
-        const event = payload.eventType;
-        if (event === "INSERT") {
-          const sid = payload.new?.student_id;
-          const adate = payload.new?.attendance_date;
-          if (sid && adate && adate <= attendanceDateValue) {
-            recentAttendanceRows = [
-              ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === sid && (row.attendance_date || row.attendanceDate) === adate)),
-              { student_id: sid, attendance_date: adate },
-            ];
-          }
-          if (sid && adate === attendanceDateValue) {
-            todayAttendanceIds.add(sid);
-            const playerName = kids.find((k) => k.id === sid)?.name;
-            if (playerName) showRealtimeToast(`✓ ${playerName} marked present`);
-            if (activeView === "attendance") renderAttendance(todayAttendanceIds);
-          }
-        } else if (event === "UPDATE") {
-          const sid = payload.new?.student_id;
-          const adate = payload.new?.attendance_date;
-          if (sid && adate && adate <= attendanceDateValue) {
-            recentAttendanceRows = [
-              ...recentAttendanceRows.filter((row) => !((row.student_id || row.studentId) === sid && (row.attendance_date || row.attendanceDate) === adate)),
-              { student_id: sid, attendance_date: adate },
-            ];
-          }
-          if (sid && adate === attendanceDateValue) {
-            todayAttendanceIds.add(sid);
-            if (activeView === "attendance") renderAttendance(todayAttendanceIds);
-          }
-        } else if (event === "DELETE") {
-          const sid = payload.old?.student_id;
-          const adate = payload.old?.attendance_date;
-          if (sid && adate) {
-            recentAttendanceRows = recentAttendanceRows.filter(
-              (row) => !((row.student_id || row.studentId) === sid && (row.attendance_date || row.attendanceDate) === adate)
-            );
-          }
-          if (sid && adate === attendanceDateValue) {
-            todayAttendanceIds.delete(sid);
-            const playerName = kids.find((k) => k.id === sid)?.name;
-            if (playerName) showRealtimeToast(`${playerName} marked absent`);
-            if (activeView === "attendance") renderAttendance(todayAttendanceIds);
-          }
-        }
-      }
-    )
-    .subscribe();
+    const roster = tables.has("members") || tables.has("student_details") ||
+                   tables.has("enrollments");
+    const finance = tables.has("payments") || tables.has("expenses");
+    const register = tables.has("attendance_records");
+    const chase = tables.has("reminder_events") || tables.has("payment_link_requests");
 
-  // Finance tables — keeps browser and Android app finance screens in sync without manual refresh.
-  realtimeFinanceChannel = supabaseClient
-    .channel("public:finance")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "academy_expenses" },
-      () => {
-        queueFinanceRefresh();
-        if (activeView === "finance") showRealtimeToast("Finance expenses updated");
+    (async () => {
+      if (roster) { await loadKids(); }
+      if (register) { renderAttendance(); }
+      if (isManagerLoggedIn && finance) { queueFinanceRefresh(); }
+      if (isManagerLoggedIn && chase) { await loadPaymentFollowUps(); }
+      if (isManagerLoggedIn && (roster || tables.has("members"))) {
+        await loadPendingAdmissions();
       }
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "student_payments" },
-      () => {
-        queueFinanceRefresh();
-        if (activeView === "finance") showRealtimeToast("Fee payment timeline updated");
-      }
-    )
-    .subscribe();
+      renderKids();
+      updatePaymentAssist();
+    })().catch(() => {
+      // A failed refetch must not kill the subscription; the next event
+      // or the manual refresh recovers it.
+    });
+  };
+  const signal = (table) => {
+    touched.add(table);
+    if (pending) window.clearTimeout(pending);
+    pending = window.setTimeout(refetch, 400);
+  };
 
-  realtimeAdmissionsChannel = supabaseClient
-    .channel("public:admissions")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "admissions" },
-      async () => {
-        if (isManagerLoggedIn) {
-          await loadPendingAdmissions();
-        }
-      }
-    )
-    .subscribe();
+  // Exactly the tables in the supabase_realtime publication (2026-08-12o).
+  // Subscribing to anything outside it is silence, not an error.
+  const WATCHED = [
+    { schema: "public", table: "members" },
+    { schema: "public", table: "payments" },
+    { schema: "public", table: "expenses" },
+    { schema: "public", table: "enrollments" },
+    { schema: "public", table: "attendance_records" },
+    { schema: "public", table: "reminder_events" },
+    { schema: "genalpha", table: "student_details" },
+    { schema: "genalpha", table: "payment_link_requests" },
+  ];
 
-  realtimeRemindersChannel = supabaseClient
-    .channel("public:reminder-payment-status")
-    .on(
+  let channel = supabaseClient.channel("genalpha:changes");
+  WATCHED.forEach((source) => {
+    channel = channel.on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "reminder_events" },
-      async () => {
-        if (!isManagerLoggedIn) return;
-        await loadPaymentFollowUps();
-        renderKids();
-      }
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "payment_link_requests" },
-      async () => {
-        if (!isManagerLoggedIn) return;
-        await loadPaymentFollowUps();
-        renderKids();
-      }
-    )
-    .subscribe();
+      { event: "*", schema: source.schema, table: source.table },
+      () => signal(source.table)
+    );
+  });
+  realtimeStudentsChannel = channel.subscribe();
   updatePaymentAssist();
 };
 
