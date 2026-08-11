@@ -3985,6 +3985,39 @@ const renderAdmissionReviewQueue = () => {
             <span>Consent: ${admission.consentAccepted && admission.termsAccepted ? "Signed" : "Missing"} · Ready now: ${admission.readyToStart ? "Yes" : "No"}</span>
             <span>Jersey: ${escapeHtml(admission.jerseySize || "Not set")} · ${admission.jerseyPairs || 0} pair${admission.jerseyPairs === 1 ? "" : "s"}</span>
           </div>
+          ${(() => {
+            // THE FEE, before you approve, not after.
+            //
+            // Approving writes coaching_fee into a member-scoped fee_rules
+            // row, and resolve_fee answers from that for the rest of the
+            // family's time here — it is what reminder_queue bills them.
+            // The number is typed on the public form, and custom pricing
+            // is deliberate (live rules run 1,500 to 10,000), so a wrong
+            // one is indistinguishable from a right one afterwards. This
+            // card is the only gate, so it has to show the number.
+            const months = admission.feePlan === "quarterly" ? 3
+              : admission.feePlan === "halfyearly" ? 6
+              : Number(admission.monthsCovered) || 1;
+            const perMonth = months > 1
+              ? Math.round((admission.coachingFee / months) * 100) / 100
+              : admission.coachingFee;
+            const rupees = (n) => `Rs ${Number(n || 0).toLocaleString("en-IN")}`;
+            return `
+              <div class="review-fee">
+                <div class="review-fee-headline">
+                  <span class="review-fee-label">Coaching fee</span>
+                  <strong class="review-fee-amount">${escapeHtml(rupees(perMonth))}<span class="review-fee-per"> / month</span></strong>
+                </div>
+                <p class="review-fee-note">
+                  ${escapeHtml((admission.feePlan || "pending").toString())} plan${months > 1 ? ` · ${rupees(admission.coachingFee)} for ${months} months` : ""}
+                  · admission ${escapeHtml(rupees(admission.admissionFee))}
+                  · jersey ${escapeHtml(rupees(admission.jerseyAmount))}
+                  · total ${escapeHtml(rupees(admission.totalFeeAmount))}
+                </p>
+                <p class="review-fee-warn">This becomes their monthly fee. Check it before approving.</p>
+              </div>
+            `;
+          })()}
           ${admission.comments ? `<p class="review-comment">${escapeHtml(admission.comments)}</p>` : ""}
           <div class="review-actions">
             <button class="primary-btn" type="button" data-approve-admission="${escapeHtml(admission.id)}">Approve</button>

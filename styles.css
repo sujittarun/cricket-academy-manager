@@ -10043,3 +10043,61 @@ body.popup-open {
     font-size: 0.65rem !important;
   }
 }
+
+/* The fee on an admission review card.
+   Approving turns this number into the family's permanent fee rule, and
+   custom pricing is normal here — live rules span Rs 1,500 to Rs 10,000 —
+   so a wrong one is indistinguishable from a right one once it is in.
+   This card is the only gate before that happens, so the amount is the
+   loudest thing on it. */
+.review-fee {
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.review-fee-headline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.review-fee-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.review-fee-amount {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.review-fee-per {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.66;
+}
+
+.review-fee-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  opacity: 0.78;
+}
+
+.review-fee-warn {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  opacity: 0.62;
+}
+
+@media (max-width: 480px) {
+  .review-fee-headline { flex-direction: column; gap: 0.15rem; }
+  .review-fee-amount { font-size: 1.4rem; }
+}
