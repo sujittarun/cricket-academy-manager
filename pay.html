@@ -626,7 +626,8 @@
           return true;
         }
 
-        const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/whatsapp-reminder`;
+        // genalpha-whatsapp, NOT whatsapp-reminder: since the cutover this project hosts both, and whatsapp-reminder is the PLATFORM's engine for raj/mpp/demo, which has no payment_options action.
+        const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/genalpha-whatsapp`;
         const request = fetch(endpoint, {
           method: "POST",
           keepalive: true,
@@ -685,7 +686,7 @@
       const loadPaymentOptions = async () => {
         if (!reminderEventId || !supabaseConfig.url) return;
         try {
-          const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/whatsapp-reminder`;
+          const endpoint = `${String(supabaseConfig.url).replace(/\/+$/, "")}/functions/v1/genalpha-whatsapp`;
           const response = await fetch(endpoint, {
             method: "POST",
             headers: {

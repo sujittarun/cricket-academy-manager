@@ -4669,7 +4669,7 @@ const getFreshManagerAccessToken = async () => {
 };
 
 const callReminderFunction = async (kid, reminderState, accessToken) => {
-  const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+  const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/genalpha-whatsapp`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -4688,7 +4688,7 @@ const callReminderFunction = async (kid, reminderState, accessToken) => {
 };
 
 const callRenewalVerifiedFunction = async ({ kid, planTitle, amount, cycleDate, toDate, accessToken }) => {
-  const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+  const functionResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/genalpha-whatsapp`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -7025,7 +7025,7 @@ admissionReviewList.addEventListener("click", async (event) => {
     remindBtn.textContent = "Sending...";
     
     try {
-      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/whatsapp-reminder`, {
+      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/genalpha-whatsapp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
