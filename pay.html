@@ -711,10 +711,21 @@
       };
 
       const openUpiApp = async (appName = "generic") => {
-        messageText.textContent = "Preparing payment and WhatsApp instructions...";
-        await notifyPaymentAttempt();
+        // Open the UPI app FIRST, then tell the academy.
+        //
+        // This used to await notifyPaymentAttempt(), which is a round trip
+        // to an edge function raced against a 4-second timeout — so a
+        // parent tapping Pay Now waited on a cold function start before
+        // their UPI app appeared. On a phone that reads as the button
+        // being broken, and the whole point of this template is that
+        // paying is one tap.
+        //
+        // Nothing is lost by not waiting: the fetch already sets
+        // keepalive: true, which is precisely the flag that lets a request
+        // finish after the page navigates away.
         const upiLinks = buildUpiLinks();
         const targetUrl = upiLinks[appName] || upiLinks.generic;
+        void notifyPaymentAttempt();
         messageText.textContent = "Opening your UPI app...";
         window.location.href = targetUrl;
         window.setTimeout(() => {
@@ -728,8 +739,8 @@
           return;
         }
         if (isAppleTouchDevice()) {
-          messageText.textContent = "Sending payment instructions to WhatsApp...";
-          await notifyPaymentAttempt();
+          // Same reasoning: show the chooser immediately, notify behind it.
+          void notifyPaymentAttempt();
           showUpiOptions();
           return;
         }
