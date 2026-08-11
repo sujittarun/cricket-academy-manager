@@ -5269,7 +5269,12 @@ const runFinanceLoad = async () => {
     renderWhatsappPerformance(whatsappStatsCache, "");
   } else {
     supabaseClient.functions
-      .invoke("whatsapp-reminder", { body: { action: "whatsapp_monthly_stats", months: 4 } })
+      // genalpha-whatsapp, not whatsapp-reminder. whatsapp_monthly_stats is
+      // GenAlpha's own action and exists only in GenAlpha's engine; the
+      // platform's shared reminder function has no such action, so this
+      // returned an error and the panel rendered empty. Same mistake as
+      // pay.html made before the cutover.
+      .invoke("genalpha-whatsapp", { body: { action: "whatsapp_monthly_stats", months: 4 } })
       .then((whatsappStatsResult) => {
         const errorMessage = whatsappStatsResult.error?.message || whatsappStatsResult.data?.error || "";
         if (!errorMessage && Array.isArray(whatsappStatsResult.data?.months)) {
