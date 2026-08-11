@@ -6616,148 +6616,182 @@ const updateStudentWithRetry = async (studentId, payload, attempts = 3) => {
   return lastResult;
 };
 
+let isSavingRenewal = false;
+
 renewalForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const kid = kids.find((item) => item.id === renewalStudentId.value);
-  if (!kid) return;
-  const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
-  const monthsCovered = renewalPlan.value === "special" ? getRenewalSpecialMonths() : plan.months;
-  const isJoiningFee = renewalPaymentMode?.value === "joining";
-  const joiningFeeSplit = isJoiningFee
-    ? syncJoiningFeeBreakdown()
-    : { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0, jerseySize: "", jerseyPairs: 0 };
-  const amount = isJoiningFee ? joiningFeeSplit.totalFeeAmount : getRenewalAmountForPlan();
-  if (amount <= 0) {
-    renewalMessage.textContent = isJoiningFee ? "Joining fee total must be greater than zero." : "Enter a valid renewal amount.";
-    return;
-  }
-  const paymentDate = renewalPaymentDate?.value || toLocalIsoDate();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
-    renewalMessage.textContent = "Choose a valid payment date.";
-    return;
-  }
-  const cycleDate = isJoiningFee ? kid.joinDate : getDueCycleDate(kid);
-  const renewals = [...kid.renewals, cycleDate];
-  const paymentPayload = {
-    student_id: kid.id,
-    payment_type: isJoiningFee ? "joining" : "renewal",
-    plan_type: renewalPlan.value,
-    cycle_start_date: cycleDate,
-    months_covered: monthsCovered,
-    amount,
-    paid_on: paymentDate,
-    comment: renewalComment.value.trim(),
-    recorded_by: getActiveManagerEmail(),
-    ...(isJoiningFee
-      ? {
-          coaching_fee: joiningFeeSplit.coachingFee,
-          admission_fee: joiningFeeSplit.admissionFee,
-          jersey_amount: joiningFeeSplit.jerseyAmount,
-          total_fee_amount: joiningFeeSplit.totalFeeAmount,
-          jersey_size: joiningFeeSplit.jerseySize,
-          jersey_pairs: joiningFeeSplit.jerseyPairs,
-        }
-      : {}),
-  };
-  renewalMessage.textContent = "Saving...";
-  let { data: paymentRow, error: paymentError } = await insertRenewalPaymentWithRetry(paymentPayload);
-  let savedWithoutPaymentFeeFields = false;
-  if (paymentError && isJoiningFee && isMissingPaymentFeeColumnError(paymentError)) {
-    const legacyPaymentPayload = { ...paymentPayload };
-    delete legacyPaymentPayload.coaching_fee;
-    delete legacyPaymentPayload.admission_fee;
-    delete legacyPaymentPayload.jersey_amount;
-    delete legacyPaymentPayload.total_fee_amount;
-    delete legacyPaymentPayload.jersey_size;
-    delete legacyPaymentPayload.jersey_pairs;
-    ({ data: paymentRow, error: paymentError } = await insertRenewalPaymentWithRetry(legacyPaymentPayload));
-    savedWithoutPaymentFeeFields = !paymentError;
-  }
-  if (paymentError) {
-    renewalMessage.textContent = isNetworkFetchError(paymentError)
-      ? "Network error: could not reach the server, so nothing was saved. Check your internet connection and press Save again."
-      : paymentError.message;
-    return;
-  }
-  const studentUpdatePayload = {
-    ...(isJoiningFee
-      ? {
-          fees_paid: true,
-          amount_paid: amount,
-          payment_status: "paid",
-          fee_plan: renewalPlan.value,
-          coaching_fee: joiningFeeSplit.coachingFee,
-          admission_fee: joiningFeeSplit.admissionFee,
-          jersey_amount: joiningFeeSplit.jerseyAmount,
-          total_fee_amount: joiningFeeSplit.totalFeeAmount,
-          jersey_size: joiningFeeSplit.jerseySize,
-          jersey_pairs: joiningFeeSplit.jerseyPairs,
-        }
-      : { renewals }),
-    ...(kid.discontinued ? getRejoinPayload(kid) : { discontinued: false }),
-    updated_by: getActiveManagerEmail(),
-  };
-  let { error: updateError } = await updateStudentWithRetry(kid.id, studentUpdatePayload);
-  let savedWithoutStudentFeeFields = false;
-  if (updateError && isJoiningFee && isMissingStudentFeeColumnError(updateError)) {
-    const legacyStudentUpdatePayload = { ...studentUpdatePayload };
-    delete legacyStudentUpdatePayload.fee_plan;
-    delete legacyStudentUpdatePayload.coaching_fee;
-    delete legacyStudentUpdatePayload.admission_fee;
-    delete legacyStudentUpdatePayload.jersey_amount;
-    delete legacyStudentUpdatePayload.total_fee_amount;
-    ({ error: updateError } = await updateStudentWithRetry(kid.id, legacyStudentUpdatePayload));
-    savedWithoutStudentFeeFields = !updateError;
-  }
-  if (updateError) {
-    renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}. Press Save again — the payment will not be duplicated.`;
-    return;
-  }
-  if (savedWithoutPaymentFeeFields || savedWithoutStudentFeeFields) {
-    showToast("Joining payment saved. Apply the latest Supabase fee split migration to save detailed split fields.");
-  }
-  if (paymentRow) {
-    financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
-  }
-  const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
-  
-  // 3. Show Receipt and Close Popup Instantly
-  closeRenewalPopup();
-  latestAdmissionReceipt = isJoiningFee ? buildReceiptFromKid(kid, {
-    amountPaid: amount,
-    paidOn: paymentDate,
-    jerseySize: joiningFeeSplit.jerseySize || kid.jerseySize,
-    jerseyPairs: joiningFeeSplit.jerseyPairs,
-  }) : buildRenewalReceiptFromKid(kid, {
-    plan: renewalPlan.value,
-    planTitle: getPaymentPlanLabel(renewalPlan.value, monthsCovered),
-    monthsCovered,
-    amount,
-    cycleDate,
-    paidOn: paymentDate,
-  });
-  renderReceipt(latestAdmissionReceipt);
 
-  // 4. Run Slow Tasks in Background (WhatsApp & Reload)
-  (async () => {
-    try {
-      const accessToken = await getFreshManagerAccessToken();
-      if (accessToken) {
-        await callRenewalVerifiedFunction({
-          kid,
-          planTitle: isJoiningFee ? "Joining Fee" : getPaymentPlanLabel(renewalPlan.value, monthsCovered),
-          amount,
-          cycleDate,
-          toDate: renewalToDate,
-          accessToken,
-        });
-      }
-    } catch (err) {
-      console.error("Background WhatsApp trigger failed:", err);
+  // ONE SAVE AT A TIME.
+  //
+  // Nothing disabled this button while the save was in flight, and the
+  // duplicate check inside insertRenewalPaymentWithRetry is a separate
+  // round trip — so three taps on an unresponsive button all passed the
+  // check before the first insert landed, and a real player was recorded
+  // as paying three months in sixty seconds. The database now refuses an
+  // identical payment inside two minutes; this stops the taps reaching it
+  // and, more to the point, makes the button feel like it responded.
+  if (isSavingRenewal) return;
+  isSavingRenewal = true;
+  const saveButton = document.getElementById("renewalSaveButton");
+  const saveLabel = saveButton?.textContent;
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+  }
+  const finishSaving = () => {
+    isSavingRenewal = false;
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = saveLabel || "Save renewal payment";
     }
-    await loadKids();
-    await loadFinance();
-  })();
+  };
+
+  try {
+    const kid = kids.find((item) => item.id === renewalStudentId.value);
+    if (!kid) return;
+    const plan = RENEWAL_PLANS[renewalPlan.value] || RENEWAL_PLANS.monthly;
+    const monthsCovered = renewalPlan.value === "special" ? getRenewalSpecialMonths() : plan.months;
+    const isJoiningFee = renewalPaymentMode?.value === "joining";
+    const joiningFeeSplit = isJoiningFee
+      ? syncJoiningFeeBreakdown()
+      : { coachingFee: 0, admissionFee: 0, jerseyAmount: 0, totalFeeAmount: 0, jerseySize: "", jerseyPairs: 0 };
+    const amount = isJoiningFee ? joiningFeeSplit.totalFeeAmount : getRenewalAmountForPlan();
+    if (amount <= 0) {
+      renewalMessage.textContent = isJoiningFee ? "Joining fee total must be greater than zero." : "Enter a valid renewal amount.";
+      return;
+    }
+    const paymentDate = renewalPaymentDate?.value || toLocalIsoDate();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
+      renewalMessage.textContent = "Choose a valid payment date.";
+      return;
+    }
+    const cycleDate = isJoiningFee ? kid.joinDate : getDueCycleDate(kid);
+    const renewals = [...kid.renewals, cycleDate];
+    const paymentPayload = {
+      student_id: kid.id,
+      payment_type: isJoiningFee ? "joining" : "renewal",
+      plan_type: renewalPlan.value,
+      cycle_start_date: cycleDate,
+      months_covered: monthsCovered,
+      amount,
+      paid_on: paymentDate,
+      comment: renewalComment.value.trim(),
+      recorded_by: getActiveManagerEmail(),
+      ...(isJoiningFee
+        ? {
+            coaching_fee: joiningFeeSplit.coachingFee,
+            admission_fee: joiningFeeSplit.admissionFee,
+            jersey_amount: joiningFeeSplit.jerseyAmount,
+            total_fee_amount: joiningFeeSplit.totalFeeAmount,
+            jersey_size: joiningFeeSplit.jerseySize,
+            jersey_pairs: joiningFeeSplit.jerseyPairs,
+          }
+        : {}),
+    };
+    renewalMessage.textContent = "Saving...";
+    let { data: paymentRow, error: paymentError } = await insertRenewalPaymentWithRetry(paymentPayload);
+    let savedWithoutPaymentFeeFields = false;
+    if (paymentError && isJoiningFee && isMissingPaymentFeeColumnError(paymentError)) {
+      const legacyPaymentPayload = { ...paymentPayload };
+      delete legacyPaymentPayload.coaching_fee;
+      delete legacyPaymentPayload.admission_fee;
+      delete legacyPaymentPayload.jersey_amount;
+      delete legacyPaymentPayload.total_fee_amount;
+      delete legacyPaymentPayload.jersey_size;
+      delete legacyPaymentPayload.jersey_pairs;
+      ({ data: paymentRow, error: paymentError } = await insertRenewalPaymentWithRetry(legacyPaymentPayload));
+      savedWithoutPaymentFeeFields = !paymentError;
+    }
+    if (paymentError) {
+      renewalMessage.textContent = isNetworkFetchError(paymentError)
+        ? "Network error: could not reach the server, so nothing was saved. Check your internet connection and press Save again."
+        : paymentError.message;
+      return;
+    }
+    const studentUpdatePayload = {
+      ...(isJoiningFee
+        ? {
+            fees_paid: true,
+            amount_paid: amount,
+            payment_status: "paid",
+            fee_plan: renewalPlan.value,
+            coaching_fee: joiningFeeSplit.coachingFee,
+            admission_fee: joiningFeeSplit.admissionFee,
+            jersey_amount: joiningFeeSplit.jerseyAmount,
+            total_fee_amount: joiningFeeSplit.totalFeeAmount,
+            jersey_size: joiningFeeSplit.jerseySize,
+            jersey_pairs: joiningFeeSplit.jerseyPairs,
+          }
+        : { renewals }),
+      ...(kid.discontinued ? getRejoinPayload(kid) : { discontinued: false }),
+      updated_by: getActiveManagerEmail(),
+    };
+    let { error: updateError } = await updateStudentWithRetry(kid.id, studentUpdatePayload);
+    let savedWithoutStudentFeeFields = false;
+    if (updateError && isJoiningFee && isMissingStudentFeeColumnError(updateError)) {
+      const legacyStudentUpdatePayload = { ...studentUpdatePayload };
+      delete legacyStudentUpdatePayload.fee_plan;
+      delete legacyStudentUpdatePayload.coaching_fee;
+      delete legacyStudentUpdatePayload.admission_fee;
+      delete legacyStudentUpdatePayload.jersey_amount;
+      delete legacyStudentUpdatePayload.total_fee_amount;
+      ({ error: updateError } = await updateStudentWithRetry(kid.id, legacyStudentUpdatePayload));
+      savedWithoutStudentFeeFields = !updateError;
+    }
+    if (updateError) {
+      renewalMessage.textContent = `Payment saved, but player renewal status failed: ${updateError.message}. Press Save again — the payment will not be duplicated.`;
+      return;
+    }
+    if (savedWithoutPaymentFeeFields || savedWithoutStudentFeeFields) {
+      showToast("Joining payment saved. Apply the latest Supabase fee split migration to save detailed split fields.");
+    }
+    if (paymentRow) {
+      financePayments = [paymentRow, ...financePayments.filter((payment) => payment.id !== paymentRow.id)];
+    }
+    const renewalToDate = addMonthsIso(cycleDate, monthsCovered);
+  
+    // 3. Show Receipt and Close Popup Instantly
+    closeRenewalPopup();
+    latestAdmissionReceipt = isJoiningFee ? buildReceiptFromKid(kid, {
+      amountPaid: amount,
+      paidOn: paymentDate,
+      jerseySize: joiningFeeSplit.jerseySize || kid.jerseySize,
+      jerseyPairs: joiningFeeSplit.jerseyPairs,
+    }) : buildRenewalReceiptFromKid(kid, {
+      plan: renewalPlan.value,
+      planTitle: getPaymentPlanLabel(renewalPlan.value, monthsCovered),
+      monthsCovered,
+      amount,
+      cycleDate,
+      paidOn: paymentDate,
+    });
+    renderReceipt(latestAdmissionReceipt);
+
+    // 4. Run Slow Tasks in Background (WhatsApp & Reload)
+    (async () => {
+      try {
+        const accessToken = await getFreshManagerAccessToken();
+        if (accessToken) {
+          await callRenewalVerifiedFunction({
+            kid,
+            planTitle: isJoiningFee ? "Joining Fee" : getPaymentPlanLabel(renewalPlan.value, monthsCovered),
+            amount,
+            cycleDate,
+            toDate: renewalToDate,
+            accessToken,
+          });
+        }
+      } catch (err) {
+        console.error("Background WhatsApp trigger failed:", err);
+      }
+      await loadKids();
+      await loadFinance();
+    })();
+  } finally {
+    // Every exit path re-enables the button — there are a dozen early
+    // returns in here and adding a call to each is how one gets missed.
+    finishSaving();
+  }
 });
 openPaymentPopupButton.addEventListener("click", openPaymentPopup);
 closePaymentPopupButton.addEventListener("click", closePaymentPopup);
