@@ -5848,6 +5848,7 @@ loginForm.addEventListener("submit", async (event) => {
       loginMessage.textContent = error.message;
       return;
     }
+    if (typeof amReport === "function") amReport("sign_in", {});
 
     lastManagerEmail = email;
     lastManagerPassword = password;
@@ -5929,6 +5930,10 @@ admissionReviewList?.addEventListener("click", async (event) => {
       p_reviewed_by: getActiveManagerEmail(),
       p_review_notes: "",
     }));
+  }
+
+  if (!error && typeof amReport === "function") {
+    amReport(approveButton ? "admission_approved" : "admission_rejected", {});
   }
 
   if (error) {
@@ -6155,6 +6160,11 @@ kidForm.addEventListener("submit", async (event) => {
       .eq("id", editingKidId));
   } else {
     ({ error } = await supabaseClient.from("students").insert(databasePayload));
+  }
+  // Roster change. Reported only on success, and as a count — the console
+  // is account-level, so no name, no phone, no id ever goes in props.
+  if (!error && typeof amReport === "function") {
+    amReport(wasEditing ? "student_updated" : "student_added", {});
   }
 
   if (error && (isMissingStudentProfileColumnError(error) || isMissingStudentFeeColumnError(error))) {
@@ -6415,6 +6425,7 @@ kidsTableBody.addEventListener("click", async (event) => {
       formMessage.textContent = error.message;
       return;
     }
+    if (typeof amReport === "function") amReport("student_removed", {});
 
     if (editingKidId === id) {
       resetFormState();
