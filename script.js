@@ -611,6 +611,11 @@ const switchView = (view, push = true) => {
   
   activeView = viewToSet;
   localStorage.setItem("activeView", activeView);
+  // One page_view per view, not one per page load. `page` is derived from
+  // location.pathname, which never changes under hash routing, so the
+  // load-time event was the only navigation signal this app ever sent —
+  // the console could not tell roster from finance.
+  if (typeof amReport === "function") amReport("page_view", { view: activeView });
   updateActiveView();
   
   // Load data for specific views
@@ -6646,6 +6651,12 @@ const insertRenewalPaymentWithRetry = async (payload, attempts = 3) => {
     const existing = await findExistingRenewalPayment(payload).catch(() => null);
     if (existing) return { data: existing, error: null };
     lastResult = await supabaseClient.from("student_payments").insert(payload).select("*").single();
+    if (!lastResult.error && typeof amReport === "function") {
+      // Same event name Leo and MPP already send, so the console can
+      // aggregate across tenants instead of learning a per-tenant
+      // vocabulary. Counts only — no amount, no student, no name.
+      amReport("payment_recorded", { kind: payload.payment_type || "renewal" });
+    }
     if (!lastResult.error || !isNetworkFetchError(lastResult.error)) return lastResult;
     if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
   }
@@ -7621,6 +7632,7 @@ expenseForm?.addEventListener("submit", async (event) => {
     expenseMessage.textContent = error.message;
     return;
   }
+  if (typeof amReport === "function") amReport("expense_recorded", {});
   expenseForm.reset();
   // Reset expense date to today after successful save
   const expenseDateInput = document.getElementById("expenseDate");
