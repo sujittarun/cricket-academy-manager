@@ -4829,60 +4829,10 @@ body.popup-open {
   border-color: rgba(5, 150, 105, 0.24);
 }
 
-.attendance-absence-nudge {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr);
-  gap: 12px;
-  align-items: center;
-  margin: -6px 0 16px;
-  padding: 14px;
-  border: 1px solid rgba(37, 99, 235, 0.16);
-  border-radius: 14px;
-  background: #eff6ff;
-}
 
-.absence-nudge-copy {
-  display: grid;
-  gap: 4px;
-}
 
-.absence-nudge-copy strong {
-  color: #1e3a8a;
-  font-size: 0.94rem;
-}
 
-.absence-nudge-copy span {
-  color: #416184;
-  font-size: 0.82rem;
-}
 
-.absence-nudge-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  justify-content: flex-end;
-}
-
-.absence-nudge-pill,
-.absence-nudge-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 5px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.16);
-  background: rgba(255, 255, 255, 0.72);
-  color: #1d4ed8;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.absence-nudge-pill small {
-  color: #416184;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
 
 .attendance-filter-bar {
   display: grid;
@@ -5569,15 +5519,7 @@ body.popup-open {
     border-radius: 12px;
   }
 
-  .attendance-absence-nudge {
-    grid-template-columns: 1fr;
-    margin-bottom: 12px;
-    padding: 12px;
-  }
 
-  .absence-nudge-list {
-    justify-content: flex-start;
-  }
 
   .attendance-filter-bar {
     grid-template-columns: 1fr;

@@ -269,7 +269,6 @@ const attendanceEditorLock = document.getElementById("attendanceEditorLock");
 const attendanceSummaryBar = document.getElementById("attendanceSummaryBar");
 const attendancePresentCount = document.getElementById("attendancePresentCount");
 const attendanceTotalCount = document.getElementById("attendanceTotalCount");
-const attendanceAbsenceNudge = document.getElementById("attendanceAbsenceNudge");
 const attendanceFilterBar = document.getElementById("attendanceFilterBar");
 const attendanceSearchInput = document.getElementById("attendanceSearchInput");
 const attendanceSlotFilters = document.getElementById("attendanceSlotFilters");
@@ -2671,65 +2670,8 @@ const getFilteredAttendancePlayers = (activePlayers) => {
   );
 };
 
-const ATTENDANCE_ABSENCE_NUDGE_DAYS = 5;
-
-const buildAttendanceAbsenceNudges = (activePlayers, attendedIds, referenceDate = attendanceDateValue) => {
-  const reference = parseIsoDate(referenceDate);
-  if (!reference) return [];
-  const referenceIso = toLocalIsoDate(reference);
-  const latestPresentByStudent = recentAttendanceRows.reduce((map, row) => {
-    const studentId = row.student_id || row.studentId;
-    const attendanceDate = String(row.attendance_date || row.attendanceDate || "").slice(0, 10);
-    if (!studentId || !attendanceDate || attendanceDate > referenceIso) return map;
-    const current = map.get(studentId);
-    if (!current || attendanceDate > current) map.set(studentId, attendanceDate);
-    return map;
-  }, new Map());
-
-  attendedIds.forEach((studentId) => {
-    latestPresentByStudent.set(studentId, referenceIso);
-  });
-
-  return activePlayers
-    .map((kid) => {
-      const joinDate = String(kid.joinDate || "").slice(0, 10);
-      if (!joinDate || joinDate > referenceIso) return null;
-      const lastPresentDate = latestPresentByStudent.get(kid.id) || "";
-      const startDate = lastPresentDate || joinDate;
-      const absentDays = daysBetweenIso(startDate, referenceIso);
-      if (absentDays < ATTENDANCE_ABSENCE_NUDGE_DAYS) return null;
-      return { kid, absentDays, lastPresentDate };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.absentDays - a.absentDays || a.kid.name.localeCompare(b.kid.name));
-};
-
-const renderAttendanceAbsenceNudge = (activePlayers, attendedIds) => {
-  if (!attendanceAbsenceNudge) return;
-  const nudges = buildAttendanceAbsenceNudges(activePlayers, attendedIds);
-  attendanceAbsenceNudge.hidden = nudges.length === 0;
-  if (nudges.length === 0) {
-    attendanceAbsenceNudge.innerHTML = "";
-    return;
-  }
-  const visible = nudges.slice(0, 6);
-  const remaining = nudges.length - visible.length;
-  attendanceAbsenceNudge.innerHTML = `
-    <div class="absence-nudge-copy">
-      <strong>${nudges.length} player${nudges.length === 1 ? "" : "s"} need attendance follow-up</strong>
-      <span>No attendance marked for ${ATTENDANCE_ABSENCE_NUDGE_DAYS}+ days. Review before marking discontinued.</span>
-    </div>
-    <div class="absence-nudge-list">
-      ${visible.map(({ kid, absentDays, lastPresentDate }) => `
-        <span class="absence-nudge-pill">
-          ${escapeHtml(kid.name)}
-          <small>${absentDays}d${lastPresentDate ? ` • last ${formatDate(lastPresentDate)}` : " • never marked"}</small>
-        </span>
-      `).join("")}
-      ${remaining > 0 ? `<span class="absence-nudge-more">+${remaining} more</span>` : ""}
-    </div>
-  `;
-};
+// Days of attendance history the streak badges need. See loadAttendance.
+const ATTENDANCE_HISTORY_DAYS = 60;
 
 const ATTENDANCE_STREAK_MILESTONES = [
   { days: 30, label: "Legend", className: "legend" },
@@ -7417,7 +7359,11 @@ const loadAttendance = async (date = attendanceDateValue) => {
   }
 
   try {
-    const since = addDaysIso(date, -120);
+    // Only the streak badges read this history now, and the longest milestone is 30 weekdays
+    // (~6 calendar weeks), so 60 days covers it with room for holidays. The old 120-day window
+    // existed for the absence follow-up and was large enough to hit PostgREST's 1000-row cap,
+    // which silently truncated the history the streaks were counted from.
+    const since = addDaysIso(date, -ATTENDANCE_HISTORY_DAYS);
     const [dayResult, recentResult] = await Promise.all([
       supabaseClient
         .from("attendance")
@@ -7457,7 +7403,6 @@ const renderAttendance = (attendedIds) => {
 
   if (!managerReady) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
-    if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = true;
     if (attendanceGridContainer) attendanceGridContainer.hidden = true;
@@ -7476,7 +7421,6 @@ const renderAttendance = (attendedIds) => {
 
   if (activePlayers.length === 0) {
     if (attendanceSummaryBar) attendanceSummaryBar.hidden = true;
-    if (attendanceAbsenceNudge) attendanceAbsenceNudge.hidden = true;
     if (attendanceFilterBar) attendanceFilterBar.hidden = true;
     if (attendanceEmptyState) attendanceEmptyState.hidden = false;
     if (attendanceGridContainer) attendanceGridContainer.hidden = true;
@@ -7484,7 +7428,6 @@ const renderAttendance = (attendedIds) => {
   }
 
   if (attendanceSummaryBar) attendanceSummaryBar.hidden = false;
-  renderAttendanceAbsenceNudge(activePlayers, attendedIds);
   if (attendanceFilterBar) attendanceFilterBar.hidden = false;
   if (attendanceEmptyState) {
     attendanceEmptyState.hidden = visiblePlayers.length > 0;
