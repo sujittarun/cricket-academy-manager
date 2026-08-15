@@ -5364,7 +5364,7 @@ const runFinanceLoad = async () => {
               <td data-label="Paid by">${item.paid_by}</td>
               <td data-label="Comment" class="finance-comment">${item.comment || "-"}</td>
               <td data-label="Action">
-                <button class="danger-btn expense-delete-btn" data-expense-delete="${item.id}" type="button">Delete</button>
+                <button class="danger-btn expense-delete-btn" data-expense-delete="${item.id}" data-expense-label="${escapeHtml(`${item.expense_type} ${rupees(item.amount)} on ${formatDate(item.expense_date)}`)}" type="button">Delete</button>
               </td>
             </tr>
           `).join("")
@@ -7615,6 +7615,11 @@ financeExpensesTableBody?.addEventListener("click", async (event) => {
 
   const expenseId = button.dataset.expenseDelete;
   if (!expenseId || !isManagerLoggedIn) return;
+
+  // Deleting an expense is immediate and there is no undo, so name the row being
+  // removed rather than asking a bare "are you sure".
+  const label = button.dataset.expenseLabel || "this expense";
+  if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
 
   button.disabled = true;
   button.textContent = "Deleting...";
