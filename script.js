@@ -7571,9 +7571,22 @@ expenseForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(expenseForm);
   const expenseDateValue = String(formData.get("expenseDate") || "").trim();
+  const expenseType = String(formData.get("expenseType") || "").trim();
+  const amount = Number(formData.get("expenseAmount") || 0);
+  // The Android app already refuses these; the browser only had the input's
+  // min="0", which lets a zero through and writes a meaningless row into the
+  // ledger. Same rule in both apps now.
+  if (!expenseType) {
+    expenseMessage.textContent = "Choose an expense type.";
+    return;
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    expenseMessage.textContent = "Enter a valid expense amount.";
+    return;
+  }
   const payload = {
-    expense_type: String(formData.get("expenseType") || ""),
-    amount: Number(formData.get("expenseAmount") || 0),
+    expense_type: expenseType,
+    amount,
     comment: String(formData.get("expenseComment") || "").trim(),
     paid_by: String(formData.get("expensePaidBy") || ""),
     created_by: getActiveManagerEmail(),
