@@ -4308,7 +4308,11 @@ const fromSharedTimelineRow = (row = {}) => {
       : "Fee reminder sent";
     base.details = [
       formatRunDates(row.runDates),
-      badge ? `${badge} by parent` : "",
+      // Read is something the parent did; delivered is something that
+      // happened to them. "delivered by parent" reads as if they sent it.
+      badge === "read" ? "read by parent"
+        : badge === "failed" ? "delivery failed"
+        : badge ? `${badge} to parent` : "",
       row.linkIncluded ? "Pay Now link included" : "",
     ].filter(Boolean).join(" • ");
     base.changed_by = "WhatsApp";
