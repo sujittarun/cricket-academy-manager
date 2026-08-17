@@ -1981,6 +1981,13 @@ body.popup-open {
   background: rgba(15, 34, 64, 0.08);
 }
 
+.proof-unavailable {
+  margin-top: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(15, 34, 64, 0.55);
+}
+
 .proof-viewer-backdrop {
   position: fixed;
   inset: 0;

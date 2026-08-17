@@ -3999,6 +3999,18 @@ const loadPendingAdmissions = async () => {
   renderAdmissionReviewQueue();
 };
 
+// Every outbound message is written twice: a `*_sent` row whose status is
+// updated in place as Meta reports, and one `*_message_status` row per
+// transition. Showing both would print each message two or three times,
+// so the status rows win — they carry the delivered/read/failed story.
+// The exception is a send that never reached Meta at all, which has no
+// status row; that arrives from reminder_events instead (see
+// REMINDER_FAILED_STATUSES), which is why reminder_send_failed is absent
+// here rather than forgotten.
+//
+// The upi_app_* rows are the one signal with no counterpart anywhere.
+// They are the only record of a parent tapping Pay Now and the phone
+// failing to hand off to a UPI app, which reads as silence otherwise.
 const importantWhatsappFlowEvents = new Set([
   "reminder_created",
   "reminder_message_status",
@@ -4010,6 +4022,9 @@ const importantWhatsappFlowEvents = new Set([
   "parent_plan_selected",
   "payment_link_sent",
   "payment_attempted",
+  "upi_app_opened",
+  "upi_app_not_opened",
+  "upi_app_returned",
   "payment_pending_verification",
   "payment_confirmed",
   "parent_help_requested",
@@ -4066,9 +4081,19 @@ const whatsappFlowTitle = (row = {}) => {
   if (eventType === "manager_payment_alert_without_proof_sent") return "Manager payment alert sent";
   if (eventType === "payment_verification_reply_sent") return "Payment proof reply sent to parent";
   if (eventType === "parent_plan_selected") return "Parent selected payment plan";
-  if (eventType === "payment_link_sent") return "Payment link sent to parent";
+  // Not a second message. The link is carried inside the reminder itself,
+  // which is why this row has no message id and lands in the same second
+  // as reminder_created — "sent to parent" read as an extra WhatsApp.
+  if (eventType === "payment_link_sent") return "Pay Now link included in reminder";
   if (eventType === "payment_attempted") return "Parent tapped Pay Now";
-  if (eventType === "payment_pending_verification") return "Payment proof received from parent";
+  if (eventType === "upi_app_opened") return "UPI app opened on parent's phone";
+  if (eventType === "upi_app_not_opened") return "No UPI app opened after Pay Now";
+  if (eventType === "upi_app_returned") return "Parent returned from the UPI app";
+  if (eventType === "payment_pending_verification") {
+    return status === "no_matching_reminder"
+      ? "Payment proof received — no reminder to match it to"
+      : "Payment proof received from parent";
+  }
   if (eventType === "payment_confirmed") return "Payment confirmed by academy";
   if (eventType === "parent_help_requested") return "Parent requested help";
   return "";
@@ -4106,14 +4131,21 @@ const buildWhatsappFlowDetails = (row = {}) => {
   if (row.event_type === "payment_link_sent" || row.event_type === "payment_verification_reply_sent") {
     return row.message_body || "";
   }
+  if (row.event_type === "upi_app_not_opened") {
+    return "The phone did not hand off to a UPI app, so no payment was started from this tap.";
+  }
+  if (row.event_type === "upi_app_opened") return "";
+  if (row.event_type === "upi_app_returned") return row.message_body || "";
+  // The object key is deliberately NOT printed. It is not something a
+  // manager can act on, and the screenshot itself is rendered instead —
+  // see the proof thumbnail on the timeline item.
   return [
-    row.payment_plan ? `Plan: ${row.payment_plan}` : "",
+    row.payment_plan ? `Plan: ${REMINDER_PLAN_LABELS[row.payment_plan] || row.payment_plan}` : "",
     row.payment_amount ? `Amount: Rs ${Number(row.payment_amount).toLocaleString("en-IN")}` : "",
     row.payment_months ? `Months: ${row.payment_months}` : "",
     row.payment_from_date ? `From: ${row.payment_from_date}` : "",
     row.payment_to_date ? `To: ${row.payment_to_date}` : "",
     row.error_message || "",
-    row.proof_path ? `payment-proofs/${row.proof_path}` : "",
   ].filter(Boolean).join(" • ");
 };
 
@@ -4131,7 +4163,33 @@ const normalizeWhatsappFlowTimelineItem = (row = {}) => {
     changed_by: row.created_by || (row.direction === "provider" ? "Meta" : "WhatsApp"),
     created_at: createdAt,
     reminder_event_id: row.reminder_event_id || "",
+    // Carried as fields rather than scraped back out of the details text.
+    // The old path put the object key into the sentence and then matched
+    // it with a regex, which meant the thumbnail worked only for keys the
+    // regex happened to fit — two segments, one dot.
+    proof_bucket: row.proof_bucket || "",
+    proof_path: row.proof_path || "",
   };
+};
+
+// The payment page posts its plan and Pay Now events more than once —
+// two identical parent_plan_selected rows land in the same second, and
+// so do two payment_attempted. Distinct ids, same fact. Collapse repeats
+// of one event type within a minute; a second tap tomorrow is a real
+// second tap and keeps its own row.
+const collapseRepeatedFlowEvents = (items = []) => {
+  const seen = new Set();
+  return items.filter((item) => {
+    if (!item) return false;
+    const key = [
+      item.event_type,
+      item.title || "",
+      String(item.created_at || "").slice(0, 16),
+    ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };
 
 const suppressSupersededReminderFailures = (items = []) => {
@@ -4186,7 +4244,7 @@ const loadPlayerTimeline = async (studentId) => {
     .limit(10);
   const flowQuery = supabaseClient
     .from("whatsapp_flow_events")
-    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_kind,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_path")
+    .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_kind,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_bucket,proof_path")
     .eq("student_id", studentId)
     .order("status_at", { ascending: false, nullsFirst: false })
     .limit(40);
@@ -4227,17 +4285,23 @@ const loadPlayerTimeline = async (studentId) => {
 
   const whatsappFlowEvents = flowResult.error
     ? []
-    : (flowResult.data || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean);
+    : collapseRepeatedFlowEvents(
+        (flowResult.data || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean),
+      );
 
   const mergedRows = suppressSupersededReminderFailures([...timelineRows, ...reminderStatusEvents, ...whatsappFlowEvents])
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
     .slice(0, 30);
 
   return Promise.all(mergedRows.map(async (item) => {
-    const proofPath = extractPaymentProofPath(item.details || "");
+    // Flow rows carry the key as a field. student_timeline rows are older
+    // and only have it inside their sentence, so those still get scraped —
+    // and the sentence is cleaned up before it is shown either way.
+    const proofPath = item.proof_path || extractPaymentProofPath(item.details || "");
     if (!proofPath) return item;
-    const proofUrl = await createPaymentProofSignedUrl(proofPath);
-    return { ...item, proofPath, proofUrl };
+    const details = stripPaymentProofPath(item.details || "");
+    const proofUrl = await createPaymentProofSignedUrl(proofPath, item.proof_bucket);
+    return { ...item, details, proofPath, proofUrl };
   }));
 };
 
@@ -4269,18 +4333,31 @@ const loadPlayerAttendanceSummary = async (studentId) => {
   };
 };
 
-const extractPaymentProofPath = (details = "") => {
-  const match = String(details).match(/payment-proofs\/([^\s.]+\/[^\s.]+\.(?:jpg|jpeg|png|webp|pdf))/i);
-  return match?.[1] || "";
-};
+// Historical student_timeline rows carry the key inside their sentence
+// ("Proof stored at payment-proofs/<key>."). Any number of segments —
+// the key gained a tenant prefix on 2026-08-17 and the old two-segment
+// pattern would have quietly stopped matching.
+const PAYMENT_PROOF_PATH_PATTERN = /payment-proofs\/((?:[^\s./]+\/)+[^\s/]+\.(?:jpg|jpeg|png|webp|pdf))/i;
 
-const createPaymentProofSignedUrl = async (path) => {
+const extractPaymentProofPath = (details = "") =>
+  String(details).match(PAYMENT_PROOF_PATH_PATTERN)?.[1] || "";
+
+// An object key is not a fact a manager can use. Once it has been turned
+// into a thumbnail, take it out of the sentence.
+const stripPaymentProofPath = (details = "") =>
+  String(details)
+    .replace(new RegExp(`\\s*(?:Proof stored at\\s*)?${PAYMENT_PROOF_PATH_PATTERN.source}\\.?`, "i"), "")
+    .replace(/\s*•\s*$/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+const createPaymentProofSignedUrl = async (path, bucket = "payment-proofs") => {
   if (!path) return "";
   const accessToken = await getFreshManagerAccessToken();
   if (!accessToken) return "";
 
   try {
-    const response = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/sign/payment-proofs/${path}`, {
+    const response = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/sign/${bucket || "payment-proofs"}/${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -4514,13 +4591,20 @@ const buildTimelineRows = (timeline = []) => {
   return rows;
 };
 
-const renderTimelineProofButton = (item = {}) =>
-  item.proofUrl
-    ? `<button class="proof-thumb" type="button" data-proof-url="${escapeHtml(item.proofUrl)}">
-        <img src="${escapeHtml(item.proofUrl)}" alt="Payment proof thumbnail" />
+const renderTimelineProofButton = (item = {}) => {
+  if (item.proofUrl) {
+    return `<button class="proof-thumb" type="button" data-proof-url="${escapeHtml(item.proofUrl)}">
+        <img src="${escapeHtml(item.proofUrl)}" alt="Payment proof thumbnail" loading="lazy" />
         <span>View proof</span>
-      </button>`
+      </button>`;
+  }
+  // Say so rather than showing nothing. A screenshot that exists but will
+  // not open is a different problem from a parent who never sent one, and
+  // the timeline used to blur the two by printing a storage path.
+  return item.proofPath
+    ? `<p class="proof-unavailable">Screenshot stored, but it could not be opened just now.</p>`
     : "";
+};
 
 const renderTimelineMiniEvent = (item = {}) => {
   const tone = getTimelineTone(item);
