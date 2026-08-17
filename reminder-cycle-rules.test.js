@@ -44,9 +44,16 @@ test("a missing follow-up is never treated as current", () => {
 });
 
 test("the Android fixture copy has not drifted", () => {
+  // The repos are siblings: GenAlpha/ and GenAlphaApp/. This used to join
+  // "..", "android-app", which resolves to a directory that has never
+  // existed — and the existsSync guard below turned the miss into a silent
+  // return, so the byte-identity this test claims to enforce had never once
+  // been asserted. A missing copy now fails, because a check that skips is
+  // not a check.
   const androidCopy = path.join(
     __dirname,
     "..",
+    "GenAlphaApp",
     "android-app",
     "app",
     "src",
@@ -54,7 +61,7 @@ test("the Android fixture copy has not drifted", () => {
     "resources",
     "reminder-cycle-fixtures.json",
   );
-  if (!fs.existsSync(androidCopy)) return; // android repo not checked out beside the web repo
+  assert.ok(fs.existsSync(androidCopy), `missing ${androidCopy}`);
   assert.equal(
     fs.readFileSync(androidCopy, "utf8"),
     fs.readFileSync(path.join(__dirname, "reminder-cycle-fixtures.json"), "utf8"),

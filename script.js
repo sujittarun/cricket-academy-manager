@@ -4169,6 +4169,16 @@ const normalizeWhatsappFlowTimelineItem = (row = {}) => {
     // regex happened to fit — two segments, one dot.
     proof_bucket: row.proof_bucket || "",
     proof_path: row.proof_path || "",
+    // Carried so the shared fold can classify without re-reading the query.
+    source: "flow",
+    status: row.status || "",
+    message_kind: row.message_kind || "",
+    sent_at: row.sent_at || "",
+    accepted_at: row.accepted_at || "",
+    delivered_at: row.delivered_at || "",
+    read_at: row.read_at || "",
+    failed_at: row.failed_at || "",
+    error_message: row.error_message || "",
   };
 };
 
@@ -4225,7 +4235,91 @@ const suppressSupersededReminderFailures = (items = []) => {
   });
 };
 
-const loadPlayerTimeline = async (studentId) => {
+// Built from getPlayerPaymentRows — the same typed rows the Payment details
+// section above the timeline already renders, including the joining payment
+// it synthesizes for students whose first payment predates the payments
+// table. Money on the timeline therefore says exactly what money above it
+// says, and cannot go missing when a timeline echo does.
+const paymentRowDetails = (row = {}) => [
+  row.amount ? `Rs ${Number(row.amount).toLocaleString("en-IN")}` : "",
+  row.plan || "",
+  row.months ? `${row.months} month${row.months === 1 ? "" : "s"}` : "",
+].filter(Boolean).join(" • ");
+
+// The app's row shape and the shared module's row shape are the same facts
+// under different names. Kept as two explicit maps rather than renaming the
+// app's fields, so the shared module never has to know that this app spells
+// things with underscores and the Kotlin one does not.
+const toSharedTimelineRow = (row = {}) => ({
+  id: row.id,
+  source: row.source || "timeline",
+  eventType: row.event_type || "",
+  status: row.status || "",
+  messageKind: row.message_kind || "",
+  occurredAt: row.created_at || "",
+  title: row.title || "",
+  details: row.details || "",
+  changedBy: row.changed_by || "",
+  errorMessage: row.error_message || "",
+  proofBucket: row.proof_bucket || "",
+  proofPath: row.proof_path || "",
+  sentAt: row.sent_at || "",
+  acceptedAt: row.accepted_at || "",
+  deliveredAt: row.delivered_at || "",
+  readAt: row.read_at || "",
+  failedAt: row.failed_at || "",
+  runCount: row.runCount,
+  runDates: row.runDates,
+  appRow: row,
+});
+
+const DELIVERY_BADGES = {
+  read: "read",
+  delivered: "delivered",
+  sent: "sent",
+  queued: "queued",
+  failed: "failed",
+};
+
+const formatRunDates = (dates = []) => {
+  const pretty = dates.map((date) => formatDate(date)).filter(Boolean);
+  if (pretty.length <= 1) return pretty.join("");
+  // Every rung's date, because "we messaged you on the 3rd, the 5th and the
+  // 8th" is the sentence the owner says on the phone. It costs one line.
+  if (pretty.length <= 8) {
+    return `${pretty.slice(0, -1).join(", ")} & ${pretty[pretty.length - 1]}`;
+  }
+  return `${pretty.slice(0, 3).join(", ")} … ${pretty[pretty.length - 1]}`;
+};
+
+const fromSharedTimelineRow = (row = {}) => {
+  const base = { ...(row.appRow || {}) };
+  base.kind = row.kind;
+  base.runCount = row.runCount;
+  base.runDates = row.runDates;
+  base.deliveryState = row.deliveryState;
+  base.proof_path = row.proofPath || base.proof_path || "";
+  base.proof_bucket = row.proofBucket || base.proof_bucket || "";
+
+  if (row.kind === "reminder") {
+    const badge = DELIVERY_BADGES[row.deliveryState];
+    base.title = row.runCount > 1
+      ? `Fee reminder sent ${row.runCount}×`
+      : "Fee reminder sent";
+    base.details = [
+      formatRunDates(row.runDates),
+      badge ? `${badge} by parent` : "",
+      row.linkIncluded ? "Pay Now link included" : "",
+    ].filter(Boolean).join(" • ");
+    base.changed_by = "WhatsApp";
+  } else if (row.kind === "profile" && row.runCount > 1) {
+    base.title = `Player details edited ${row.runCount}×`;
+  }
+  return base;
+};
+
+const loadPlayerTimeline = async (kid) => {
+  const studentId = kid?.id;
   if (!isBackendReady || !isManagerLoggedIn) return [];
 
   const timelineQuery = supabaseClient
@@ -4234,20 +4328,28 @@ const loadPlayerTimeline = async (studentId) => {
     .eq("student_id", studentId)
     .neq("event_type", "whatsapp_flow")
     .order("created_at", { ascending: false })
-    .limit(30);
+    // Limits rise because the fold now happens AFTER the fetch. They used to
+    // cap the raw rows, so the 179 whatsapp_reminder and 131 renewal
+    // confirmation echoes were fetched inside the window and then thrown
+    // away — a p90 student's older informative rows were never fetched at
+    // all. Round-trip COUNT is what costs 180 ms here, and it is unchanged.
+    .limit(150);
   const reminderQuery = supabaseClient
     .from("reminder_events")
     .select("id,student_id,reminder_type,status,due_date,created_at,created_by,meta_error,failed_at,retry_count,max_retry_count,next_retry_at,last_retry_at,retry_reason,manual_followup_required,manual_followup_reason")
     .eq("student_id", studentId)
     .in("status", [...REMINDER_FAILED_STATUSES])
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(60);
   const flowQuery = supabaseClient
     .from("whatsapp_flow_events")
     .select("id,student_id,reminder_event_id,event_type,direction,status,status_at,accepted_at,delivered_at,read_at,failed_at,created_at,created_by,error_message,message_kind,message_body,payment_plan,payment_amount,payment_months,payment_from_date,payment_to_date,proof_bucket,proof_path")
     .eq("student_id", studentId)
-    .order("status_at", { ascending: false, nullsFirst: false })
-    .limit(40);
+    // Ordered by created_at, not status_at: rendering sorts by a derived
+    // field, so ordering the fetch by a column that is often null meant the
+    // window and the order disagreed — rows fetched last could sort first.
+    .order("created_at", { ascending: false })
+    .limit(200);
 
   const [timelineResult, initialReminderResult, flowResult] = await Promise.all([
     timelineQuery,
@@ -4285,15 +4387,43 @@ const loadPlayerTimeline = async (studentId) => {
 
   const whatsappFlowEvents = flowResult.error
     ? []
-    : collapseRepeatedFlowEvents(
-        (flowResult.data || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean),
-      );
+    : (flowResult.data || []).map(normalizeWhatsappFlowTimelineItem).filter(Boolean);
 
-  const mergedRows = suppressSupersededReminderFailures([...timelineRows, ...reminderStatusEvents, ...whatsappFlowEvents])
-    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
-    .slice(0, 30);
+  // Money comes from the typed payment rows the profile already holds, never
+  // from a timeline sentence about a payment: 122 of 143 payments had no
+  // matching same-day echo, so the echoes cannot be reconciled — and do not
+  // need to be, once the payment itself is the row.
+  const paymentRows = getPlayerPaymentRows(kid).map((row, index) => ({
+    id: `payment-${row.id || index}`,
+    student_id: kid.id,
+    source: "payment",
+    event_type: "payment_row",
+    title: row.title,
+    details: paymentRowDetails(row),
+    changed_by: "Academy",
+    created_at: row.date || "",
+    event_date: String(row.date || "").slice(0, 10),
+  }));
 
-  return Promise.all(mergedRows.map(async (item) => {
+  const merged = [
+    ...timelineRows.map((row) => ({ ...row, source: "timeline" })),
+    ...reminderStatusEvents,
+    ...whatsappFlowEvents,
+    ...paymentRows,
+  ];
+
+  // suppressSupersededReminderFailures is deliberately NOT applied any more:
+  // it hid a genuine evening bounce whenever the same day also had a payment,
+  // which is exactly backwards. Payment state and delivery state are
+  // independent channels, and the fold's fixtures assert it.
+  const rawRows = merged.sort((a, b) =>
+    String(b.created_at || "").localeCompare(String(a.created_at || "")),
+  );
+  const mergedRows = GEN_ALPHA_TIMELINE_RULES.foldTimeline(
+    rawRows.map(toSharedTimelineRow),
+  ).map(fromSharedTimelineRow);
+
+  const withProof = await Promise.all(mergedRows.map(async (item) => {
     // Flow rows carry the key as a field. student_timeline rows are older
     // and only have it inside their sentence, so those still get scraped —
     // and the sentence is cleaned up before it is shown either way.
@@ -4303,6 +4433,11 @@ const loadPlayerTimeline = async (studentId) => {
     const proofUrl = await createPaymentProofSignedUrl(proofPath, item.proof_bucket);
     return { ...item, details, proofPath, proofUrl };
   }));
+
+  // `rawRows` rides along so "Show everything" can swap to the unfolded list
+  // without a second round trip. Nothing behind the toggle was fetched twice.
+  withProof.raw = rawRows;
+  return withProof;
 };
 
 const loadPlayerAttendanceSummary = async (studentId) => {
@@ -4666,11 +4801,14 @@ const renderTimelineCluster = (cluster = {}) => {
   `;
 };
 
+// One flat, strictly reverse-chronological list. The cluster layer that used
+// to sit here is gone: the shared fold already collapses runs, so clustering
+// on top of it wrapped single rows in a "1 update folded" box — and it only
+// ever existed on web, which is precisely the kind of divergence the shared
+// rule module exists to prevent.
 const renderPlayerTimeline = (timeline = []) =>
   `<ol class="timeline-list advanced-timeline-list">
-    ${buildTimelineRows(timeline).map((row) =>
-      row.type === "cluster" ? renderTimelineCluster(row) : renderTimelineEvent(row.item)
-    ).join("")}
+    ${timeline.map((item) => renderTimelineEvent(item)).join("")}
   </ol>`;
 
 const closePaymentProofViewer = ({ restoreFocus = true } = {}) => {
@@ -5019,9 +5157,49 @@ const sendReminderDryRun = async (kid) => {
   };
 };
 
+// The toggle is component-local and NOT persisted. Persisting it would mean
+// localStorage here and DataStore on Android — two mechanisms, drift no
+// fixture can see, for a preference nobody asked for.
+let showAllTimelineRecords = false;
+let lastRenderedTimeline = null;
+
+const renderTimelineSection = (timeline = []) => {
+  const raw = timeline.raw || [];
+  const hasHidden = raw.length > timeline.length;
+  const shown = showAllTimelineRecords && hasHidden ? raw : timeline;
+  return `
+    <div class="player-detail-section timeline-section" id="playerTimelineSection">
+      <div class="timeline-section-head">
+        <div>
+          <span>Player journey</span>
+          <h4>Timeline</h4>
+        </div>
+        <div class="timeline-section-meta">
+          <strong>${timeline.length} event${timeline.length === 1 ? "" : "s"}${
+            hasHidden ? ` · ${raw.length} records` : ""
+          }</strong>
+          ${
+            hasHidden
+              ? `<button type="button" class="timeline-show-all" data-timeline-show-all>${
+                  showAllTimelineRecords ? "Show less" : "Show everything"
+                }</button>`
+              : ""
+          }
+        </div>
+      </div>
+      ${
+        shown.length > 0
+          ? renderPlayerTimeline(shown)
+          : `<p class="sub-copy">No timeline records yet. Run the player profile timeline SQL migration to start capturing changes.</p>`
+      }
+    </div>
+  `;
+};
+
 const renderPlayerDetails = async (kid) => {
   if (!kid || !playerDetailPopup || !playerDetailContent) return;
   const renderSeq = ++playerDetailRenderSeq;
+  showAllTimelineRecords = false;
   playerDetailTitle.textContent = kid.name;
   if (playerDetailAvatar) playerDetailAvatar.textContent = getPlayerInitials(kid.name);
   playerDetailContent.setAttribute("aria-busy", "true");
@@ -5046,8 +5224,12 @@ const renderPlayerDetails = async (kid) => {
   // Give the browser one paint before timeline network work starts so the
   // profile always responds immediately on mobile connections.
   await new Promise((resolve) => requestAnimationFrame(resolve));
-  const timeline = compactPlayerTimeline(await loadPlayerTimeline(kid.id));
+  // compactPlayerTimeline is gone: it ran AFTER the 30-row cap, so it spent
+  // the budget on rows it was about to discard. The shared fold replaces it
+  // and runs before anything is dropped.
+  const timeline = await loadPlayerTimeline(kid);
   if (renderSeq !== playerDetailRenderSeq || playerDetailPopup.hidden) return;
+  lastRenderedTimeline = timeline;
   const paymentRows = getPlayerPaymentRows(kid);
   const totalPaid = paymentRows.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const totalMonths = paymentRows.reduce((total, payment) => total + Number(payment.months || 0), 0);
@@ -5145,20 +5327,7 @@ const renderPlayerDetails = async (kid) => {
           </div>`
         : ""
     }
-    <div class="player-detail-section timeline-section">
-      <div class="timeline-section-head">
-        <div>
-          <span>Player journey</span>
-          <h4>Timeline</h4>
-        </div>
-        <strong>${timeline.length} event${timeline.length === 1 ? "" : "s"}</strong>
-      </div>
-      ${
-        timeline.length > 0
-          ? renderPlayerTimeline(timeline)
-          : `<p class="sub-copy">No timeline records yet. Run the player profile timeline SQL migration to start capturing changes.</p>`
-      }
-    </div>
+    ${renderTimelineSection(timeline)}
   `;
   playerDetailContent.removeAttribute("aria-busy");
 };
@@ -6922,6 +7091,16 @@ playerDetailContent?.addEventListener("click", async (event) => {
   const proofTarget = event.target.closest("[data-proof-url]");
   if (proofTarget) {
     openPaymentProofViewer(proofTarget.dataset.proofUrl || "", proofTarget);
+    return;
+  }
+  if (event.target.closest("[data-timeline-show-all]")) {
+    // Both lists are already in memory, so this is a boolean and a swap —
+    // never a second fetch.
+    showAllTimelineRecords = !showAllTimelineRecords;
+    const section = document.getElementById("playerTimelineSection");
+    if (section && lastRenderedTimeline) {
+      section.outerHTML = renderTimelineSection(lastRenderedTimeline);
+    }
     return;
   }
   const confirmTarget = event.target.closest("[data-profile-confirm-payment-id]");
