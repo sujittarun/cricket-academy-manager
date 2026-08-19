@@ -459,6 +459,23 @@ const AM_REPORT = {
   ver: "web",
 };
 
+/* Who, as opposed to which tab. A session id lives in sessionStorage and
+   dies with the tab, so the same person opening the app tomorrow reads as
+   somebody new. This one lives in localStorage, which is what lets "3
+   visits" mean one person three times rather than three people once. It
+   identifies a BROWSER: no name, no phone, nothing derived from the
+   account, and it goes when the user clears site data. */
+function amVisitorId() {
+  try {
+    let v = localStorage.getItem("ga-am-vid");
+    if (!v) {
+      v = "v_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("ga-am-vid", v);
+    }
+    return v;
+  } catch (e) { return null; }
+}
+
 function amReport(name, props) {
   try {
     let sid = null;
@@ -483,7 +500,7 @@ function amReport(name, props) {
         name,
         session_id: sid,
         page: (location.pathname.split("/").pop() || "index.html").slice(0, 60),
-        props: { ver: AM_REPORT.ver, ...(props || {}) },
+        props: { ver: AM_REPORT.ver, vid: amVisitorId(), ...(props || {}) },
       }),
       keepalive: true,
     }).catch(() => {});
