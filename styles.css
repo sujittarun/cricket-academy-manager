@@ -4581,6 +4581,14 @@ body.popup-open {
   align-items: end;
 }
 
+/* Age is typed when the parent left the date of birth blank, and read-only
+   when a date of birth fills it in. */
+.admission-age-field input[readonly] {
+  background: rgba(15, 34, 64, 0.05);
+  color: rgba(15, 34, 64, 0.62);
+  cursor: default;
+}
+
 .data-tile {
   display: grid;
   gap: 4px;

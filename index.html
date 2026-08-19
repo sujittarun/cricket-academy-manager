@@ -19,7 +19,7 @@
     <link rel="shortcut icon" type="image/png" href="./assets/gen-alpha-favicon-192.png" />
     <link rel="apple-touch-icon" href="./assets/gen-alpha-favicon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=82" />
+    <link rel="stylesheet" href="./styles.css?v=83" />
     <link rel="stylesheet" href="./ui-refresh.css?v=5" />
     <script>
       (function() {
@@ -744,26 +744,27 @@
                     <div class="dob-compact-row full-span">
                       <label>
                         DOB
-                        <select id="admissionBirthDay" name="birthDay" required>
+                        <select id="admissionBirthDay" name="birthDay">
                           <option value="">DD</option>
                         </select>
                       </label>
                       <label>
                         &nbsp;
-                        <select id="admissionBirthMonth" name="birthMonth" required>
+                        <select id="admissionBirthMonth" name="birthMonth">
                           <option value="">MON</option>
                         </select>
                       </label>
                       <label>
                         &nbsp;
-                        <select id="admissionBirthYear" name="birthYear" required>
+                        <select id="admissionBirthYear" name="birthYear">
                           <option value="">YYYY</option>
                         </select>
                       </label>
-                      <div class="data-tile compact-data-tile">
-                        <span class="data-label">Age</span>
-                        <span id="admissionAge" class="data-value">Auto</span>
-                      </div>
+                      <label class="admission-age-field">
+                        Age
+                        <input id="admissionAge" name="admissionAge" type="number" min="4" max="18"
+                               inputmode="numeric" placeholder="Age" />
+                      </label>
                     </div>
                   </div>
                 </section>
@@ -1381,6 +1382,6 @@
     <script src="./roster-movement-rules.js?v=1"></script>
     <script src="./reminder-cycle-rules.js?v=2"></script>
     <script src="./timeline-rules.js?v=1"></script>
-    <script src="./script.js?v=108"></script>
+    <script src="./script.js?v=109"></script>
   </body>
 </html>

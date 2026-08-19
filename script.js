@@ -3264,9 +3264,26 @@ const calculateAge = (dateValue) => {
   return age >= 0 ? age : null;
 };
 
+// Age is derived from the date of birth when there is one, and typed in when
+// there is not. The form asks for both and parents routinely fill one box and
+// leave the other blank, so demanding the date of birth rejected forms that
+// were correctly filled in.
 const updateAdmissionAge = () => {
-  const age = calculateAge(buildDobIso());
-  admissionAge.textContent = age === null ? "Auto" : String(age);
+  const dob = buildDobIso();
+  if (!dob) {
+    admissionAge.readOnly = false;
+    return;
+  }
+  const age = calculateAge(dob);
+  admissionAge.value = age === null ? "" : String(age);
+  admissionAge.readOnly = true;
+};
+
+const getAdmissionAge = () => {
+  const derived = calculateAge(buildDobIso());
+  if (derived !== null) return derived;
+  const typed = Number(admissionAge.value);
+  return Number.isFinite(typed) && typed > 0 ? Math.round(typed) : null;
 };
 
 const populateAdmissionSelectors = () => {
@@ -3306,7 +3323,8 @@ const resetAdmissionForm = async () => {
   admissionForm.reset();
   admissionJoinDate.value = toLocalIsoDate();
   admissionMessage.textContent = "";
-  admissionAge.textContent = "Auto";
+  admissionAge.value = "";
+  admissionAge.readOnly = false;
   admissionPaymentIntentId = buildPaymentIntentId();
   sessionStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
   
@@ -7408,12 +7426,14 @@ admissionForm.addEventListener("submit", async (event) => {
 
   const formData = new FormData(admissionForm);
   const dateOfBirth = buildDobIso();
-  const age = calculateAge(dateOfBirth);
+  const age = getAdmissionAge();
   const parentContact = String(formData.get("parentContact") || "").replace(/\D/g, "");
   const alternateContact = String(formData.get("alternateContact") || "").replace(/\D/g, "");
 
-  if (!dateOfBirth || age === null) {
-    admissionMessage.textContent = "Please complete the date of birth properly.";
+  if (age === null || age < 4 || age > 18) {
+    admissionMessage.textContent = dateOfBirth
+      ? "That date of birth does not give an age between 4 and 18."
+      : "Enter the date of birth, or just the age if the form did not carry one.";
     return;
   }
 
@@ -7436,7 +7456,7 @@ admissionForm.addEventListener("submit", async (event) => {
   const baseAdmissionPayload = {
     p_applicant_name: String(formData.get("applicantName") || "").trim(),
     p_nationality: String(formData.get("nationality") || "").trim(),
-    p_date_of_birth: dateOfBirth,
+    p_date_of_birth: dateOfBirth || null,
     p_age: age,
     p_gender: String(formData.get("gender") || "").trim(),
     p_father_guardian_name: String(formData.get("guardianName") || "").trim(),
