@@ -1343,6 +1343,10 @@ const getPlayerPaymentRows = (kid) => {
       plan: isJerseyPayment ? "Jersey pair" : getPaymentPlanLabel(payment.plan_type || payment.planType, months),
       months,
       amount: getSignedPaymentAmount(payment),
+      // A screenshot sent through AgentAlpha lands on the payment itself, not
+      // on a WhatsApp flow event, so the timeline never saw it and showed the
+      // payment with no proof at all.
+      proofPath: payment.proof_path || payment.proofPath || "",
     });
   });
   return rows.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
@@ -4442,6 +4446,8 @@ const loadPlayerTimeline = async (kid) => {
     changed_by: "Academy",
     created_at: row.date || "",
     event_date: String(row.date || "").slice(0, 10),
+    proof_bucket: "payment-proofs",
+    proof_path: row.proofPath || "",
   }));
 
   const merged = [
