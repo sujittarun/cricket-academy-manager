@@ -2401,13 +2401,32 @@ const getFilteredKids = () => {
     : activeSlotFilter === "not-set"
       ? kids.filter((kid) => isActiveKid(kid) && !kid.timeSlot)
       : kids.filter((kid) => isActiveKid(kid) && kid.timeSlot === activeSlotFilter);
-  // Player name, parent name, batch. A parent rings up and gives their own
-  // name far more often than the child's registered spelling, so a roster
-  // that only matches the player is the wrong end of the conversation.
+  // Player name, parent name, batch, phone. A parent rings up and gives their
+  // own name — or their number shows on the screen — far more often than the
+  // child's registered spelling, so a roster that only matches the player is
+  // the wrong end of the conversation.
   const search = rosterSearchQuery.trim().toLowerCase();
-  const matchesRosterSearch = (kid) =>
-    [kid.name, kid.fatherGuardianName, kid.timeSlot]
+  // Digits are compared digit-to-digit, so "94414 93533", "+91 9441493533"
+  // and "9441493533" all find the same parent. Three digits minimum: on a
+  // ten-digit number a one- or two-digit query matches most of the roster,
+  // which reads as a broken filter rather than a search.
+  // Indian numbers are stored as ten digits, so a query carrying a country
+  // code ("+91 9441493533") is LONGER than what it should match and a plain
+  // substring test finds nothing. Both sides drop to their last ten digits
+  // first.
+  const localDigits = (value) => {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.length > 10 ? digits.slice(-10) : digits;
+  };
+  const searchDigits = localDigits(search);
+  const matchesRosterSearch = (kid) => {
+    const text = [kid.name, kid.fatherGuardianName, kid.timeSlot]
       .some((field) => String(field || "").toLowerCase().includes(search));
+    if (text) return true;
+    if (searchDigits.length < 3) return false;
+    return [kid.parentContactNo, kid.alternateContactNo]
+      .some((phone) => localDigits(phone).includes(searchDigits));
+  };
   const searchFiltered = search ? slotFiltered.filter(matchesRosterSearch) : slotFiltered;
   const filtered = searchFiltered.filter(matchesRosterFilters);
   return [...filtered].sort((a, b) => {
