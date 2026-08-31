@@ -2401,10 +2401,14 @@ const getFilteredKids = () => {
     : activeSlotFilter === "not-set"
       ? kids.filter((kid) => isActiveKid(kid) && !kid.timeSlot)
       : kids.filter((kid) => isActiveKid(kid) && kid.timeSlot === activeSlotFilter);
+  // Player name, parent name, batch. A parent rings up and gives their own
+  // name far more often than the child's registered spelling, so a roster
+  // that only matches the player is the wrong end of the conversation.
   const search = rosterSearchQuery.trim().toLowerCase();
-  const searchFiltered = search
-    ? slotFiltered.filter((kid) => kid.name.toLowerCase().includes(search))
-    : slotFiltered;
+  const matchesRosterSearch = (kid) =>
+    [kid.name, kid.fatherGuardianName, kid.timeSlot]
+      .some((field) => String(field || "").toLowerCase().includes(search));
+  const searchFiltered = search ? slotFiltered.filter(matchesRosterSearch) : slotFiltered;
   const filtered = searchFiltered.filter(matchesRosterFilters);
   return [...filtered].sort((a, b) => {
     const result = compareRosterValues(getRosterSortValue(a, rosterSortKey), getRosterSortValue(b, rosterSortKey));
